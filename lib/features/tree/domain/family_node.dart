@@ -1,5 +1,6 @@
 import 'package:familytree/features/person/domain/person.dart';
 import 'package:familytree/features/tree/domain/marriage.dart';
+import 'package:familytree/features/tree/domain/parent_child.dart';
 
 /// Một "đơn vị gia đình" của người chính: một người bạn đời (có thể null
 /// nếu con chỉ có một cha/mẹ trong dữ liệu) cùng các con của cặp đó.
@@ -9,6 +10,9 @@ class UnionGroup {
   final Person? spouse;
   final Marriage? marriage;
   final List<FamilyNode> children = [];
+
+  /// id người con -> loại quan hệ (ruột/nuôi/riêng), dùng để vẽ nét liền/đứt.
+  final Map<String, RelationType> childRelations = {};
 }
 
 /// Một người "trong họ" được đặt trên cây, kèm các đơn vị gia đình của họ

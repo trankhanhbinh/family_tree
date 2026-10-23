@@ -141,6 +141,12 @@ void main() {
           ['15', '16']);
     });
 
+    test('con nuôi (16) được đánh dấu adopted, con ruột (15) là biological', () {
+      final union = forest.nodeOfPerson['09']!.unions.first;
+      expect(union.childRelations['16'], RelationType.adopted);
+      expect(union.childRelations['15'], RelationType.biological);
+    });
+    
     test('mọi người trong 16 đều tra được nút', () {
       expect(forest.nodeOfPerson.length, 16);
       expect(forest.nodeOfPerson['06']!.person.id, '03');

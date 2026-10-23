@@ -165,6 +165,9 @@ class FamilyTreeBuilder {
         d.kids.sort(_comparePeople);
         final group = UnionGroup(spouse: d.spouse, marriage: d.marriage);
         group.children.addAll(d.kids.map((k) => nodes[k.id]!));
+        for (final k in d.kids) {
+          group.childRelations[k.id] = _relationFor(rowsOf[k.id], entry.key);
+        }
         node.unions.add(group);
       }
     }
@@ -252,6 +255,15 @@ class _Draft {
     }
     return earliest;
   }
+}
+
+/// Loại quan hệ của con với người chính; không có thì mặc định ruột.
+RelationType _relationFor(List<ParentChild>? rows, String anchorId) {
+  if (rows == null || rows.isEmpty) return RelationType.biological;
+  for (final r in rows) {
+    if (r.parentId == anchorId) return r.relationType;
+  }
+  return rows.first.relationType;
 }
 
 String _pairKey(String a, String b) => a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
