@@ -58,7 +58,7 @@ class TreePainter extends CustomPainter {
         continue;
       }
 
-      final MarriageStatus? status = marriage.status;
+      final MarriageStatus status = marriage.status;
       if (status == MarriageStatus.divorced) {
         _strokePolyline(canvas, link.points, paint, dash: _dash, gap: _gap);
       } else if (status == MarriageStatus.widowed) {
@@ -151,12 +151,12 @@ class TreePainter extends CustomPainter {
     final DateTime? birthDate = person.birthDate;
     final int? deathYear = person.deathYear;
     final DateTime? deathDate = person.deathDate;
-    final bool? alive = person.isAlive;
+    final bool alive = person.isAlive;
 
     final int? birth = birthYear ?? birthDate?.year;
     final int? death = deathYear ?? deathDate?.year;
 
-    if (alive == false) {
+    if (!alive) {
       return '${birth ?? '?'} – ${death ?? '?'}';
     }
     return birth == null ? '?' : '$birth –';
@@ -181,10 +181,8 @@ class TreePainter extends CustomPainter {
     final rect = card.rect;
     final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(10));
 
-    final bool? alive = person.isAlive;
-    final deceased = alive == false;
-    final Gender? gender = person.gender;
-    final accent = _accentOf(gender);
+    final deceased = !person.isAlive;
+    final accent = _accentOf(person.gender);
 
     // Nền
     canvas.drawRRect(
