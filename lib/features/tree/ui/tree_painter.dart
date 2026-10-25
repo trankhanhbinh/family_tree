@@ -239,7 +239,7 @@ class TreePainter extends CustomPainter {
     );
     initial.dispose();
 
-    // Khối chữ bên phải
+    // Khối chữ bên phải (họ tên + năm sinh - năm mất)
     final textLeft = rect.left + pad + avatarRadius * 2 + 8;
     final textWidth = rect.right - 8 - textLeft;
 
@@ -259,31 +259,16 @@ class TreePainter extends CustomPainter {
       const TextStyle(fontSize: 12, color: Color(0xFF616161)),
       textWidth,
     );
-    final Object? generation = person.generation;
-    final generationText = generation == null ? null : 'Đời thứ $generation';
-    final gen = generationText == null
-        ? null
-        : _text(
-            generationText,
-            const TextStyle(fontSize: 11, color: Color(0xFF8D6E63)),
-            textWidth,
-          );
 
-    const gapBetween = 2.0;
-    final totalHeight = name.height +
-        gapBetween +
-        years.height +
-        (gen == null ? 0 : gapBetween + gen.height);
+    const gapBetween = 4.0;
+    final totalHeight = name.height + gapBetween + years.height;
     var y = rect.center.dy - totalHeight / 2;
 
     name.paint(canvas, Offset(textLeft, y));
     y += name.height + gapBetween;
     years.paint(canvas, Offset(textLeft, y));
-    y += years.height + gapBetween;
-    gen?.paint(canvas, Offset(textLeft, y));
 
     name.dispose();
     years.dispose();
-    gen?.dispose();
   }
 }
