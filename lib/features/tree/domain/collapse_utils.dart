@@ -21,3 +21,28 @@ Set<String> collapsibleNonRootIds(FamilyForest forest) {
   }
   return result;
 }
+
+/// Với mỗi người: danh sách id các người chính (tổ tiên) phải ĐANG MỞ thì
+/// thẻ của người đó mới hiện. Không gồm chính người đó.
+/// Vợ/chồng ngoại họ: lấy theo tổ tiên của người chính đứng cạnh.
+Map<String, List<String>> collapseBlockersOf(FamilyForest forest) {
+  final result = <String, List<String>>{};
+
+  void visit(FamilyNode node, List<String> path) {
+    result[node.person.id] = path;
+    for (final union in node.unions) {
+      final spouse = union.spouse;
+      if (spouse != null) {
+        result.putIfAbsent(spouse.id, () => path);
+      }
+      for (final child in union.children) {
+        visit(child, [...path, node.person.id]);
+      }
+    }
+  }
+
+  for (final root in forest.roots) {
+    visit(root, const <String>[]);
+  }
+  return result;
+}

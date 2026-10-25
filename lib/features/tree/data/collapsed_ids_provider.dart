@@ -18,6 +18,15 @@ class CollapsedIdsNotifier extends Notifier<Set<String>> {
     state = {...ids};
   }
 
+  /// Mở các id được chỉ định (id không đang thu gọn thì bỏ qua).
+  void expand(Iterable<String> ids) {
+    final toRemove = ids.where(state.contains).toSet();
+    if (toRemove.isEmpty) {
+      return;
+    }
+    state = state.difference(toRemove);
+  }
+
   void expandAll() {
     state = <String>{};
   }

@@ -1,29 +1,36 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:familytree/features/tree/data/focus_request_provider.dart';
 import 'package:familytree/features/tree/domain/collapse_utils.dart';
 import 'package:familytree/features/tree/domain/family_node.dart';
 import 'package:familytree/features/tree/domain/tree_layout.dart';
 import 'package:familytree/features/tree/domain/tree_layout_engine.dart';
 import 'package:familytree/features/tree/ui/tree_painter.dart';
 
-/// Canvas cây gia phả: zoom/pan, bấm thẻ, thu gọn/mở rộng nhánh, nút "về gốc".
-/// Khối H2 sẽ thêm tìm kiếm, H3 chỉ vẽ phần nhìn thấy.
+/// Canvas cây gia phả: zoom/pan, bấm thẻ, thu gọn/mở rộng nhánh,
+/// cuộn tới người được tìm, nút "về gốc".
+/// Khối H3 sẽ chỉ vẽ phần nhìn thấy.
 class TreeView extends StatefulWidget {
   const TreeView({
     super.key,
     required this.forest,
     required this.collapsedIds,
+    required this.focusRequest,
     required this.onPersonTap,
     required this.onToggleCollapse,
     required this.onCollapseAll,
     required this.onExpandAll,
+    required this.onFocusHandled,
   });
 
   final FamilyForest forest;
 
   /// Các người chính đang thu gọn (nguồn sự thật nằm ở provider).
   final Set<String> collapsedIds;
+
+  /// Yêu cầu cuộn tới một người (null nếu không có).
+  final FocusRequest? focusRequest;
 
   final void Function(String personId) onPersonTap;
   final void Function(String personId) onToggleCollapse;
@@ -32,15 +39,21 @@ class TreeView extends StatefulWidget {
   final void Function(Set<String> ids) onCollapseAll;
   final VoidCallback onExpandAll;
 
+  /// Báo đã nhận yêu cầu cuộn để provider xóa nó.
+  final VoidCallback onFocusHandled;
+
   @override
   State<TreeView> createState() => _TreeViewState();
 }
 
-class _TreeViewState extends State<TreeView> {
+class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
   static const double _initialScale = 0.8;
   static const double _minScale = 0.15;
   static const double _maxScale = 2.5;
   static const double _topMargin = 24;
+
+  /// Khi cuộn tới người được tìm, zoom không nhỏ hơn mức này.
+  static const double _focusMinScale = 0.8;
 
   late TreeLayout _layout;
   late Set<String> _collapsible;
@@ -54,11 +67,26 @@ class _TreeViewState extends State<TreeView> {
   // "Thu gọn tất cả"/"Mở rộng tất cả": sau khi layout đổi thì về gốc.
   bool _goHomePending = false;
 
+  // Cuộn tới người được tìm + nhấp nháy.
+  late final AnimationController _moveController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 600),
+  );
+  late final AnimationController _pulseController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2400),
+  );
+  Matrix4Tween? _moveTween;
+  int? _handledToken;
+  String? _highlightId;
+
   @override
   void initState() {
     super.initState();
     _collapsible = collapsibleNonRootIds(widget.forest);
     _layout = _compute();
+    _moveController.addListener(_onMoveTick);
+    _scheduleFocusCheck();
   }
 
   @override
@@ -67,18 +95,22 @@ class _TreeViewState extends State<TreeView> {
     final forestChanged = !identical(oldWidget.forest, widget.forest);
     final collapsedChanged =
         !identical(oldWidget.collapsedIds, widget.collapsedIds);
-    if (!forestChanged && !collapsedChanged) {
-      return;
+    if (forestChanged || collapsedChanged) {
+      if (forestChanged) {
+        _collapsible = collapsibleNonRootIds(widget.forest);
+      }
+      _layout = _compute();
+      _applyViewportPolicy();
     }
-    if (forestChanged) {
-      _collapsible = collapsibleNonRootIds(widget.forest);
+    if (!identical(oldWidget.focusRequest, widget.focusRequest)) {
+      _scheduleFocusCheck();
     }
-    _layout = _compute();
-    _applyViewportPolicy();
   }
 
   @override
   void dispose() {
+    _moveController.dispose();
+    _pulseController.dispose();
     _controller?.dispose();
     super.dispose();
   }
@@ -90,6 +122,75 @@ class _TreeViewState extends State<TreeView> {
 
   bool get _allCollapsed =>
       _collapsible.isNotEmpty && widget.collapsedIds.containsAll(_collapsible);
+
+  // ---------- Cuộn tới người được tìm ----------
+
+  void _scheduleFocusCheck() {
+    final request = widget.focusRequest;
+    if (request == null || request.token == _handledToken) {
+      return;
+    }
+    // Chờ khung hình xong để chắc chắn layout mới và controller đã có.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _focusOn(widget.focusRequest);
+      }
+    });
+  }
+
+  void _focusOn(FocusRequest? request) {
+    final controller = _controller;
+    if (request == null ||
+        controller == null ||
+        request.token == _handledToken) {
+      return;
+    }
+    _handledToken = request.token;
+    widget.onFocusHandled();
+
+    final card = _layout.cardById[request.personId];
+    if (card == null) {
+      return;
+    }
+
+    final current = controller.value;
+    final scale = math.min(
+      math.max(current.getMaxScaleOnAxis(), _focusMinScale),
+      _maxScale,
+    );
+    final center = card.rect.center;
+    final target = Matrix4(
+      scale, 0, 0, 0,
+      0, scale, 0, 0,
+      0, 0, 1, 0,
+      _viewport.width / 2 - center.dx * scale,
+      _viewport.height / 2 - center.dy * scale,
+      0, 1,
+    );
+
+    _moveTween = Matrix4Tween(begin: current, end: target);
+    _moveController.forward(from: 0);
+
+    final id = request.personId;
+    setState(() => _highlightId = id);
+    _pulseController.forward(from: 0).whenComplete(() {
+      if (mounted && _highlightId == id) {
+        setState(() => _highlightId = null);
+      }
+    });
+  }
+
+  void _onMoveTick() {
+    final tween = _moveTween;
+    final controller = _controller;
+    if (tween == null || controller == null) {
+      return;
+    }
+    controller.value =
+        tween.transform(Curves.easeInOut.transform(_moveController.value));
+  }
+
+  // ---------- Khung nhìn ----------
 
   /// Giữ nguyên zoom; bù tịnh tiến để thẻ neo đứng yên trên màn hình.
   void _applyViewportPolicy() {
@@ -175,10 +276,12 @@ class _TreeViewState extends State<TreeView> {
   }
 
   void _goHome() {
+    _moveController.stop();
     _controller?.value = _homeMatrix(_viewport);
   }
 
   void _toggleAll() {
+    _moveController.stop();
     _goHomePending = true;
     _anchorId = null;
     _anchorRect = null;
@@ -206,13 +309,19 @@ class _TreeViewState extends State<TreeView> {
                 minScale: _minScale,
                 maxScale: _maxScale,
                 boundaryMargin: const EdgeInsets.all(double.infinity),
+                // Người dùng chạm vào cây thì dừng cuộn tự động.
+                onInteractionStart: (_) => _moveController.stop(),
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTapUp: (details) => _handleTap(details.localPosition),
                   child: RepaintBoundary(
                     child: CustomPaint(
                       size: _layout.size,
-                      painter: TreePainter(_layout),
+                      painter: TreePainter(
+                        _layout,
+                        highlightId: _highlightId,
+                        pulse: _pulseController,
+                      ),
                     ),
                   ),
                 ),

@@ -9,9 +9,15 @@ import 'package:familytree/features/tree/domain/tree_layout.dart';
 /// Vẽ toàn bộ cây (đường nối + thẻ) lên một canvas duy nhất.
 /// Thứ tự vẽ: đường hôn nhân -> đường con nuôi (nét đứt) -> đường con ruột (nét liền) -> thẻ.
 class TreePainter extends CustomPainter {
-  TreePainter(this.layout);
+  TreePainter(this.layout, {this.highlightId, Animation<double>? pulse})
+      : _pulse = pulse,
+        super(repaint: pulse);
 
   final TreeLayout layout;
+
+  /// Người đang nhấp nháy (sau khi tìm kiếm / "Xem trên cây").
+  final String? highlightId;
+  final Animation<double>? _pulse;
 
   static const Color _lineColor = Color(0xFF5D4037);
   static const Color _widowedColor = Color(0xFFB0B0B0);
@@ -22,6 +28,7 @@ class TreePainter extends CustomPainter {
   static const Color _footerAccent = Color(0xFF8B1E1E);
   static const Color _footerIdleBg = Color(0xFFF6E9E9);
   static const Color _footerDivider = Color(0xFFE3C9C9);
+  static const Color _highlightColor = Color(0xFFFFA000);
   static const double _dash = 6;
   static const double _gap = 4;
 
@@ -32,11 +39,45 @@ class TreePainter extends CustomPainter {
     for (final card in layout.cards) {
       _paintCard(canvas, card);
     }
+    _paintHighlight(canvas);
   }
 
   @override
   bool shouldRepaint(TreePainter oldDelegate) =>
-      !identical(oldDelegate.layout, layout);
+      !identical(oldDelegate.layout, layout) ||
+      oldDelegate.highlightId != highlightId;
+
+  /// Khung vàng nhấp nháy 3 nhịp quanh thẻ được tìm thấy, mờ dần ở cuối.
+  void _paintHighlight(Canvas canvas) {
+    final id = highlightId;
+    if (id == null) {
+      return;
+    }
+    final card = layout.cardById[id];
+    if (card == null) {
+      return;
+    }
+    final t = _pulse?.value ?? 0.0;
+    final wave = 0.5 + 0.5 * math.cos(t * 3 * 2 * math.pi);
+    final fade = t > 0.85 ? (1 - t) / 0.15 : 1.0;
+    final alpha = math.min(math.max((0.35 + 0.65 * wave) * fade, 0.0), 1.0);
+
+    final rrect = RRect.fromRectAndRadius(
+      card.rect.inflate(6),
+      const Radius.circular(14),
+    );
+    canvas.drawRRect(
+      rrect,
+      Paint()..color = _highlightColor.withValues(alpha: alpha * 0.25),
+    );
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 5
+        ..color = _highlightColor.withValues(alpha: alpha),
+    );
+  }
 
   // ---------- Đường nối ----------
 

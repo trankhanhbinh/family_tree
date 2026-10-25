@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:familytree/features/tree/data/clan_info_provider.dart';
 import 'package:familytree/features/tree/data/collapsed_ids_provider.dart';
 import 'package:familytree/features/tree/data/family_forest_provider.dart';
+import 'package:familytree/features/tree/data/focus_request_provider.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/ui/tree_view.dart';
 
@@ -15,11 +16,23 @@ class TreeScreen extends ConsumerWidget {
     final forestAsync = ref.watch(familyForestProvider);
     final clanName = ref.watch(clanNameProvider).value ?? 'Gia phả';
     final collapsedIds = ref.watch(collapsedIdsProvider);
+    final focusRequest = ref.watch(focusRequestProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(clanName),
         actions: [
+          TextButton.icon(
+            onPressed: () => context.push('/search'),
+            icon: const Icon(Icons.search, size: 26),
+            label: const Text(
+              'Tìm',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
           IconButton(
             tooltip: 'Làm mới',
             icon: const Icon(Icons.refresh),
@@ -44,10 +57,12 @@ class TreeScreen extends ConsumerWidget {
           return TreeView(
             forest: forest,
             collapsedIds: collapsedIds,
+            focusRequest: focusRequest,
             onPersonTap: (personId) => context.push('/person/$personId'),
             onToggleCollapse: notifier.toggle,
             onCollapseAll: notifier.collapseAll,
             onExpandAll: notifier.expandAll,
+            onFocusHandled: ref.read(focusRequestProvider.notifier).clear,
           );
         },
       ),

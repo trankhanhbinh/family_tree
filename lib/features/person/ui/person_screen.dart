@@ -8,6 +8,8 @@ import 'package:familytree/features/person/domain/person_relations.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/domain/marriage.dart';
 import 'package:familytree/features/tree/domain/parent_child.dart';
+import 'package:familytree/features/tree/data/family_forest_provider.dart';
+import 'package:familytree/features/tree/data/focus_request_provider.dart';
 
 /// Màn hình chi tiết người. Giai đoạn 4 sẽ thêm danh sách ảnh và nút "Đề xuất sửa".
 class PersonScreen extends ConsumerWidget {
@@ -49,6 +51,24 @@ class PersonScreen extends ConsumerWidget {
 
     final sections = <Widget>[
       _Header(person: person),
+      const SizedBox(height: 16),
+      SizedBox(
+        height: 56,
+        child: FilledButton.icon(
+          onPressed: () {
+            final forest = ref.read(familyForestProvider).value;
+            if (forest != null) {
+              ref.read(focusRequestProvider.notifier).focusOn(person.id, forest);
+            }
+            context.go('/home');
+          },
+          icon: const Icon(Icons.account_tree_outlined, size: 28),
+          label: const Text(
+            'Xem trên cây',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+        ),
+      ),
       const SizedBox(height: 16),
       _SectionCard(
         title: 'Thông tin',
