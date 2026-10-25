@@ -29,6 +29,7 @@ class _Computer {
   final List<LayoutLink> links = [];
   final Map<String, double> _widths = {};
   final Map<String, double> _centerX = {};
+  final Map<String, int> _descendantCounts = {};
   int _maxRow = 0;
 
   TreeLayout run(FamilyForest forest) {
@@ -51,6 +52,23 @@ class _Computer {
         contentHeight + cfg.padding * 2,
       ),
     );
+  }
+
+  // ---- Đếm con cháu (toàn cây, không phụ thuộc thu gọn) --------------------
+
+  int _descendants(FamilyNode n) {
+    final cached = _descendantCounts[n.person.id];
+    if (cached != null) {
+      return cached;
+    }
+    var total = 0;
+    for (final u in n.unions) {
+      for (final c in u.children) {
+        total += 1 + _descendants(c);
+      }
+    }
+    _descendantCounts[n.person.id] = total;
+    return total;
   }
 
   // ---- Bước 1: độ rộng cụm -------------------------------------------------
@@ -103,7 +121,7 @@ class _Computer {
     final spouseUnions = _spouseUnions(n);
     final childUnions = _childUnions(n);
 
-    // Thẻ người chính.
+    // Thẻ người chính (có dải thu gọn nếu có con).
     cards.add(CardLayout(
       person: n.person,
       ownerId: n.person.id,
@@ -112,6 +130,15 @@ class _Computer {
       rect: Rect.fromLTWH(rowX, y, cfg.cardWidth, cfg.cardHeight),
       hasChildren: n.hasChildren,
       isCollapsed: n.hasChildren && collapsed.contains(n.person.id),
+      descendantCount: _descendants(n),
+      footerRect: n.hasChildren
+          ? Rect.fromLTWH(
+              rowX,
+              y + cfg.cardHeight - cfg.footerHeight,
+              cfg.cardWidth,
+              cfg.footerHeight,
+            )
+          : null,
     ));
     final primaryCx = rowX + cfg.cardWidth / 2;
     _centerX[n.person.id] = primaryCx;

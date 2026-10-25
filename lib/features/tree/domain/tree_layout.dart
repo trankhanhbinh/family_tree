@@ -8,7 +8,8 @@ import 'package:familytree/features/tree/domain/parent_child.dart';
 class TreeLayoutConfig {
   const TreeLayoutConfig({
     this.cardWidth = 160,
-    this.cardHeight = 104,
+    this.cardHeight = 120,
+    this.footerHeight = 40,
     this.spouseGap = 16,
     this.siblingGap = 28,
     this.levelGap = 72,
@@ -21,6 +22,9 @@ class TreeLayoutConfig {
 
   final double cardWidth;
   final double cardHeight;
+
+  /// Chiều cao dải "Ẩn con cháu" / "Xem thêm N người" ở đáy thẻ người chính có con.
+  final double footerHeight;
 
   /// Khoảng cách ngang giữa hai thẻ vợ/chồng.
   final double spouseGap;
@@ -53,6 +57,8 @@ class CardLayout {
     required this.rect,
     this.hasChildren = false,
     this.isCollapsed = false,
+    this.descendantCount = 0,
+    this.footerRect,
   });
 
   final Person person;
@@ -68,6 +74,13 @@ class CardLayout {
   /// Chỉ có ý nghĩa với thẻ người chính: có con / đang thu gọn.
   final bool hasChildren;
   final bool isCollapsed;
+
+  /// Số con cháu huyết thống/nuôi (đệ quy, không tính vợ/chồng).
+  /// Tính trên toàn cây, không phụ thuộc đang thu gọn hay không.
+  final int descendantCount;
+
+  /// Vùng dải thu gọn (nằm trong [rect]); null nếu thẻ không có dải.
+  final Rect? footerRect;
 
   String get personId => person.id;
 }

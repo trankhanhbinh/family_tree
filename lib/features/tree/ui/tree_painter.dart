@@ -19,6 +19,9 @@ class TreePainter extends CustomPainter {
   static const Color _maleColor = Color(0xFF1E6BB8);
   static const Color _femaleColor = Color(0xFFC2185B);
   static const Color _otherColor = Color(0xFF757575);
+  static const Color _footerAccent = Color(0xFF8B1E1E);
+  static const Color _footerIdleBg = Color(0xFFF6E9E9);
+  static const Color _footerDivider = Color(0xFFE3C9C9);
   static const double _dash = 6;
   static const double _gap = 4;
 
@@ -203,6 +206,9 @@ class TreePainter extends CustomPainter {
       canvas.restore();
     }
 
+    // Dải thu gọn ở đáy (vẽ trước viền để viền nằm đè lên).
+    _paintFooter(canvas, card, rrect);
+
     // Viền theo giới tính
     canvas.drawRRect(
       rrect,
@@ -212,10 +218,14 @@ class TreePainter extends CustomPainter {
         ..color = accent,
     );
 
+    // Nội dung căn giữa trong phần trên (nếu có dải) hoặc cả thẻ (thẻ lá).
+    final contentBottom = card.footerRect?.top ?? rect.bottom;
+    final contentCy = (rect.top + contentBottom) / 2;
+
     // Avatar tròn (chữ cái đầu của tên)
     const pad = 10.0;
     const avatarRadius = 21.0;
-    final avatarCenter = Offset(rect.left + pad + avatarRadius, rect.center.dy);
+    final avatarCenter = Offset(rect.left + pad + avatarRadius, contentCy);
     canvas.drawCircle(
       avatarCenter,
       avatarRadius,
@@ -262,7 +272,7 @@ class TreePainter extends CustomPainter {
 
     const gapBetween = 4.0;
     final totalHeight = name.height + gapBetween + years.height;
-    var y = rect.center.dy - totalHeight / 2;
+    var y = contentCy - totalHeight / 2;
 
     name.paint(canvas, Offset(textLeft, y));
     y += name.height + gapBetween;
@@ -270,5 +280,91 @@ class TreePainter extends CustomPainter {
 
     name.dispose();
     years.dispose();
+  }
+
+  // ---------- Dải thu gọn / mở rộng ----------
+
+  void _paintFooter(Canvas canvas, CardLayout card, RRect cardRRect) {
+    final footer = card.footerRect;
+    if (footer == null) {
+      return;
+    }
+    final collapsed = card.isCollapsed;
+    final fg = collapsed ? Colors.white : _footerAccent;
+
+    canvas.save();
+    canvas.clipRRect(cardRRect);
+
+    // Nền dải: đang thu gọn = nền đặc nổi bật, đang mở = nền nhạt.
+    canvas.drawRect(
+      footer,
+      Paint()..color = collapsed ? _footerAccent : _footerIdleBg,
+    );
+    if (!collapsed) {
+      canvas.drawLine(
+        footer.topLeft,
+        footer.topRight,
+        Paint()
+          ..color = _footerDivider
+          ..strokeWidth = 1,
+      );
+    }
+
+    // Chữ + chevron căn giữa thành một nhóm.
+    const chevronW = 18.0;
+    const chevronH = 10.0;
+    const innerGap = 6.0;
+    const sidePad = 8.0;
+    final avail = footer.width - sidePad * 2 - chevronW - innerGap;
+    final style = TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      color: fg,
+    );
+
+    var label =
+        collapsed ? 'Xem thêm ${card.descendantCount} người' : 'Ẩn con cháu';
+    var tp = _text(label, style, double.infinity);
+    if (tp.width > avail) {
+      // Số quá lớn: rút gọn nhãn để không bị cắt "…".
+      tp.dispose();
+      label = 'Xem thêm ${card.descendantCount}';
+      tp = _text(label, style, double.infinity);
+    }
+
+    final groupW = tp.width + innerGap + chevronW;
+    final startX = footer.center.dx - groupW / 2;
+    final cy = footer.center.dy;
+
+    tp.paint(canvas, Offset(startX, cy - tp.height / 2));
+
+    final cx = startX + tp.width + innerGap + chevronW / 2;
+    final halfW = chevronW / 2;
+    final halfH = chevronH / 2;
+    // Mở: chevron lên (^). Thu gọn: chevron xuống (v).
+    final chevron = Path();
+    if (collapsed) {
+      chevron
+        ..moveTo(cx - halfW, cy - halfH)
+        ..lineTo(cx, cy + halfH)
+        ..lineTo(cx + halfW, cy - halfH);
+    } else {
+      chevron
+        ..moveTo(cx - halfW, cy + halfH)
+        ..lineTo(cx, cy - halfH)
+        ..lineTo(cx + halfW, cy + halfH);
+    }
+    canvas.drawPath(
+      chevron,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..color = fg,
+    );
+
+    tp.dispose();
+    canvas.restore();
   }
 }

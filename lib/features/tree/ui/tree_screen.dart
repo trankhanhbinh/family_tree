@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:familytree/features/tree/data/clan_info_provider.dart';
+import 'package:familytree/features/tree/data/collapsed_ids_provider.dart';
 import 'package:familytree/features/tree/data/family_forest_provider.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/ui/tree_view.dart';
@@ -13,6 +14,7 @@ class TreeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final forestAsync = ref.watch(familyForestProvider);
     final clanName = ref.watch(clanNameProvider).value ?? 'Gia phả';
+    final collapsedIds = ref.watch(collapsedIdsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -22,6 +24,7 @@ class TreeScreen extends ConsumerWidget {
             tooltip: 'Làm mới',
             icon: const Icon(Icons.refresh),
             onPressed: () {
+              // Không đụng collapsedIdsProvider: trạng thái thu gọn được giữ nguyên.
               ref.invalidate(clanNameProvider);
               ref.invalidate(treeDataProvider);
             },
@@ -37,9 +40,14 @@ class TreeScreen extends ConsumerWidget {
           if (forest.roots.isEmpty) {
             return const Center(child: Text('Chưa có dữ liệu gia phả.'));
           }
+          final notifier = ref.read(collapsedIdsProvider.notifier);
           return TreeView(
             forest: forest,
+            collapsedIds: collapsedIds,
             onPersonTap: (personId) => context.push('/person/$personId'),
+            onToggleCollapse: notifier.toggle,
+            onCollapseAll: notifier.collapseAll,
+            onExpandAll: notifier.expandAll,
           );
         },
       ),
