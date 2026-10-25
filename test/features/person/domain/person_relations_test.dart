@@ -109,8 +109,8 @@ void main() {
     final children = relationsOf('a').children;
     expect(children.map((e) => e.person.id).toList(), [
       'k1',
-      's',
       'k2',
+      's',
       'k3',
       'k4',
     ]);
