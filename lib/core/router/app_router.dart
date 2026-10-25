@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:familytree/features/tree/ui/home_placeholder_screen.dart';
+import 'package:familytree/features/person/ui/person_screen.dart';
 import 'package:familytree/features/tree/ui/splash_screen.dart';
+import 'package:familytree/features/tree/ui/tree_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -13,7 +14,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const HomePlaceholderScreen(),
+        builder: (context, state) => const TreeScreen(),
+      ),
+      GoRoute(
+        path: '/person/:id',
+        builder: (context, state) =>
+            PersonScreen(personId: state.pathParameters['id']!),
       ),
     ],
   );
