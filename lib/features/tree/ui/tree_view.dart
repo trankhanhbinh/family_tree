@@ -10,7 +10,7 @@ import 'package:familytree/features/tree/ui/tree_painter.dart';
 
 /// Canvas cây gia phả: zoom/pan, bấm thẻ, thu gọn/mở rộng nhánh,
 /// cuộn tới người được tìm, nút "về gốc".
-/// Khối H3 sẽ chỉ vẽ phần nhìn thấy.
+/// H3: CustomPaint tự áp ma trận và chỉ vẽ phần nhìn thấy.
 class TreeView extends StatefulWidget {
   const TreeView({
     super.key,
@@ -56,6 +56,8 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
   static const double _focusMinScale = 0.8;
 
   late TreeLayout _layout;
+  late TreeScene _scene; // H3
+  final CardTextCache _cache = CardTextCache(); // H3
   late Set<String> _collapsible;
   TransformationController? _controller;
   Size _viewport = Size.zero;
@@ -84,7 +86,7 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _collapsible = collapsibleNonRootIds(widget.forest);
-    _layout = _compute();
+    _rebuildLayout();
     _moveController.addListener(_onMoveTick);
     _scheduleFocusCheck();
   }
@@ -98,8 +100,9 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
     if (forestChanged || collapsedChanged) {
       if (forestChanged) {
         _collapsible = collapsibleNonRootIds(widget.forest);
+        _cache.clear(); // dữ liệu người đổi thì chữ đã dựng không còn đúng
       }
-      _layout = _compute();
+      _rebuildLayout();
       _applyViewportPolicy();
     }
     if (!identical(oldWidget.focusRequest, widget.focusRequest)) {
@@ -112,13 +115,17 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
     _moveController.dispose();
     _pulseController.dispose();
     _controller?.dispose();
+    _cache.clear();
     super.dispose();
   }
 
-  TreeLayout _compute() => TreeLayoutEngine.compute(
-        widget.forest,
-        collapsedIds: widget.collapsedIds,
-      );
+  void _rebuildLayout() {
+    _layout = TreeLayoutEngine.compute(
+      widget.forest,
+      collapsedIds: widget.collapsedIds,
+    );
+    _scene = TreeScene(_layout); // H3: dựng đường nối + nét đứt một lần
+  }
 
   bool get _allCollapsed =>
       _collapsible.isNotEmpty && widget.collapsedIds.containsAll(_collapsible);
@@ -257,7 +264,7 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
   }
 
   void _handleTap(Offset position) {
-    // position đã ở hệ toạ độ canvas (GestureDetector nằm trong con của InteractiveViewer).
+    // position ở hệ toạ độ canvas (GestureDetector nằm trong con của InteractiveViewer).
     for (final card in _layout.cards.reversed) {
       if (!card.rect.contains(position)) {
         continue;
@@ -297,14 +304,30 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
     return LayoutBuilder(
       builder: (context, constraints) {
         _viewport = constraints.biggest;
-        _controller ??= TransformationController(_homeMatrix(_viewport));
+        final controller =
+            _controller ??= TransformationController(_homeMatrix(_viewport));
         final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
 
         return Stack(
           children: [
+            // H3: lớp vẽ nằm DƯỚI, phủ đúng khung màn hình, tự áp ma trận.
+            Positioned.fill(
+              child: RepaintBoundary(
+                child: CustomPaint(
+                  painter: TreePainter(
+                    scene: _scene,
+                    controller: controller,
+                    cache: _cache,
+                    highlightId: _highlightId,
+                    pulse: _pulseController,
+                  ),
+                ),
+              ),
+            ),
+            // H3: lớp cử chỉ nằm TRÊN, không vẽ gì (khung trong suốt đúng cỡ cây).
             Positioned.fill(
               child: InteractiveViewer(
-                transformationController: _controller,
+                transformationController: controller,
                 constrained: false,
                 minScale: _minScale,
                 maxScale: _maxScale,
@@ -314,15 +337,9 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTapUp: (details) => _handleTap(details.localPosition),
-                  child: RepaintBoundary(
-                    child: CustomPaint(
-                      size: _layout.size,
-                      painter: TreePainter(
-                        _layout,
-                        highlightId: _highlightId,
-                        pulse: _pulseController,
-                      ),
-                    ),
+                  child: SizedBox(
+                    width: _layout.size.width,
+                    height: _layout.size.height,
                   ),
                 ),
               ),

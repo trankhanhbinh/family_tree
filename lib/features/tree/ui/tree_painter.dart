@@ -6,46 +6,228 @@ import 'package:familytree/features/tree/domain/marriage.dart';
 import 'package:familytree/features/tree/domain/parent_child.dart';
 import 'package:familytree/features/tree/domain/tree_layout.dart';
 
-/// Vẽ toàn bộ cây (đường nối + thẻ) lên một canvas duy nhất.
-/// Thứ tự vẽ: đường hôn nhân -> đường con nuôi (nét đứt) -> đường con ruột (nét liền) -> thẻ.
-class TreePainter extends CustomPainter {
-  TreePainter(this.layout, {this.highlightId, Animation<double>? pulse})
-      : _pulse = pulse,
-        super(repaint: pulse);
+const Color _lineColor = Color(0xFF5D4037);
+const Color _widowedColor = Color(0xFFB0B0B0);
+const Color _noMarriageColor = Color(0xFF9E9E9E);
+const Color _maleColor = Color(0xFF1E6BB8);
+const Color _femaleColor = Color(0xFFC2185B);
+const Color _otherColor = Color(0xFF757575);
+const Color _footerAccent = Color(0xFF8B1E1E);
+const Color _footerIdleBg = Color(0xFFF6E9E9);
+const Color _footerDivider = Color(0xFFE3C9C9);
+const Color _highlightColor = Color(0xFFFFA000);
+
+Paint _stroke(Color color, double width) => Paint()
+  ..style = PaintingStyle.stroke
+  ..strokeWidth = width
+  ..strokeJoin = StrokeJoin.round
+  ..color = color;
+
+// Dùng chung cho mọi đường cùng kiểu (không tạo Paint mới mỗi lần vẽ).
+final Paint _childPaint = _stroke(_lineColor, 2);
+final Paint _marriedPaint = _stroke(_lineColor, 2);
+final Paint _widowedPaint = _stroke(_widowedColor, 2);
+final Paint _noMarriagePaint = _stroke(_noMarriageColor, 1.2);
+
+/// Một đường nối đã dựng sẵn thành Path, kèm khung bao để loại nhanh khi nằm ngoài màn hình.
+class LinkShape {
+  LinkShape(this.path, this.paint) : bounds = path.getBounds().inflate(3);
+
+  final Path path;
+  final Paint paint;
+  final Rect bounds;
+}
+
+/// Dữ liệu vẽ dựng MỘT LẦN cho mỗi layout (đường nối, nét đứt).
+class TreeScene {
+  TreeScene(this.layout) {
+    for (final link in layout.links) {
+      if (link.kind == LinkKind.marriage) {
+        marriageLinks.add(_buildMarriage(link));
+      } else if (_isNotBiological(link.relation)) {
+        childDashed.add(
+          LinkShape(_dashed(link.points, 6, 4), _childPaint),
+        );
+      } else {
+        childSolid.add(LinkShape(_polyline(link.points), _childPaint));
+      }
+    }
+  }
 
   final TreeLayout layout;
+  final List<LinkShape> marriageLinks = [];
+  final List<LinkShape> childDashed = [];
+  final List<LinkShape> childSolid = [];
+
+  /// Các thẻ giao với vùng [area] (toạ độ canvas).
+  List<CardLayout> cardsIn(Rect area) =>
+      layout.cards.where((c) => c.rect.overlaps(area)).toList();
+
+  LinkShape _buildMarriage(LayoutLink link) {
+    final marriage = link.marriage;
+    if (marriage == null) {
+      // Cặp không có dòng hôn nhân: nét chấm mảnh.
+      return LinkShape(_dashed(link.points, 2, 4), _noMarriagePaint);
+    }
+    final MarriageStatus status = marriage.status;
+    if (status == MarriageStatus.divorced) {
+      return LinkShape(_dashed(link.points, 6, 4), _marriedPaint);
+    }
+    if (status == MarriageStatus.widowed) {
+      return LinkShape(_polyline(link.points), _widowedPaint);
+    }
+    return LinkShape(_polyline(link.points), _marriedPaint);
+  }
+
+  static bool _isNotBiological(RelationType? relation) =>
+      relation != null && relation != RelationType.biological;
+
+  static Path _polyline(List<Offset> points) {
+    final path = Path();
+    if (points.isEmpty) {
+      return path;
+    }
+    path.moveTo(points.first.dx, points.first.dy);
+    for (var i = 1; i < points.length; i++) {
+      path.lineTo(points[i].dx, points[i].dy);
+    }
+    return path;
+  }
+
+  static Path _dashed(List<Offset> points, double dash, double gap) {
+    final source = _polyline(points);
+    final out = Path();
+    for (final metric in source.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final end = math.min(distance + dash, metric.length);
+        out.addPath(metric.extractPath(distance, end), Offset.zero);
+        distance += dash + gap;
+      }
+    }
+    return out;
+  }
+}
+
+/// Chữ trên một thẻ (dựng một lần).
+class CardText {
+  CardText({required this.initial, required this.name, required this.years});
+
+  final TextPainter initial;
+  final TextPainter name;
+  final TextPainter years;
+
+  void dispose() {
+    initial.dispose();
+    name.dispose();
+    years.dispose();
+  }
+}
+
+/// Bộ nhớ đệm TextPainter. Chủ sở hữu (TreeView) gọi [clear] khi dữ liệu đổi
+/// và [clear] khi huỷ.
+class CardTextCache {
+  final Map<String, CardText> cards = {};
+  final Map<String, TextPainter> footers = {};
+
+  void clear() {
+    for (final c in cards.values) {
+      c.dispose();
+    }
+    for (final f in footers.values) {
+      f.dispose();
+    }
+    cards.clear();
+    footers.clear();
+  }
+}
+
+/// Vẽ cây theo khung nhìn: chỉ vẽ phần nhìn thấy, tự áp ma trận zoom/pan.
+/// Thứ tự: đường hôn nhân -> đường con nét đứt -> đường con nét liền -> thẻ -> khung nổi bật.
+class TreePainter extends CustomPainter {
+  TreePainter({
+    required this.scene,
+    required this.controller,
+    required this.cache,
+    this.highlightId,
+    Animation<double>? pulse,
+  })  : _pulse = pulse,
+        super(
+          repaint: Listenable.merge([controller, ?pulse]),
+        );
+
+  final TreeScene scene;
+  final TransformationController controller;
+  final CardTextCache cache;
 
   /// Người đang nhấp nháy (sau khi tìm kiếm / "Xem trên cây").
   final String? highlightId;
   final Animation<double>? _pulse;
 
-  static const Color _lineColor = Color(0xFF5D4037);
-  static const Color _widowedColor = Color(0xFFB0B0B0);
-  static const Color _noMarriageColor = Color(0xFF9E9E9E);
-  static const Color _maleColor = Color(0xFF1E6BB8);
-  static const Color _femaleColor = Color(0xFFC2185B);
-  static const Color _otherColor = Color(0xFF757575);
-  static const Color _footerAccent = Color(0xFF8B1E1E);
-  static const Color _footerIdleBg = Color(0xFFF6E9E9);
-  static const Color _footerDivider = Color(0xFFE3C9C9);
-  static const Color _highlightColor = Color(0xFFFFA000);
-  static const double _dash = 6;
-  static const double _gap = 4;
+  /// Zoom nhỏ hơn mức này thì vẽ thẻ rút gọn (không chữ).
+  static const double _liteScale = 0.3;
+
+  static const double _pad = 10;
+  static const double _avatarRadius = 21;
+
+  static final Paint _whitePaint = Paint()..color = Colors.white;
+  static final Paint _deceasedPaint = Paint()..color = const Color(0xFFECECEC);
+  static final Paint _ribbonPaint = Paint()..color = Colors.black87;
+
+  TreeLayout get layout => scene.layout;
 
   @override
   void paint(Canvas canvas, Size size) {
-    _paintMarriageLinks(canvas);
-    _paintChildLinks(canvas);
-    for (final card in layout.cards) {
-      _paintCard(canvas, card);
+    final matrix = controller.value;
+    final scale = matrix.getMaxScaleOnAxis();
+    // Vùng canvas đang nhìn thấy (nới 60px để thẻ sát mép không bị cắt).
+    final visible =
+        MatrixUtils.inverseTransformRect(matrix, Offset.zero & size)
+            .inflate(60);
+
+    canvas.save();
+    canvas.transform(matrix.storage);
+
+    for (final s in scene.marriageLinks) {
+      if (s.bounds.overlaps(visible)) {
+        canvas.drawPath(s.path, s.paint);
+      }
     }
+    // Nét đứt trước, nét liền sau (chung đoạn thân dọc).
+    for (final s in scene.childDashed) {
+      if (s.bounds.overlaps(visible)) {
+        canvas.drawPath(s.path, s.paint);
+      }
+    }
+    for (final s in scene.childSolid) {
+      if (s.bounds.overlaps(visible)) {
+        canvas.drawPath(s.path, s.paint);
+      }
+    }
+
+    final lite = scale < _liteScale;
+    for (final card in layout.cards) {
+      if (!card.rect.overlaps(visible)) {
+        continue;
+      }
+      if (lite) {
+        _paintCardLite(canvas, card);
+      } else {
+        _paintCard(canvas, card);
+      }
+    }
+
     _paintHighlight(canvas);
+    canvas.restore();
   }
 
   @override
   bool shouldRepaint(TreePainter oldDelegate) =>
-      !identical(oldDelegate.layout, layout) ||
-      oldDelegate.highlightId != highlightId;
+      !identical(oldDelegate.scene, scene) ||
+      oldDelegate.highlightId != highlightId ||
+      !identical(oldDelegate.cache, cache);
+
+  // ---------- Khung nổi bật ----------
 
   /// Khung vàng nhấp nháy 3 nhịp quanh thẻ được tìm thấy, mờ dần ở cuối.
   void _paintHighlight(Canvas canvas) {
@@ -79,97 +261,7 @@ class TreePainter extends CustomPainter {
     );
   }
 
-  // ---------- Đường nối ----------
-
-  void _paintMarriageLinks(Canvas canvas) {
-    for (final link in layout.links) {
-      if (link.kind != LinkKind.marriage) {
-        continue;
-      }
-      final paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..strokeJoin = StrokeJoin.round
-        ..color = _lineColor;
-
-      final marriage = link.marriage;
-      if (marriage == null) {
-        // Cặp không có dòng hôn nhân: nét chấm mảnh.
-        paint
-          ..strokeWidth = 1.2
-          ..color = _noMarriageColor;
-        _strokePolyline(canvas, link.points, paint, dash: 2, gap: 4);
-        continue;
-      }
-
-      final MarriageStatus status = marriage.status;
-      if (status == MarriageStatus.divorced) {
-        _strokePolyline(canvas, link.points, paint, dash: _dash, gap: _gap);
-      } else if (status == MarriageStatus.widowed) {
-        paint.color = _widowedColor;
-        _strokePolyline(canvas, link.points, paint);
-      } else {
-        _strokePolyline(canvas, link.points, paint);
-      }
-    }
-  }
-
-  void _paintChildLinks(Canvas canvas) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeJoin = StrokeJoin.round
-      ..color = _lineColor;
-
-    final childLinks =
-        layout.links.where((l) => l.kind == LinkKind.child).toList();
-
-    // Các đường con cùng đơn vị dùng chung đoạn thân dọc:
-    // vẽ nét đứt (con nuôi/con riêng) trước, nét liền (con ruột) sau.
-    for (final link in childLinks) {
-      if (_isNotBiological(link.relation)) {
-        _strokePolyline(canvas, link.points, paint, dash: _dash, gap: _gap);
-      }
-    }
-    for (final link in childLinks) {
-      if (!_isNotBiological(link.relation)) {
-        _strokePolyline(canvas, link.points, paint);
-      }
-    }
-  }
-
-  bool _isNotBiological(RelationType? relation) =>
-      relation != null && relation != RelationType.biological;
-
-  void _strokePolyline(
-    Canvas canvas,
-    List<Offset> points,
-    Paint paint, {
-    double dash = 0,
-    double gap = 0,
-  }) {
-    if (points.length < 2) {
-      return;
-    }
-    final path = Path()..moveTo(points.first.dx, points.first.dy);
-    for (var i = 1; i < points.length; i++) {
-      path.lineTo(points[i].dx, points[i].dy);
-    }
-    if (dash <= 0) {
-      canvas.drawPath(path, paint);
-      return;
-    }
-    for (final metric in path.computeMetrics()) {
-      var distance = 0.0;
-      while (distance < metric.length) {
-        final end = math.min(distance + dash, metric.length);
-        canvas.drawPath(metric.extractPath(distance, end), paint);
-        distance += dash + gap;
-      }
-    }
-  }
-
-  // ---------- Thẻ người ----------
+  // ---------- Thẻ ----------
 
   Color _accentOf(Gender? gender) {
     if (gender == Gender.male) {
@@ -220,6 +312,76 @@ class TreePainter extends CustomPainter {
     )..layout(maxWidth: maxWidth);
   }
 
+  CardText _cardText(CardLayout card) {
+    final cached = cache.cards[card.personId];
+    if (cached != null) {
+      return cached;
+    }
+    final person = card.person;
+    final accent = _accentOf(person.gender);
+    final textLeft = _pad + _avatarRadius * 2 + 8;
+    final textWidth = card.rect.width - 8 - textLeft;
+
+    final text = CardText(
+      initial: _text(
+        _initialOf(person.fullName),
+        TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: accent),
+        _avatarRadius * 2,
+      ),
+      name: _text(
+        person.fullName,
+        const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          height: 1.15,
+          color: Color(0xFF212121),
+        ),
+        textWidth,
+        maxLines: 2,
+      ),
+      years: _text(
+        _yearsText(person),
+        const TextStyle(fontSize: 12, color: Color(0xFF616161)),
+        textWidth,
+      ),
+    );
+    cache.cards[card.personId] = text;
+    return text;
+  }
+
+  /// Thẻ rút gọn khi zoom xa: chỉ nền + viền + dải, không chữ.
+  void _paintCardLite(Canvas canvas, CardLayout card) {
+    final rect = card.rect;
+    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(10));
+    final accent = _accentOf(card.person.gender);
+
+    canvas.drawRRect(
+      rrect,
+      card.person.isAlive ? _whitePaint : _deceasedPaint,
+    );
+    canvas.drawRRect(
+      rrect,
+      Paint()..color = accent.withValues(alpha: 0.18),
+    );
+    final footer = card.footerRect;
+    if (footer != null) {
+      canvas.save();
+      canvas.clipRRect(rrect);
+      canvas.drawRect(
+        footer,
+        Paint()..color = card.isCollapsed ? _footerAccent : _footerIdleBg,
+      );
+      canvas.restore();
+    }
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4
+        ..color = accent,
+    );
+  }
+
   void _paintCard(Canvas canvas, CardLayout card) {
     final person = card.person;
     final rect = card.rect;
@@ -229,10 +391,7 @@ class TreePainter extends CustomPainter {
     final accent = _accentOf(person.gender);
 
     // Nền
-    canvas.drawRRect(
-      rrect,
-      Paint()..color = deceased ? const Color(0xFFECECEC) : Colors.white,
-    );
+    canvas.drawRRect(rrect, deceased ? _deceasedPaint : _whitePaint);
 
     // Dải băng đen góc trên phải (người đã mất)
     if (deceased) {
@@ -243,7 +402,7 @@ class TreePainter extends CustomPainter {
         ..lineTo(rect.right, rect.top)
         ..lineTo(rect.right, rect.top + 20)
         ..close();
-      canvas.drawPath(ribbon, Paint()..color = Colors.black87);
+      canvas.drawPath(ribbon, _ribbonPaint);
       canvas.restore();
     }
 
@@ -263,67 +422,67 @@ class TreePainter extends CustomPainter {
     final contentBottom = card.footerRect?.top ?? rect.bottom;
     final contentCy = (rect.top + contentBottom) / 2;
 
+    final text = _cardText(card);
+
     // Avatar tròn (chữ cái đầu của tên)
-    const pad = 10.0;
-    const avatarRadius = 21.0;
-    final avatarCenter = Offset(rect.left + pad + avatarRadius, contentCy);
+    final avatarCenter =
+        Offset(rect.left + _pad + _avatarRadius, contentCy);
     canvas.drawCircle(
       avatarCenter,
-      avatarRadius,
+      _avatarRadius,
       Paint()..color = accent.withValues(alpha: 0.15),
     );
-    final initial = _text(
-      _initialOf(person.fullName),
-      TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        color: accent,
-      ),
-      avatarRadius * 2,
-    );
-    initial.paint(
+    text.initial.paint(
       canvas,
       Offset(
-        avatarCenter.dx - initial.width / 2,
-        avatarCenter.dy - initial.height / 2,
+        avatarCenter.dx - text.initial.width / 2,
+        avatarCenter.dy - text.initial.height / 2,
       ),
     );
-    initial.dispose();
 
     // Khối chữ bên phải (họ tên + năm sinh - năm mất)
-    final textLeft = rect.left + pad + avatarRadius * 2 + 8;
-    final textWidth = rect.right - 8 - textLeft;
-
-    final name = _text(
-      person.fullName,
-      const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        height: 1.15,
-        color: Color(0xFF212121),
-      ),
-      textWidth,
-      maxLines: 2,
-    );
-    final years = _text(
-      _yearsText(person),
-      const TextStyle(fontSize: 12, color: Color(0xFF616161)),
-      textWidth,
-    );
-
+    final textLeft = rect.left + _pad + _avatarRadius * 2 + 8;
     const gapBetween = 4.0;
-    final totalHeight = name.height + gapBetween + years.height;
+    final totalHeight = text.name.height + gapBetween + text.years.height;
     var y = contentCy - totalHeight / 2;
 
-    name.paint(canvas, Offset(textLeft, y));
-    y += name.height + gapBetween;
-    years.paint(canvas, Offset(textLeft, y));
-
-    name.dispose();
-    years.dispose();
+    text.name.paint(canvas, Offset(textLeft, y));
+    y += text.name.height + gapBetween;
+    text.years.paint(canvas, Offset(textLeft, y));
   }
 
   // ---------- Dải thu gọn / mở rộng ----------
+
+  TextPainter _footerLabel(CardLayout card, Rect footer) {
+    final collapsed = card.isCollapsed;
+    final key = '$collapsed|${card.descendantCount}';
+    final cached = cache.footers[key];
+    if (cached != null) {
+      return cached;
+    }
+    const chevronW = 18.0;
+    const innerGap = 6.0;
+    const sidePad = 8.0;
+    final avail = footer.width - sidePad * 2 - chevronW - innerGap;
+    final style = TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      color: collapsed ? Colors.white : _footerAccent,
+    );
+
+    var tp = _text(
+      collapsed ? 'Xem thêm ${card.descendantCount} người' : 'Ẩn con cháu',
+      style,
+      double.infinity,
+    );
+    if (tp.width > avail) {
+      // Số quá lớn: rút gọn nhãn để không bị cắt "…".
+      tp.dispose();
+      tp = _text('Xem thêm ${card.descendantCount}', style, double.infinity);
+    }
+    cache.footers[key] = tp;
+    return tp;
+  }
 
   void _paintFooter(Canvas canvas, CardLayout card, RRect cardRRect) {
     final footer = card.footerRect;
@@ -351,28 +510,11 @@ class TreePainter extends CustomPainter {
       );
     }
 
-    // Chữ + chevron căn giữa thành một nhóm.
     const chevronW = 18.0;
     const chevronH = 10.0;
     const innerGap = 6.0;
-    const sidePad = 8.0;
-    final avail = footer.width - sidePad * 2 - chevronW - innerGap;
-    final style = TextStyle(
-      fontSize: 13,
-      fontWeight: FontWeight.w700,
-      color: fg,
-    );
 
-    var label =
-        collapsed ? 'Xem thêm ${card.descendantCount} người' : 'Ẩn con cháu';
-    var tp = _text(label, style, double.infinity);
-    if (tp.width > avail) {
-      // Số quá lớn: rút gọn nhãn để không bị cắt "…".
-      tp.dispose();
-      label = 'Xem thêm ${card.descendantCount}';
-      tp = _text(label, style, double.infinity);
-    }
-
+    final tp = _footerLabel(card, footer);
     final groupW = tp.width + innerGap + chevronW;
     final startX = footer.center.dx - groupW / 2;
     final cy = footer.center.dy;
@@ -405,7 +547,6 @@ class TreePainter extends CustomPainter {
         ..color = fg,
     );
 
-    tp.dispose();
     canvas.restore();
   }
 }
