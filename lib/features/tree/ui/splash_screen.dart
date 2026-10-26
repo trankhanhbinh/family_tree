@@ -1,16 +1,54 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:familytree/features/auth/data/auth_service.dart';
+import 'package:familytree/features/auth/ui/dev_auth_check_screen.dart';
 import 'package:familytree/features/tree/data/clan_info_provider.dart';
 
-class SplashScreen extends ConsumerWidget {
+// Chỉ bật khi chạy: --dart-define=DEV_AUTH_CHECK=true (tạm cho 4A).
+const bool _kDevAuthCheck = bool.fromEnvironment('DEV_AUTH_CHECK');
+
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Tải xong thì chuyển sang màn hình chính
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Đăng nhập ẩn danh âm thầm. Thất bại thì vẫn xem được cây
+    // (xem không cần đăng nhập); chỉ khi bấm "Đề xuất" mới thử lại và báo lỗi.
+    unawaited(ref.read(authServiceProvider).trySignInQuietly());
+  }
+
+  void _goNext() {
+    if (!mounted) {
+      return;
+    }
+    if (_kDevAuthCheck) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const DevAuthCheckScreen()),
+      );
+    } else {
+      context.go('/home');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.listen<AsyncValue<String>>(clanNameProvider, (previous, next) {
-      if (next.hasValue) context.go('/home');
+      if (next.hasError && !next.isLoading) {
+        debugPrint('Lỗi tải clan_info: ${next.error}');
+      }
+      if (next.hasValue) {
+        _goNext();
+      }
     });
 
     final state = ref.watch(clanNameProvider);
@@ -20,12 +58,9 @@ class SplashScreen extends ConsumerWidget {
         child: state.when(
           data: (_) => const CircularProgressIndicator(),
           loading: () => const CircularProgressIndicator(),
-          error: (error, stack) {
-            debugPrint('Lỗi tải clan_info: $error');
-            return _ErrorView(
-              onRetry: () => ref.invalidate(clanNameProvider),
-            );
-          },
+          error: (error, stack) => _ErrorView(
+            onRetry: () => ref.invalidate(clanNameProvider),
+          ),
         ),
       ),
     );
@@ -46,18 +81,23 @@ class _ErrorView extends StatelessWidget {
         children: [
           Icon(
             Icons.cloud_off,
-            size: 48,
+            size: 56,
             color: Theme.of(context).colorScheme.error,
           ),
           const SizedBox(height: 16),
           const Text(
             'Không tải được dữ liệu.\nVui lòng kiểm tra kết nối mạng.',
             textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, height: 1.4),
           ),
           const SizedBox(height: 24),
-          FilledButton(
-            onPressed: onRetry,
-            child: const Text('Thử lại'),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: FilledButton(
+              onPressed: onRetry,
+              child: const Text('Thử lại', style: TextStyle(fontSize: 18)),
+            ),
           ),
         ],
       ),
