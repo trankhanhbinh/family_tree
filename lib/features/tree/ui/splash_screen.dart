@@ -5,11 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:familytree/features/auth/data/auth_service.dart';
-import 'package:familytree/features/auth/ui/dev_auth_check_screen.dart';
 import 'package:familytree/features/tree/data/clan_info_provider.dart';
-
-// Chỉ bật khi chạy: --dart-define=DEV_AUTH_CHECK=true (tạm cho 4A).
-const bool _kDevAuthCheck = bool.fromEnvironment('DEV_AUTH_CHECK');
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -31,13 +27,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     if (!mounted) {
       return;
     }
-    if (_kDevAuthCheck) {
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const DevAuthCheckScreen()),
-      );
-    } else {
-      context.go('/home');
-    }
+    context.go('/home');
   }
 
   @override
