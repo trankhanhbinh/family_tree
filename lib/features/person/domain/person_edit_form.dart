@@ -7,7 +7,7 @@ const int kRequestNoteMaxLength = 500;
 const int kMinYear = 1000;
 
 /// Nhóm ô có thể báo lỗi (theo thứ tự xuất hiện trên màn hình).
-enum PersonField { fullName, birth, death, memorial }
+enum PersonField { fullName, gender, birth, death, memorial }
 
 /// Giá trị người dùng đang nhập (chuỗi thô, chưa chuẩn hóa).
 class PersonFormValues {
@@ -173,6 +173,7 @@ ParsedDate parseDateParts({
 Map<PersonField, String> validatePersonForm(
   PersonFormValues values, {
   required int nowYear,
+  bool genderChosen = true,
 }) {
   final errors = <PersonField, String>{};
 
@@ -186,6 +187,10 @@ Map<PersonField, String> validatePersonForm(
         'Họ và tên quá dài (tối đa $kPersonNameMaxLength ký tự).';
   }
 
+  if (!genderChosen) {
+    errors[PersonField.gender] = 'Vui lòng chọn giới tính.';
+  }
+  
   final birth = parseDateParts(
     day: values.birthDay,
     month: values.birthMonth,

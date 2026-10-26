@@ -88,6 +88,36 @@ class PersonScreen extends ConsumerWidget {
       ),
       if (!person.isAlive) _memorialSection(person),
       ..._familySection(context, relations),
+      _SectionCard(
+        title: 'Thêm người thân',
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/person/${person.id}/add-child'),
+              icon: const Icon(Icons.child_care, size: 28),
+              label: const Text(
+                'Thêm con',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/person/${person.id}/add-spouse'),
+              icon: const Icon(Icons.favorite_border, size: 28),
+              label: const Text(
+                'Thêm vợ/chồng',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
       ..._notesSection(person),
     ];
 

@@ -1,39 +1,41 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:familytree/features/proposals/domain/request_draft.dart';
 import 'package:familytree/features/tree/data/clan_info_provider.dart';
-
-// Giá trị cột entity_type / action của bảng change_requests.
-const String kEntityPerson = 'person';
-const String kActionCreate = 'create';
-const String kActionUpdate = 'update';
-const String kActionDelete = 'delete';
 
 class ChangeRequestRepository {
   ChangeRequestRepository(this._client);
 
   final SupabaseClient _client;
 
-  /// Gửi một đề xuất. status do trigger của database ép thành 'pending'.
+  /// Gửi một hoặc nhiều đề xuất bằng MỘT lệnh insert: hoặc tất cả thành công,
+  /// hoặc tất cả bị hoàn tác (không có "người mồ côi").
+  /// status do trigger của database ép thành 'pending'.
+  /// Ghi chú gửi admin chỉ gắn vào dòng đầu tiên.
   /// Ném lỗi nếu thất bại (nơi gọi hiện bằng showErrorDialog).
-  Future<void> submit({
+  Future<void> submitAll({
     required String requesterId,
     required String nickname,
-    required String entityType,
-    String? entityId,
-    required String action,
-    required Map<String, dynamic> payload,
+    required List<RequestDraft> drafts,
     String? note,
   }) async {
-    await _client.from('change_requests').insert({
-      'requester_id': requesterId,
-      'nickname': nickname,
-      'entity_type': entityType,
-      'entity_id': ?entityId,
-      'action': action,
-      'payload': payload,
-      'note': ?note,
-    });
+    if (drafts.isEmpty) {
+      return;
+    }
+    final rows = <Map<String, dynamic>>[
+      for (var i = 0; i < drafts.length; i++)
+        {
+          'requester_id': requesterId,
+          'nickname': nickname,
+          'entity_type': drafts[i].entityType,
+          'entity_id': ?drafts[i].entityId,
+          'action': drafts[i].action,
+          'payload': drafts[i].payload,
+          'note': ?(i == 0 ? note : null),
+        },
+    ];
+    await _client.from('change_requests').insert(rows);
   }
 }
 
