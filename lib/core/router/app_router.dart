@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:familytree/features/person/ui/person_edit_screen.dart';
 import 'package:familytree/features/person/ui/person_screen.dart';
 import 'package:familytree/features/tree/ui/search_screen.dart';
 import 'package:familytree/features/tree/ui/splash_screen.dart';
@@ -25,6 +26,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/person/:id',
         builder: (context, state) =>
             PersonScreen(personId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/person/:id/edit',
+        builder: (context, state) =>
+            PersonEditScreen(personId: state.pathParameters['id']!),
       ),
     ],
   );

@@ -69,6 +69,18 @@ class PersonScreen extends ConsumerWidget {
           ),
         ),
       ),
+      const SizedBox(height: 12),
+      SizedBox(
+        height: 56,
+        child: OutlinedButton.icon(
+          onPressed: () => context.push('/person/${person.id}/edit'),
+          icon: const Icon(Icons.edit_outlined, size: 28),
+          label: const Text(
+            'Đề xuất sửa thông tin',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+        ),
+      ),
       const SizedBox(height: 16),
       _SectionCard(
         title: 'Thông tin',
