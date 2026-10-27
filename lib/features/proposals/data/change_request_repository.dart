@@ -12,13 +12,14 @@ class ChangeRequestRepository {
   /// Gửi một hoặc nhiều đề xuất bằng MỘT lệnh insert: hoặc tất cả thành công,
   /// hoặc tất cả bị hoàn tác (không có "người mồ côi").
   /// status do trigger của database ép thành 'pending'.
-  /// Ghi chú gửi admin chỉ gắn vào dòng đầu tiên.
+  /// Ghi chú gửi admin chỉ gắn vào dòng thứ [noteIndex] (mặc định dòng đầu).
   /// Ném lỗi nếu thất bại (nơi gọi hiện bằng showErrorDialog).
   Future<void> submitAll({
     required String requesterId,
     required String nickname,
     required List<RequestDraft> drafts,
     String? note,
+    int noteIndex = 0,
   }) async {
     if (drafts.isEmpty) {
       return;
@@ -32,7 +33,7 @@ class ChangeRequestRepository {
           'entity_id': ?drafts[i].entityId,
           'action': drafts[i].action,
           'payload': drafts[i].payload,
-          'note': ?(i == 0 ? note : null),
+          'note': ?(i == noteIndex ? note : null),
         },
     ];
     await _client.from('change_requests').insert(rows);

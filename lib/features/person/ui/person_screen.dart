@@ -89,7 +89,7 @@ class PersonScreen extends ConsumerWidget {
       if (!person.isAlive) _memorialSection(person),
       ..._familySection(context, relations),
       _SectionCard(
-        title: 'Thêm người thân',
+        title: 'Thêm / sửa người thân',
         children: [
           SizedBox(
             width: double.infinity,
@@ -116,9 +116,39 @@ class PersonScreen extends ConsumerWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/person/${person.id}/relations'),
+              icon: const Icon(Icons.edit_note, size: 28),
+              label: const Text(
+                'Sửa quan hệ gia đình',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
         ],
       ),
       ..._notesSection(person),
+            const SizedBox(height: 8),
+      SizedBox(
+        height: 56,
+        child: OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Theme.of(context).colorScheme.error,
+            side: BorderSide(color: Theme.of(context).colorScheme.error),
+          ),
+          onPressed: () => context.push('/person/${person.id}/delete'),
+          icon: const Icon(Icons.delete_outline, size: 28),
+          label: const Text(
+            'Đề xuất xóa người này',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+        ),
+      ),
+      const SizedBox(height: 24),
     ];
 
     return Scaffold(
