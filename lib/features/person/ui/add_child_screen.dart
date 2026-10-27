@@ -248,7 +248,7 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _intro(isAdmin),
-                        _otherParentCard(),
+                        _otherParentCard(isAdmin),
                         _relationCard(),
                         PersonFormFields(
                           controller: _form,
@@ -302,7 +302,7 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
     );
   }
 
-  Widget _otherParentCard() {
+  Widget _otherParentCard(bool isAdmin) {
     final spouses = widget.spouses;
     if (spouses.isEmpty) {
       return FormCard(
@@ -311,8 +311,9 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
           Text(
             '${widget.person.fullName} chưa có vợ/chồng nào trong gia phả, '
             'nên con sẽ chỉ được gắn với ${widget.person.fullName}. '
-            'Muốn ghi cả cha/mẹ còn lại, hãy gửi đề xuất "Thêm vợ/chồng" '
-            'trước và đợi được duyệt.',
+            '${isAdmin ? 'Muốn ghi cả cha/mẹ còn lại, hãy "Thêm vợ/chồng" '
+                'trước rồi quay lại thêm con.' : 'Muốn ghi cả cha/mẹ còn lại, '
+                'hãy gửi đề xuất "Thêm vợ/chồng" trước và đợi được duyệt.'}',
             style: const TextStyle(fontSize: 16, height: 1.4),
           ),
         ],

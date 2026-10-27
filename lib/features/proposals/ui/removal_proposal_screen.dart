@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:familytree/core/ui/app_dialogs.dart';
 import 'package:familytree/core/ui/choice_dialog.dart';
 import 'package:familytree/core/ui/form_widgets.dart';
-import 'package:familytree/features/auth/ui/contributor_gate.dart';
+import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/person/domain/relation_changes.dart';
-import 'package:familytree/features/proposals/data/change_request_repository.dart';
 import 'package:familytree/features/proposals/domain/request_draft.dart';
 import 'package:familytree/features/proposals/ui/sender_card.dart';
 import 'package:familytree/features/proposals/ui/submit_bar.dart';
+import 'package:familytree/features/proposals/ui/submit_changes.dart';
 
-/// Màn hình chung cho thao tác gỡ/xóa: giải thích điều sẽ xảy ra,
-/// bắt buộc nhập lý do, xác nhận rồi gửi cả gói đề xuất cùng lúc.
+/// Màn hình chung cho thao tác gỡ/xóa: giải thích điều sẽ xảy ra, xác nhận
+/// rồi gửi cả gói. Người thường: bắt buộc nhập lý do và gửi đề xuất.
+/// Admin: không cần lý do, lưu trực tiếp.
 class RemovalProposalScreen extends ConsumerStatefulWidget {
   const RemovalProposalScreen({
     super.key,
@@ -23,6 +25,9 @@ class RemovalProposalScreen extends ConsumerStatefulWidget {
     required this.confirmMessage,
     required this.noteIndex,
     this.submitLabel = 'Gửi đề xuất',
+    this.adminTitle,
+    this.adminSubmitLabel = 'Lưu thay đổi',
+    this.goHomeAfterAdminSave = false,
   });
 
   final String title;
@@ -34,6 +39,16 @@ class RemovalProposalScreen extends ConsumerStatefulWidget {
   /// Dòng của gói sẽ mang lý do (với gói xóa người: dòng xóa người, ở cuối).
   final int noteIndex;
   final String submitLabel;
+
+  /// Tiêu đề màn hình khi là admin (mặc định dùng [title]).
+  final String? adminTitle;
+
+  /// Chữ trên nút khi là admin.
+  final String adminSubmitLabel;
+
+  /// Admin lưu xong thì về thẳng màn cây (dùng khi xóa người: màn chi tiết
+  /// của người đó không còn nữa).
+  final bool goHomeAfterAdminSave;
 
   @override
   ConsumerState<RemovalProposalScreen> createState() =>
@@ -55,55 +70,52 @@ class _RemovalProposalScreenState extends ConsumerState<RemovalProposalScreen> {
     if (_submitting) {
       return;
     }
-    final error = validateReason(_reason.text, required: true);
-    setState(() => _reasonError = error);
-    if (error != null) {
-      await showMessageDialog(
-        context,
-        title: 'Chưa gửi được',
-        message: error,
-        icon: Icons.error_outline,
-        isError: true,
-      );
-      return;
+    final isAdmin = ref.read(isAdminProvider);
+
+    if (!isAdmin) {
+      final error = validateReason(_reason.text, required: true);
+      setState(() => _reasonError = error);
+      if (error != null) {
+        await showMessageDialog(
+          context,
+          title: 'Chưa gửi được',
+          message: error,
+          icon: Icons.error_outline,
+          isError: true,
+        );
+        return;
+      }
     }
 
-    final confirmed = await showChoiceDialog(
+    final proceed = await confirmSubmit(
       context,
-      title: 'Gửi đề xuất này?',
-      message: '${widget.confirmMessage}\n\n'
-          'Đề xuất dùng ${widget.drafts.length} trong tối đa 10 suất chờ duyệt.',
-      primaryLabel: widget.submitLabel,
-      secondaryLabel: 'Xem lại',
+      isAdmin: isAdmin,
+      summary: widget.confirmMessage,
+      slots: widget.drafts.length,
     );
-    if (!confirmed || !mounted) {
+    if (!proceed || !mounted) {
       return;
     }
 
     setState(() => _submitting = true);
     try {
-      final contributor = await ensureContributor(context, ref);
-      if (contributor == null || !mounted) {
+      final outcome = await submitChanges(
+        context,
+        ref,
+        drafts: widget.drafts,
+        note: isAdmin ? null : _reason.text.trim(),
+        noteIndex: widget.noteIndex,
+      );
+      if (outcome == SubmitOutcome.cancelled || !mounted) {
         return;
       }
-      await ref.read(changeRequestRepositoryProvider).submitAll(
-            requesterId: contributor.userId,
-            nickname: contributor.nickname,
-            drafts: widget.drafts,
-            note: _reason.text.trim(),
-            noteIndex: widget.noteIndex,
-          );
+      await showSubmitDone(context, outcome);
       if (!mounted) {
         return;
       }
-      await showMessageDialog(
-        context,
-        title: 'Đã gửi đề xuất',
-        message: 'Quản trị viên sẽ xem và duyệt.\n'
-            'Thay đổi chỉ áp dụng sau khi được duyệt.',
-        icon: Icons.check_circle_outline,
-      );
-      if (mounted) {
+      if (outcome == SubmitOutcome.saved && widget.goHomeAfterAdminSave) {
+        context.go('/home');
+      } else {
         Navigator.of(context).pop();
       }
     } catch (error) {
@@ -119,6 +131,8 @@ class _RemovalProposalScreenState extends ConsumerState<RemovalProposalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = ref.watch(isAdminProvider);
+
     return ListenableBuilder(
       listenable: _reason,
       builder: (context, _) {
@@ -134,7 +148,11 @@ class _RemovalProposalScreenState extends ConsumerState<RemovalProposalScreen> {
             }
           },
           child: Scaffold(
-            appBar: AppBar(title: Text(widget.title)),
+            appBar: AppBar(
+              title: Text(
+                isAdmin ? (widget.adminTitle ?? widget.title) : widget.title,
+              ),
+            ),
             body: Column(
               children: [
                 Expanded(
@@ -172,16 +190,17 @@ class _RemovalProposalScreenState extends ConsumerState<RemovalProposalScreen> {
                               ),
                           ],
                         ),
-                        SenderCard(
-                          noteController: _reason,
-                          noteLabel: 'Lý do *',
-                          noteError: _reasonError,
-                          onNoteChanged: () {
-                            if (_reasonError != null) {
-                              setState(() => _reasonError = null);
-                            }
-                          },
-                        ),
+                        if (!isAdmin)
+                          SenderCard(
+                            noteController: _reason,
+                            noteLabel: 'Lý do *',
+                            noteError: _reasonError,
+                            onNoteChanged: () {
+                              if (_reasonError != null) {
+                                setState(() => _reasonError = null);
+                              }
+                            },
+                          ),
                       ],
                     ),
                   ),
@@ -189,7 +208,9 @@ class _RemovalProposalScreenState extends ConsumerState<RemovalProposalScreen> {
                 SubmitBar(
                   submitting: _submitting,
                   onPressed: _submit,
-                  label: widget.submitLabel,
+                  label: isAdmin ? widget.adminSubmitLabel : widget.submitLabel,
+                  submittingLabel: isAdmin ? 'Đang lưu...' : 'Đang gửi...',
+                  icon: isAdmin ? Icons.save : Icons.send,
                 ),
               ],
             ),

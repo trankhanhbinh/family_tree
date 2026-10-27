@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:familytree/core/ui/app_dialogs.dart';
 import 'package:familytree/core/ui/choice_dialog.dart';
-import 'package:familytree/features/auth/ui/contributor_gate.dart';
+import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/person/domain/relation_changes.dart';
 import 'package:familytree/features/person/ui/marriage_form_fields.dart';
-import 'package:familytree/features/proposals/data/change_request_repository.dart';
 import 'package:familytree/features/proposals/domain/request_draft.dart';
 import 'package:familytree/features/proposals/ui/proposal_placeholder_screen.dart';
 import 'package:familytree/features/proposals/ui/sender_card.dart';
 import 'package:familytree/features/proposals/ui/submit_bar.dart';
+import 'package:familytree/features/proposals/ui/submit_changes.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/domain/marriage.dart';
 
@@ -79,6 +79,7 @@ class _MarriageEditFormState extends ConsumerState<_MarriageEditForm> {
     if (_submitting) {
       return;
     }
+    final isAdmin = ref.read(isAdminProvider);
     final nowYear = DateTime.now().year;
 
     final errors = _form.validate(nowYear: nowYear);
@@ -86,8 +87,9 @@ class _MarriageEditFormState extends ConsumerState<_MarriageEditForm> {
       final lines = errors.values.map((e) => '• $e').join('\n');
       await showMessageDialog(
         context,
-        title: 'Chưa gửi được',
-        message: 'Vui lòng sửa các ô báo đỏ rồi gửi lại:\n\n$lines',
+        title: isAdmin ? 'Chưa lưu được' : 'Chưa gửi được',
+        message: 'Vui lòng sửa các ô báo đỏ rồi '
+            '${isAdmin ? 'lưu' : 'gửi'} lại:\n\n$lines',
         icon: Icons.error_outline,
         isError: true,
       );
@@ -108,53 +110,42 @@ class _MarriageEditFormState extends ConsumerState<_MarriageEditForm> {
       await showMessageDialog(
         context,
         title: 'Bạn chưa thay đổi gì',
-        message: 'Hãy sửa ít nhất một thông tin rồi bấm "Gửi đề xuất".',
+        message: 'Hãy sửa ít nhất một thông tin rồi bấm '
+            '"${isAdmin ? 'Lưu thay đổi' : 'Gửi đề xuất'}".',
       );
       return;
     }
 
-    final confirmed = await showChoiceDialog(
+    final proceed = await confirmSubmit(
       context,
-      title: 'Gửi đề xuất này?',
-      message: 'Sửa thông tin hôn nhân giữa ${widget.names}.\n\n'
-          'Đề xuất dùng 1 trong tối đa 10 suất chờ duyệt.',
-      primaryLabel: 'Gửi đề xuất',
-      secondaryLabel: 'Xem lại',
+      isAdmin: isAdmin,
+      summary: 'Sửa thông tin hôn nhân giữa ${widget.names}.',
+      slots: 1,
     );
-    if (!confirmed || !mounted) {
+    if (!proceed || !mounted) {
       return;
     }
 
     setState(() => _submitting = true);
     try {
-      final contributor = await ensureContributor(context, ref);
-      if (contributor == null || !mounted) {
-        return;
-      }
       final note = _adminNote.text.trim();
-      await ref.read(changeRequestRepositoryProvider).submitAll(
-            requesterId: contributor.userId,
-            nickname: contributor.nickname,
-            drafts: [
-              RequestDraft(
-                entityType: kEntityMarriage,
-                action: kActionUpdate,
-                entityId: widget.marriage.id,
-                payload: payload,
-              ),
-            ],
-            note: note.isEmpty ? null : note,
-          );
-      if (!mounted) {
+      final outcome = await submitChanges(
+        context,
+        ref,
+        drafts: [
+          RequestDraft(
+            entityType: kEntityMarriage,
+            action: kActionUpdate,
+            entityId: widget.marriage.id,
+            payload: payload,
+          ),
+        ],
+        note: (isAdmin || note.isEmpty) ? null : note,
+      );
+      if (outcome == SubmitOutcome.cancelled || !mounted) {
         return;
       }
-      await showMessageDialog(
-        context,
-        title: 'Đã gửi đề xuất',
-        message: 'Quản trị viên sẽ xem và duyệt.\n'
-            'Thay đổi chỉ áp dụng sau khi được duyệt.',
-        icon: Icons.check_circle_outline,
-      );
+      await showSubmitDone(context, outcome);
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -171,6 +162,8 @@ class _MarriageEditFormState extends ConsumerState<_MarriageEditForm> {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = ref.watch(isAdminProvider);
+
     return ListenableBuilder(
       listenable: _all,
       builder: (context, _) {
@@ -200,18 +193,27 @@ class _MarriageEditFormState extends ConsumerState<_MarriageEditForm> {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
-                            'Sửa hôn nhân giữa ${widget.names}. '
-                            'Thay đổi sẽ được quản trị viên xem và duyệt.',
+                            isAdmin
+                                ? 'Sửa trực tiếp hôn nhân giữa ${widget.names}. '
+                                    'Thay đổi được lưu và hiện trên cây ngay.'
+                                : 'Sửa hôn nhân giữa ${widget.names}. '
+                                    'Thay đổi sẽ được quản trị viên xem và duyệt.',
                             style: const TextStyle(fontSize: 16, height: 1.4),
                           ),
                         ),
                         MarriageFormFields(controller: _form),
-                        SenderCard(noteController: _adminNote),
+                        if (!isAdmin) SenderCard(noteController: _adminNote),
                       ],
                     ),
                   ),
                 ),
-                SubmitBar(submitting: _submitting, onPressed: _submit),
+                SubmitBar(
+                  submitting: _submitting,
+                  onPressed: _submit,
+                  label: isAdmin ? 'Lưu thay đổi' : 'Gửi đề xuất',
+                  submittingLabel: isAdmin ? 'Đang lưu...' : 'Đang gửi...',
+                  icon: isAdmin ? Icons.save : Icons.send,
+                ),
               ],
             ),
           ),

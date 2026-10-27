@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/person/domain/person_relations.dart';
 import 'package:familytree/features/person/domain/relation_changes.dart';
 import 'package:familytree/features/proposals/ui/proposal_placeholder_screen.dart';
@@ -115,6 +116,7 @@ class DeletePersonScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     const title = 'Đề xuất xóa người';
+    final isAdmin = ref.watch(isAdminProvider);
     final async = ref.watch(treeDataProvider);
     final data = async.value;
     final person = data?.people.where((p) => p.id == personId).firstOrNull;
@@ -135,6 +137,7 @@ class DeletePersonScreen extends ConsumerWidget {
 
     if (personHasChildren(personId, data.parentChildren)) {
       return _BlockedDeleteScreen(
+        isAdmin: isAdmin,
         personName: person.fullName,
         childNames: [for (final c in relations.children) c.person.fullName],
       );
@@ -148,9 +151,12 @@ class DeletePersonScreen extends ConsumerWidget {
 
     return RemovalProposalScreen(
       title: title,
+      adminTitle: 'Xóa người',
       headline: 'Xóa "${person.fullName}" khỏi gia phả',
       lines: [
-        'Người này sẽ bị xóa khỏi gia phả sau khi quản trị viên duyệt.',
+        isAdmin
+            ? 'Người này sẽ bị xóa khỏi gia phả ngay sau khi bạn lưu.'
+            : 'Người này sẽ bị xóa khỏi gia phả sau khi quản trị viên duyệt.',
         if (relations.parents.isNotEmpty)
           'Gỡ quan hệ với cha/mẹ: '
               '${relations.parents.map((e) => e.person.fullName).join(', ')}.',
@@ -160,20 +166,24 @@ class DeletePersonScreen extends ConsumerWidget {
         'Chỉ nên dùng khi thêm nhầm hoặc bị trùng người.',
       ],
       drafts: drafts,
-      confirmMessage: 'Gửi đề xuất xóa "${person.fullName}" khỏi gia phả?',
+      confirmMessage: 'Xóa "${person.fullName}" khỏi gia phả?',
       // Lý do gắn vào dòng cuối của gói (dòng xóa người).
       noteIndex: drafts.length - 1,
       submitLabel: 'Gửi đề xuất xóa',
+      adminSubmitLabel: 'Xóa người này',
+      goHomeAfterAdminSave: true,
     );
   }
 }
 
 class _BlockedDeleteScreen extends StatelessWidget {
   const _BlockedDeleteScreen({
+    required this.isAdmin,
     required this.personName,
     required this.childNames,
   });
 
+  final bool isAdmin;
   final String personName;
   final List<String> childNames;
 
@@ -182,7 +192,7 @@ class _BlockedDeleteScreen extends StatelessWidget {
     final shown = childNames.take(5).join(', ');
     final more = childNames.length > 5 ? ' và ${childNames.length - 5} người khác' : '';
     return Scaffold(
-      appBar: AppBar(title: const Text('Đề xuất xóa người')),
+      appBar: AppBar(title: Text(isAdmin ? 'Xóa người' : 'Đề xuất xóa người')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -195,7 +205,9 @@ class _BlockedDeleteScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Chưa thể đề xuất xóa $personName',
+              isAdmin
+                  ? 'Chưa thể xóa $personName'
+                  : 'Chưa thể đề xuất xóa $personName',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
