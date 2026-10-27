@@ -11,6 +11,22 @@ const String kGenericErrorMessage = 'Có lỗi xảy ra, vui lòng thử lại.'
 const String kNetworkErrorMessage =
     'Không kết nối được mạng. Vui lòng kiểm tra mạng rồi thử lại.';
 
+/// Sai mã quản trị, hoặc đăng nhập được nhưng không phải admin.
+const String kWrongAdminCodeMessage =
+    'Mã không đúng hoặc không có quyền quản trị.';
+
+/// Đăng nhập sai quá nhiều lần (server giới hạn tốc độ).
+const String kTooManyAttemptsMessage =
+    'Bạn đã thử quá nhiều lần. Vui lòng đợi vài phút rồi thử lại.';
+
+/// Ném khi đăng nhập thành công nhưng is_admin() trả về false.
+class AdminAccessDeniedException implements Exception {
+  const AdminAccessDeniedException();
+
+  @override
+  String toString() => 'AdminAccessDeniedException';
+}
+
 /// 13 mã lỗi do database ném ra (RAISE EXCEPTION) -> câu tiếng Việt.
 const Map<String, String> kErrorMessagesVi = {
   'REQUEST_LIMIT_REACHED':
@@ -61,10 +77,21 @@ const List<String> _networkHints = [
 String vietnameseErrorMessage(Object error) {
   final text = _errorText(error);
 
+  if (error is AdminAccessDeniedException) {
+    return kWrongAdminCodeMessage;
+  }
+
   for (final match in _codeToken.allMatches(text)) {
     final message = kErrorMessagesVi[match.group(0)];
     if (message != null) {
       return message;
+    }
+  }
+
+  if (error is AuthException) {
+    final authMessage = _authErrorMessage(error);
+    if (authMessage != null) {
+      return authMessage;
     }
   }
 
@@ -95,4 +122,23 @@ bool _isNetworkError(Object error, String text) {
     return true;
   }
   return _networkHints.any(text.contains);
+}
+
+/// Lỗi đăng nhập của Supabase Auth. Trả null nếu không nhận ra
+/// (lỗi mạng rơi xuống phần dò từ khóa mạng phía dưới).
+String? _authErrorMessage(AuthException error) {
+  final status = error.statusCode ?? '';
+  final code = error.code ?? '';
+  final message = error.message.toLowerCase();
+
+  if (status == '429' ||
+      code.contains('rate_limit') ||
+      message.contains('rate limit')) {
+    return kTooManyAttemptsMessage;
+  }
+  if (code == 'invalid_credentials' ||
+      message.contains('invalid login credentials')) {
+    return kWrongAdminCodeMessage;
+  }
+  return null;
 }

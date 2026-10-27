@@ -7,6 +7,7 @@ import 'package:familytree/features/tree/data/family_forest_provider.dart';
 import 'package:familytree/features/tree/data/focus_request_provider.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/ui/tree_view.dart';
+import 'package:familytree/features/auth/ui/admin_entry_bar.dart';
 
 class TreeScreen extends ConsumerWidget {
   const TreeScreen({super.key});
@@ -44,6 +45,7 @@ class TreeScreen extends ConsumerWidget {
           ),
         ],
       ),
+      bottomNavigationBar: const AdminEntryBar(),
       body: forestAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _TreeErrorView(
