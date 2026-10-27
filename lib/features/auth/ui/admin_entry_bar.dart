@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:familytree/core/ui/app_dialogs.dart';
 import 'package:familytree/core/ui/choice_dialog.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
+import 'package:familytree/features/review/data/review_repository.dart';
 
 /// Thanh cao 56 ở cuối màn hình cây.
-/// Người thường: nút "Quản trị viên". Admin: "Duyệt đề xuất" + "Đăng xuất".
+/// Người thường: nút "Quản trị viên". Admin: "Duyệt đề xuất (N)" + "Đăng xuất".
 class AdminEntryBar extends ConsumerWidget {
   const AdminEntryBar({super.key});
 
@@ -35,10 +35,14 @@ class AdminEntryBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdmin = ref.watch(isAdminProvider);
     final notifier = ref.read(isAdminProvider.notifier);
+    final pendingCount = ref.watch(pendingCountProvider);
     final scheme = Theme.of(context).colorScheme;
 
     final Widget content;
     if (isAdmin) {
+      final reviewLabel = (pendingCount == null || pendingCount == 0)
+          ? 'Duyệt đề xuất'
+          : 'Duyệt đề xuất ($pendingCount)';
       content = Row(
         children: [
           Expanded(
@@ -47,16 +51,10 @@ class AdminEntryBar extends ConsumerWidget {
                 minimumSize: const Size.fromHeight(56),
                 foregroundColor: scheme.onSurface,
               ),
-              onPressed: () => showMessageDialog(
-                context,
-                title: 'Sắp có',
-                message: 'Chức năng duyệt đề xuất sẽ có ở bản cập nhật tới.',
-                icon: Icons.hourglass_empty,
-                isError: false,
-              ),
-              child: const Text(
-                'Duyệt đề xuất',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              onPressed: () => context.push('/admin/requests'),
+              child: Text(
+                reviewLabel,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
             ),
           ),
