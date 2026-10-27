@@ -78,10 +78,14 @@ class PersonFormFields extends StatelessWidget {
     super.key,
     required this.controller,
     required this.branches,
+    this.showGeneration = false,
   });
 
   final PersonFormController controller;
   final List<Branch> branches;
+
+  /// Ô "Số đời": chỉ quản trị viên thấy.
+  final bool showGeneration;
 
   @override
   Widget build(BuildContext context) {
@@ -116,6 +120,7 @@ class PersonFormFields extends StatelessWidget {
   Widget _basicCard(BuildContext context) {
     final errors = controller.errors;
     final genderError = errors[PersonField.gender];
+    final generationError = errors[PersonField.generation];
     final branchId = controller.branchId;
     final branchLabel = branchId == null
         ? 'Không thuộc chi nào'
@@ -184,6 +189,25 @@ class PersonFormFields extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        if (showGeneration)
+          KeyedSubtree(
+            key: controller.keys[PersonField.generation],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppNumberField(
+                  controller: controller.generation,
+                  label: 'Số đời (chỉ quản trị viên thấy)',
+                  maxDigits: 2,
+                  hasError: generationError != null,
+                  onChanged: () =>
+                      controller.clearError(PersonField.generation),
+                ),
+                if (generationError != null) ErrorText(generationError),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
         AppTextField(
           controller: controller.birthPlace,
           label: 'Nơi sinh',

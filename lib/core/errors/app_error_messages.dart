@@ -19,6 +19,11 @@ const String kWrongAdminCodeMessage =
 const String kTooManyAttemptsMessage =
     'Bạn đã thử quá nhiều lần. Vui lòng đợi vài phút rồi thử lại.';
 
+/// Lỗi khóa ngoại Postgres (23503): dữ liệu liên quan không còn.
+const String kRelatedDataMissingMessage =
+    'Dữ liệu liên quan không còn tồn tại. '
+    'Hãy bấm "Làm mới" ở màn hình cây rồi thử lại.';
+
 /// Ném khi đăng nhập thành công nhưng is_admin() trả về false.
 class AdminAccessDeniedException implements Exception {
   const AdminAccessDeniedException();
@@ -100,6 +105,11 @@ String vietnameseErrorMessage(Object error) {
     return kErrorMessagesVi['FORBIDDEN']!;
   }
 
+  // 23503 = vi phạm khóa ngoại (vd quan hệ trỏ tới người không còn).
+  if (error is PostgrestException && error.code == '23503') {
+    return kRelatedDataMissingMessage;
+  }
+  
   if (_isNetworkError(error, text)) {
     return kNetworkErrorMessage;
   }

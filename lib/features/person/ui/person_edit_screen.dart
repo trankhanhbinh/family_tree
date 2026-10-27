@@ -3,20 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:familytree/core/ui/app_dialogs.dart';
 import 'package:familytree/core/ui/choice_dialog.dart';
-import 'package:familytree/features/auth/ui/contributor_gate.dart';
+import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/person/domain/person.dart';
 import 'package:familytree/features/person/domain/person_edit_form.dart';
 import 'package:familytree/features/person/ui/person_form_controller.dart';
 import 'package:familytree/features/person/ui/person_form_fields.dart';
-import 'package:familytree/features/proposals/data/change_request_repository.dart';
 import 'package:familytree/features/proposals/domain/request_draft.dart';
 import 'package:familytree/features/proposals/ui/proposal_placeholder_screen.dart';
 import 'package:familytree/features/proposals/ui/sender_card.dart';
 import 'package:familytree/features/proposals/ui/submit_bar.dart';
+import 'package:familytree/features/proposals/ui/submit_changes.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/domain/branch.dart';
 
-/// Màn hình đề xuất sửa thông tin một người (khối 4B, dùng form dùng chung).
+/// Màn hình sửa thông tin một người.
+/// Người thường: gửi đề xuất (4B). Admin: lưu trực tiếp (4D-2a).
 class PersonEditScreen extends ConsumerWidget {
   const PersonEditScreen({super.key, required this.personId});
 
@@ -76,15 +77,18 @@ class _PersonEditFormState extends ConsumerState<_PersonEditForm> {
     if (_submitting) {
       return;
     }
+    final isAdmin = ref.read(isAdminProvider);
+    final actionLabel = isAdmin ? 'Lưu thay đổi' : 'Gửi đề xuất';
     final nowYear = DateTime.now().year;
 
-    final errors = _form.validate(nowYear: nowYear);
+    final errors = _form.validate(nowYear: nowYear, validateGeneration: isAdmin);
     if (errors.isNotEmpty) {
       final lines = errors.values.map((e) => '• $e').join('\n');
       await showMessageDialog(
         context,
-        title: 'Chưa gửi được',
-        message: 'Vui lòng sửa các ô báo đỏ rồi gửi lại:\n\n$lines',
+        title: isAdmin ? 'Chưa lưu được' : 'Chưa gửi được',
+        message: 'Vui lòng sửa các ô báo đỏ rồi '
+            '${isAdmin ? 'lưu' : 'gửi'} lại:\n\n$lines',
         icon: Icons.error_outline,
         isError: true,
       );
@@ -99,46 +103,37 @@ class _PersonEditFormState extends ConsumerState<_PersonEditForm> {
       widget.person,
       _form.collect(),
       nowYear: nowYear,
+      includeGeneration: isAdmin,
     );
     if (payload.isEmpty) {
       await showMessageDialog(
         context,
         title: 'Bạn chưa thay đổi gì',
-        message: 'Hãy sửa ít nhất một thông tin rồi bấm "Gửi đề xuất".',
+        message: 'Hãy sửa ít nhất một thông tin rồi bấm "$actionLabel".',
       );
       return;
     }
 
     setState(() => _submitting = true);
     try {
-      final contributor = await ensureContributor(context, ref);
-      if (contributor == null || !mounted) {
-        return;
-      }
       final note = _adminNote.text.trim();
-      await ref.read(changeRequestRepositoryProvider).submitAll(
-            requesterId: contributor.userId,
-            nickname: contributor.nickname,
-            drafts: [
-              RequestDraft(
-                entityType: kEntityPerson,
-                action: kActionUpdate,
-                entityId: widget.person.id,
-                payload: payload,
-              ),
-            ],
-            note: note.isEmpty ? null : note,
-          );
-      if (!mounted) {
+      final outcome = await submitChanges(
+        context,
+        ref,
+        drafts: [
+          RequestDraft(
+            entityType: kEntityPerson,
+            action: kActionUpdate,
+            entityId: widget.person.id,
+            payload: payload,
+          ),
+        ],
+        note: (isAdmin || note.isEmpty) ? null : note,
+      );
+      if (outcome == SubmitOutcome.cancelled || !mounted) {
         return;
       }
-      await showMessageDialog(
-        context,
-        title: 'Đã gửi đề xuất',
-        message: 'Quản trị viên sẽ xem và duyệt đề xuất của bạn.\n'
-            'Thay đổi sẽ hiện trên cây sau khi được duyệt.',
-        icon: Icons.check_circle_outline,
-      );
+      await showSubmitDone(context, outcome);
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -155,6 +150,8 @@ class _PersonEditFormState extends ConsumerState<_PersonEditForm> {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = ref.watch(isAdminProvider);
+
     return ListenableBuilder(
       listenable: _all,
       builder: (context, _) {
@@ -170,7 +167,9 @@ class _PersonEditFormState extends ConsumerState<_PersonEditForm> {
             }
           },
           child: Scaffold(
-            appBar: AppBar(title: const Text('Đề xuất sửa thông tin')),
+            appBar: AppBar(
+              title: Text(isAdmin ? 'Sửa thông tin' : 'Đề xuất sửa thông tin'),
+            ),
             body: Column(
               children: [
                 Expanded(
@@ -181,17 +180,24 @@ class _PersonEditFormState extends ConsumerState<_PersonEditForm> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _intro(),
+                        _intro(isAdmin),
                         PersonFormFields(
                           controller: _form,
                           branches: widget.branches,
+                          showGeneration: isAdmin,
                         ),
-                        SenderCard(noteController: _adminNote),
+                        if (!isAdmin) SenderCard(noteController: _adminNote),
                       ],
                     ),
                   ),
                 ),
-                SubmitBar(submitting: _submitting, onPressed: _submit),
+                SubmitBar(
+                  submitting: _submitting,
+                  onPressed: _submit,
+                  label: isAdmin ? 'Lưu thay đổi' : 'Gửi đề xuất',
+                  submittingLabel: isAdmin ? 'Đang lưu...' : 'Đang gửi...',
+                  icon: isAdmin ? Icons.save : Icons.send,
+                ),
               ],
             ),
           ),
@@ -200,21 +206,27 @@ class _PersonEditFormState extends ConsumerState<_PersonEditForm> {
     );
   }
 
-  Widget _intro() {
+  Widget _intro(bool isAdmin) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text.rich(
         TextSpan(
           style: const TextStyle(fontSize: 16, height: 1.4),
           children: [
-            const TextSpan(text: 'Bạn đang đề xuất sửa thông tin của '),
+            TextSpan(
+              text: isAdmin
+                  ? 'Bạn đang sửa trực tiếp thông tin của '
+                  : 'Bạn đang đề xuất sửa thông tin của ',
+            ),
             TextSpan(
               text: widget.person.fullName,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            const TextSpan(
-              text: '. Thay đổi sẽ được quản trị viên xem và duyệt, '
-                  'chưa áp dụng ngay.',
+            TextSpan(
+              text: isAdmin
+                  ? '. Thay đổi được lưu và hiện trên cây ngay.'
+                  : '. Thay đổi sẽ được quản trị viên xem và duyệt, '
+                      'chưa áp dụng ngay.',
             ),
           ],
         ),

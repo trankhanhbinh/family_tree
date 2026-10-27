@@ -20,7 +20,7 @@ class PersonFormController extends ChangeNotifier {
         memorialDay = TextEditingController(text: initial.memorialDay),
         memorialMonth = TextEditingController(text: initial.memorialMonth),
         notes = TextEditingController(text: initial.notes),
-        _gender = requireGenderChoice ? null : initial.gender,
+        generation = TextEditingController(text: initial.generation),        _gender = requireGenderChoice ? null : initial.gender,
         _branchId = initial.branchId,
         _isAlive = initial.isAlive,
         _memorialIsLeap = initial.memorialIsLeap {
@@ -45,6 +45,7 @@ class PersonFormController extends ChangeNotifier {
   final TextEditingController memorialDay;
   final TextEditingController memorialMonth;
   final TextEditingController notes;
+  final TextEditingController generation;
 
   Gender? _gender;
   String? _branchId;
@@ -73,6 +74,7 @@ class PersonFormController extends ChangeNotifier {
         memorialDay,
         memorialMonth,
         notes,
+        generation,
       ];
 
   Gender? get gender => _gender;
@@ -129,6 +131,7 @@ class PersonFormController extends ChangeNotifier {
       memorialMonth: memorialMonth.text,
       memorialIsLeap: _memorialIsLeap,
       notes: notes.text,
+      generation: generation.text,
     );
   }
 
@@ -141,11 +144,15 @@ class PersonFormController extends ChangeNotifier {
   }
 
   /// Kiểm tra form, lưu lỗi để hiện lên màn hình và trả về.
-  Map<PersonField, String> validate({required int nowYear}) {
+  Map<PersonField, String> validate({
+    required int nowYear,
+    bool validateGeneration = false,
+  }) {
     final result = validatePersonForm(
       collect(),
       nowYear: nowYear,
       genderChosen: genderChosen,
+      validateGeneration: validateGeneration,
     );
     errors = result;
     notifyListeners();

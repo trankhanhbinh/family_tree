@@ -7,7 +7,11 @@ const int kRequestNoteMaxLength = 500;
 const int kMinYear = 1000;
 
 /// Nhóm ô có thể báo lỗi (theo thứ tự xuất hiện trên màn hình).
-enum PersonField { fullName, gender, birth, death, memorial }
+enum PersonField { fullName, gender, generation, birth, death, memorial }
+
+/// Số đời (chỉ admin nhập): số nguyên từ 1 đến 50.
+const int kMinGeneration = 1;
+const int kMaxGeneration = 50;
 
 /// Giá trị người dùng đang nhập (chuỗi thô, chưa chuẩn hóa).
 class PersonFormValues {
@@ -29,11 +33,13 @@ class PersonFormValues {
     this.memorialMonth = '',
     this.memorialIsLeap = false,
     this.notes = '',
+    this.generation = '',
   });
 
   factory PersonFormValues.fromPerson(Person p) {
     final birth = _splitDate(p.birthDate, p.birthYear);
     final death = _splitDate(p.deathDate, p.deathYear);
+    final Object? generation = p.generation;
     return PersonFormValues(
       fullName: p.fullName,
       otherName: p.otherName ?? '',
@@ -52,6 +58,7 @@ class PersonFormValues {
       memorialMonth: p.memorialLunarMonth?.toString() ?? '',
       memorialIsLeap: p.memorialIsLeap,
       notes: p.notes ?? '',
+      generation: generation?.toString() ?? '',
     );
   }
 
@@ -72,6 +79,7 @@ class PersonFormValues {
   String memorialMonth;
   bool memorialIsLeap;
   String notes;
+  String generation;
 
   List<Object?> get _props => [
         fullName,
@@ -91,6 +99,7 @@ class PersonFormValues {
         memorialMonth,
         memorialIsLeap,
         notes,
+        generation,
       ];
 
   /// Hai bộ giá trị giống hệt nhau (dùng để biết form đã bị sửa chưa).
@@ -169,11 +178,28 @@ ParsedDate parseDateParts({
   return ParsedDate(date: date, year: yearValue);
 }
 
+/// Số đời: trống = chưa có (null); có thì phải là số nguyên 1 đến 50.
+({int? value, String? error}) parseGeneration(String raw) {
+  final text = raw.trim();
+  if (text.isEmpty) {
+    return (value: null, error: null);
+  }
+  final value = int.tryParse(text);
+  if (value == null || value < kMinGeneration || value > kMaxGeneration) {
+    return (
+      value: null,
+      error: 'Số đời phải là số nguyên từ $kMinGeneration đến $kMaxGeneration.',
+    );
+  }
+  return (value: value, error: null);
+}
+
 /// Trả về các lỗi theo nhóm ô (rỗng = hợp lệ).
 Map<PersonField, String> validatePersonForm(
   PersonFormValues values, {
   required int nowYear,
   bool genderChosen = true,
+  bool validateGeneration = false,
 }) {
   final errors = <PersonField, String>{};
 
@@ -189,6 +215,13 @@ Map<PersonField, String> validatePersonForm(
 
   if (!genderChosen) {
     errors[PersonField.gender] = 'Vui lòng chọn giới tính.';
+  }
+
+  if (validateGeneration) {
+    final generationError = parseGeneration(values.generation).error;
+    if (generationError != null) {
+      errors[PersonField.generation] = generationError;
+    }
   }
   
   final birth = parseDateParts(
@@ -267,8 +300,13 @@ Map<String, dynamic> buildPersonUpdatePayload(
   Person original,
   PersonFormValues values, {
   required int nowYear,
+  bool includeGeneration = false,
 }) {
-  final errors = validatePersonForm(values, nowYear: nowYear);
+  final errors = validatePersonForm(
+    values,
+    nowYear: nowYear,
+    validateGeneration: includeGeneration,
+  );
   if (errors.isNotEmpty) {
     throw ArgumentError('Dữ liệu chưa hợp lệ: ${errors.values.join('; ')}');
   }
@@ -288,6 +326,12 @@ Map<String, dynamic> buildPersonUpdatePayload(
   put('other_name', _text(original.otherName), _text(values.otherName));
   put('gender', original.gender.name, values.gender.name);
   put('branch_id', original.branchId, values.branchId);
+
+  // Số đời chỉ admin được sửa; người thường không bao giờ gửi cột này.
+  if (includeGeneration) {
+    final Object? before = original.generation;
+    put('generation', before, parseGeneration(values.generation).value);
+  }
 
   final birth = parseDateParts(
     day: values.birthDay,
