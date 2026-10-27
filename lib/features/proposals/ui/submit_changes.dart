@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:familytree/core/ui/app_dialogs.dart';
+import 'package:familytree/core/ui/choice_dialog.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/auth/ui/contributor_gate.dart';
 import 'package:familytree/features/proposals/data/change_request_repository.dart';
@@ -69,5 +70,34 @@ Future<void> showSubmitDone(BuildContext context, SubmitOutcome outcome) {
     message: 'Quản trị viên sẽ xem và duyệt đề xuất của bạn.\n'
         'Thay đổi sẽ hiện trên cây sau khi được duyệt.',
     icon: Icons.check_circle_outline,
+  );
+}
+
+/// Hộp thoại xác nhận trước khi gửi/lưu. Trả về true = tiếp tục.
+/// Admin: nút chính là "Xem lại" (chạm ra ngoài hộp thoại = KHÔNG lưu).
+/// Người thường: giữ như cũ, có số "suất" chờ duyệt.
+Future<bool> confirmSubmit(
+  BuildContext context, {
+  required bool isAdmin,
+  required String summary,
+  required int slots,
+}) async {
+  if (isAdmin) {
+    final review = await showChoiceDialog(
+      context,
+      title: 'Lưu thay đổi này?',
+      message: '$summary\n\nThay đổi được áp dụng ngay.',
+      primaryLabel: 'Xem lại',
+      secondaryLabel: 'Lưu thay đổi',
+    );
+    return !review;
+  }
+  return showChoiceDialog(
+    context,
+    title: 'Gửi đề xuất này?',
+    message: '$summary\n\n'
+        'Đề xuất dùng $slots trong tối đa 10 suất chờ duyệt.',
+    primaryLabel: 'Gửi đề xuất',
+    secondaryLabel: 'Xem lại',
   );
 }

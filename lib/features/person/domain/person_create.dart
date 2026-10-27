@@ -219,9 +219,13 @@ List<RequestDraft> planAddChild({
   Person? otherParent,
   required RelationType relation,
   required int nowYear,
+  bool useFormGeneration = false,
 }) {
   final parentGeneration = parent.generation;
   final childGeneration = parentGeneration == null ? null : parentGeneration + 1;
+  // Admin nhập "Số đời" thì dùng; để trống thì tự tính (đời cha/mẹ + 1).
+  final formGeneration =
+      useFormGeneration ? parseGeneration(values.generation).value : null;
 
   return [
     RequestDraft(
@@ -230,7 +234,7 @@ List<RequestDraft> planAddChild({
       payload: buildPersonCreatePayload(
         values,
         id: childId,
-        generation: childGeneration,
+        generation: formGeneration ?? childGeneration,
         nowYear: nowYear,
       ),
     ),
@@ -254,7 +258,10 @@ List<RequestDraft> planAddSpouse({
   required Person partner,
   required MarriageFormValues marriage,
   required int nowYear,
+  bool useFormGeneration = false,
 }) {
+  final formGeneration =
+      useFormGeneration ? parseGeneration(values.generation).value : null;
   final order = orderSpouses(
     existing: partner,
     newId: spouseId,
@@ -267,7 +274,7 @@ List<RequestDraft> planAddSpouse({
       payload: buildPersonCreatePayload(
         values,
         id: spouseId,
-        generation: partner.generation,
+        generation: formGeneration ?? partner.generation,
         nowYear: nowYear,
       ),
     ),

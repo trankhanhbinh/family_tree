@@ -5,14 +5,14 @@ import 'package:familytree/core/ui/app_dialogs.dart';
 import 'package:familytree/core/ui/choice_dialog.dart';
 import 'package:familytree/core/ui/form_widgets.dart';
 import 'package:familytree/core/utils/uuid.dart';
-import 'package:familytree/features/auth/ui/contributor_gate.dart';
+import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/person/domain/person.dart';
 import 'package:familytree/features/person/domain/person_create.dart';
 import 'package:familytree/features/person/domain/person_edit_form.dart';
 import 'package:familytree/features/person/domain/person_relations.dart';
 import 'package:familytree/features/person/ui/person_form_controller.dart';
 import 'package:familytree/features/person/ui/person_form_fields.dart';
-import 'package:familytree/features/proposals/data/change_request_repository.dart';
+import 'package:familytree/features/proposals/ui/submit_changes.dart';
 import 'package:familytree/features/proposals/ui/proposal_placeholder_screen.dart';
 import 'package:familytree/features/proposals/ui/sender_card.dart';
 import 'package:familytree/features/proposals/ui/submit_bar.dart';
@@ -119,9 +119,10 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
     if (_submitting) {
       return;
     }
+    final isAdmin = ref.read(isAdminProvider);
     final nowYear = DateTime.now().year;
 
-    final errors = _form.validate(nowYear: nowYear);
+    final errors = _form.validate(nowYear: nowYear, validateGeneration: isAdmin);
     final otherMissing = _otherChoice == null;
     setState(() {
       _otherError =
@@ -135,8 +136,9 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
       ].map((e) => '• $e').join('\n');
       await showMessageDialog(
         context,
-        title: 'Chưa gửi được',
-        message: 'Vui lòng sửa các mục báo đỏ rồi gửi lại:\n\n$lines',
+        title: isAdmin ? 'Chưa lưu được' : 'Chưa gửi được',
+        message: 'Vui lòng sửa các mục báo đỏ rồi '
+            '${isAdmin ? 'lưu' : 'gửi'} lại:\n\n$lines',
         icon: Icons.error_outline,
         isError: true,
       );
@@ -171,48 +173,37 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
       otherParent: other,
       relation: _relation,
       nowYear: nowYear,
+      useFormGeneration: isAdmin,
     );
 
     final childName = values.fullName.trim().replaceAll(RegExp(r'\s+'), ' ');
     final parentsText = other == null
         ? widget.person.fullName
         : '${widget.person.fullName} và ${other.fullName}';
-    final confirmed = await showChoiceDialog(
+    final proceed = await confirmSubmit(
       context,
-      title: 'Gửi đề xuất này?',
-      message: 'Thêm "$childName" là ${_relationLabel(_relation)} của '
-          '$parentsText.\n\n'
-          'Đề xuất dùng ${drafts.length} trong tối đa 10 suất chờ duyệt.',
-      primaryLabel: 'Gửi đề xuất',
-      secondaryLabel: 'Xem lại',
+      isAdmin: isAdmin,
+      summary: 'Thêm "$childName" là ${_relationLabel(_relation)} của '
+          '$parentsText.',
+      slots: drafts.length,
     );
-    if (!confirmed || !mounted) {
+    if (!proceed || !mounted) {
       return;
     }
 
     setState(() => _submitting = true);
     try {
-      final contributor = await ensureContributor(context, ref);
-      if (contributor == null || !mounted) {
-        return;
-      }
       final note = _adminNote.text.trim();
-      await ref.read(changeRequestRepositoryProvider).submitAll(
-            requesterId: contributor.userId,
-            nickname: contributor.nickname,
-            drafts: drafts,
-            note: note.isEmpty ? null : note,
-          );
-      if (!mounted) {
+      final outcome = await submitChanges(
+        context,
+        ref,
+        drafts: drafts,
+        note: (isAdmin || note.isEmpty) ? null : note,
+      );
+      if (outcome == SubmitOutcome.cancelled || !mounted) {
         return;
       }
-      await showMessageDialog(
-        context,
-        title: 'Đã gửi đề xuất',
-        message: 'Quản trị viên sẽ xem và duyệt.\n'
-            'Người mới sẽ hiện trên cây sau khi được duyệt.',
-        icon: Icons.check_circle_outline,
-      );
+      await showSubmitDone(context, outcome);
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -229,6 +220,7 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = ref.watch(isAdminProvider);
     return ListenableBuilder(
       listenable: _all,
       builder: (context, _) {
@@ -255,19 +247,26 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _intro(),
+                        _intro(isAdmin),
                         _otherParentCard(),
                         _relationCard(),
                         PersonFormFields(
                           controller: _form,
                           branches: widget.branches,
+                          showGeneration: isAdmin,
                         ),
-                        SenderCard(noteController: _adminNote),
+                        if (!isAdmin) SenderCard(noteController: _adminNote),
                       ],
                     ),
                   ),
                 ),
-                SubmitBar(submitting: _submitting, onPressed: _submit),
+                SubmitBar(
+                  submitting: _submitting,
+                  onPressed: _submit,
+                  label: isAdmin ? 'Lưu thay đổi' : 'Gửi đề xuất',
+                  submittingLabel: isAdmin ? 'Đang lưu...' : 'Đang gửi...',
+                  icon: isAdmin ? Icons.save : Icons.send,
+                ),
               ],
             ),
           ),
@@ -276,20 +275,26 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
     );
   }
 
-  Widget _intro() {
+  Widget _intro(bool isAdmin) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text.rich(
         TextSpan(
           style: const TextStyle(fontSize: 16, height: 1.4),
           children: [
-            const TextSpan(text: 'Bạn đang đề xuất thêm một người con cho '),
+            TextSpan(
+              text: isAdmin
+                  ? 'Bạn đang thêm trực tiếp một người con cho '
+                  : 'Bạn đang đề xuất thêm một người con cho ',
+            ),
             TextSpan(
               text: widget.person.fullName,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            const TextSpan(
-              text: '. Người mới chỉ hiện trên cây sau khi được duyệt.',
+            TextSpan(
+              text: isAdmin
+                  ? '. Người mới hiện trên cây ngay sau khi lưu.'
+                  : '. Người mới chỉ hiện trên cây sau khi được duyệt.',
             ),
           ],
         ),
