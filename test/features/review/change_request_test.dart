@@ -144,9 +144,9 @@ void main() {
     expect(bundle.requestIds.toSet(), {'a', 'b'});
   });
 
-  test('hasUnsupported: ảnh -> true; người, cha-con, hôn nhân -> false', () {
-    final photo = groupRequests([_req(entityType: 'person_photo')]).single;
-    expect(photo.hasUnsupported, isTrue);
+  test('hasUnsupported: chi/nhánh -> true; người, cha-con, hôn nhân -> false', () {
+    final branch = groupRequests([_req(entityType: 'branch')]).single;
+    expect(branch.hasUnsupported, isTrue);
 
     final normal = groupRequests([
       _req(id: 'a', entityType: 'person'),

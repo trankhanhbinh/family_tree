@@ -9,18 +9,22 @@ import 'package:familytree/core/ui/choice_dialog.dart';
 import 'package:familytree/core/ui/form_widgets.dart';
 import 'package:familytree/core/utils/uuid.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
+import 'package:familytree/features/auth/ui/contributor_gate.dart';
 import 'package:familytree/features/person/domain/person_photo.dart';
+import 'package:familytree/features/photos/data/pending_photo_service.dart';
 import 'package:familytree/features/photos/data/photo_service.dart';
 import 'package:familytree/features/photos/domain/photo_plans.dart';
 import 'package:familytree/features/photos/domain/photo_rules.dart';
 import 'package:familytree/features/photos/ui/photo_picker.dart';
-import 'package:familytree/features/proposals/ui/proposal_placeholder_screen.dart';
+import 'package:familytree/features/proposals/ui/sender_card.dart';
 import 'package:familytree/features/proposals/ui/submit_bar.dart';
 import 'package:familytree/features/proposals/ui/submit_changes.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 
-/// Admin thêm ảnh cho một người: chọn ảnh, ghi mô tả, lưu.
-/// Thứ tự: tải file lên trước, rồi mới tạo dòng ảnh (database bắt file phải có sẵn).
+/// Thêm ảnh cho một người.
+/// - Admin: tải file lên person-photos rồi tạo dòng ảnh (lưu ngay).
+/// - Người đóng góp: tải file lên pending-photos rồi gửi đề xuất, chờ duyệt.
+/// Luôn tải file lên TRƯỚC; bước sau lỗi thì xóa file vừa tải.
 class AddPhotoScreen extends ConsumerStatefulWidget {
   const AddPhotoScreen({super.key, required this.personId});
 
@@ -32,6 +36,8 @@ class AddPhotoScreen extends ConsumerStatefulWidget {
 
 class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
   final TextEditingController _caption = TextEditingController();
+  final TextEditingController _note = TextEditingController();
+  late final Listenable _all = Listenable.merge([_caption, _note]);
 
   // Id ảnh: sinh MỘT lần cho màn hình này (thử lại sau lỗi vẫn cùng id).
   late final String _photoId = generateUuidV4();
@@ -43,10 +49,14 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
   @override
   void dispose() {
     _caption.dispose();
+    _note.dispose();
     super.dispose();
   }
 
-  bool get _dirty => _photo != null || _caption.text.trim().isNotEmpty;
+  bool get _dirty =>
+      _photo != null ||
+      _caption.text.trim().isNotEmpty ||
+      _note.text.trim().isNotEmpty;
 
   Future<void> _pick() async {
     if (_submitting) {
@@ -88,11 +98,12 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
     if (_submitting) {
       return;
     }
+    final isAdmin = ref.read(isAdminProvider);
     final photo = _photo;
     if (photo == null) {
       await showMessageDialog(
         context,
-        title: 'Chưa lưu được',
+        title: isAdmin ? 'Chưa lưu được' : 'Chưa gửi được',
         message: 'Vui lòng chọn ảnh trước.',
         icon: Icons.error_outline,
         isError: true,
@@ -110,49 +121,114 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
       tree?.photos ?? const <PersonPhoto>[],
       widget.personId,
     );
-    final service = ref.read(photoServiceProvider);
-    final storagePath = buildPhotoStoragePath(
+    final personName = tree?.people
+            .where((p) => p.id == widget.personId)
+            .firstOrNull
+            ?.fullName ??
+        'người này';
+    final photoService = ref.read(photoServiceProvider);
+    final pendingService = ref.read(pendingPhotoServiceProvider);
+    final contentType = photoContentType(photo.extension);
+    final publicPath = buildPhotoStoragePath(
       personId: widget.personId,
       photoId: _photoId,
       extension: photo.extension,
     );
+    final note = _note.text.trim();
 
-    setState(() => _submitting = true);
-    var uploaded = false;
-    var saved = false;
-    try {
-      await service.upload(
-        storagePath: storagePath,
-        bytes: photo.bytes,
-        contentType: photoContentType(photo.extension),
+    if (!isAdmin) {
+      final proceed = await confirmSubmit(
+        context,
+        isAdmin: false,
+        summary: 'Gửi đề xuất thêm ảnh cho $personName?',
+        slots: 1,
       );
-      uploaded = true;
-      if (!mounted) {
+      if (!proceed || !mounted) {
         return;
       }
-      if (!ref.read(isAdminProvider)) {
-        throw const UserFacingException(
-          'Phiên quản trị đã hết. Hãy đăng nhập lại rồi thử lại.',
-        );
+    }
+
+    setState(() => _submitting = true);
+    String? uploadedPath;
+    var uploadedToPending = false;
+    var done = false;
+
+    Future<void> cleanUp() async {
+      final path = uploadedPath;
+      if (path == null) {
+        return;
       }
+      if (uploadedToPending) {
+        await pendingService.removeQuietly(path);
+      } else {
+        await photoService.removeQuietly(path);
+      }
+    }
+
+    try {
+      if (isAdmin) {
+        await photoService.upload(
+          storagePath: publicPath,
+          bytes: photo.bytes,
+          contentType: contentType,
+        );
+        uploadedPath = publicPath;
+        if (!mounted) {
+          return;
+        }
+        if (!ref.read(isAdminProvider)) {
+          throw const UserFacingException(
+            'Phiên quản trị đã hết. Hãy đăng nhập lại rồi thử lại.',
+          );
+        }
+      } else {
+        final contributor = await ensureContributor(context, ref);
+        if (contributor == null || !mounted) {
+          return;
+        }
+        final limitProblem = validatePendingLimit(
+          await pendingService.countOwn(contributor.userId),
+        );
+        if (limitProblem != null) {
+          throw UserFacingException(limitProblem);
+        }
+        final pendingPath = buildPendingPhotoPath(
+          requesterId: contributor.userId,
+          photoId: _photoId,
+          extension: photo.extension,
+        );
+        await pendingService.upload(
+          path: pendingPath,
+          bytes: photo.bytes,
+          contentType: contentType,
+        );
+        uploadedPath = pendingPath;
+        uploadedToPending = true;
+        if (!mounted) {
+          return;
+        }
+      }
+
       final outcome = await submitChanges(
         context,
         ref,
         drafts: planAddPhoto(
           photoId: _photoId,
           personId: widget.personId,
-          storagePath: storagePath,
+          storagePath: publicPath,
           caption: _caption.text,
           sortOrder: nextSortOrder(existing),
-          makeAvatar: existing.isEmpty,
+          makeAvatar: isAdmin && existing.isEmpty,
         ),
+        note: (isAdmin || note.isEmpty) ? null : note,
       );
-      saved = outcome == SubmitOutcome.saved;
-    } catch (error) {
-      // Tạo dòng ảnh lỗi thì dọn file vừa tải để không để file mồ côi.
-      if (uploaded) {
-        await service.removeQuietly(storagePath);
+      if (outcome == SubmitOutcome.cancelled) {
+        await cleanUp();
+        return;
       }
+      done = true;
+    } catch (error) {
+      await cleanUp();
       if (mounted) {
         await showErrorDialog(context, error);
       }
@@ -162,11 +238,14 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
       }
     }
 
-    if (saved && mounted) {
+    if (done && mounted) {
       await showMessageDialog(
         context,
-        title: 'Đã lưu ảnh',
-        message: 'Ảnh đã được thêm vào hồ sơ.',
+        title: isAdmin ? 'Đã lưu ảnh' : 'Đã gửi đề xuất ảnh',
+        message: isAdmin
+            ? 'Ảnh đã được thêm vào hồ sơ.'
+            : 'Quản trị viên sẽ xem và duyệt.\n'
+                'Ảnh sẽ hiện trong hồ sơ sau khi được duyệt.',
         icon: Icons.check_circle_outline,
       );
       if (mounted) {
@@ -178,14 +257,6 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
   @override
   Widget build(BuildContext context) {
     final isAdmin = ref.watch(isAdminProvider);
-    if (!isAdmin) {
-      return const ProposalPlaceholderScreen(
-        title: 'Thêm ảnh',
-        message: 'Chức năng này dành cho quản trị viên. '
-            'Việc gửi ảnh đề xuất sẽ có ở bản cập nhật tới.',
-      );
-    }
-
     final tree = ref.watch(treeDataProvider).value;
     final personName = tree?.people
             .where((p) => p.id == widget.personId)
@@ -195,7 +266,7 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
     final photo = _photo;
 
     return ListenableBuilder(
-      listenable: _caption,
+      listenable: _all,
       builder: (context, _) {
         return PopScope(
           canPop: !_dirty,
@@ -209,7 +280,9 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
             }
           },
           child: Scaffold(
-            appBar: AppBar(title: const Text('Thêm ảnh')),
+            appBar: AppBar(
+              title: Text(isAdmin ? 'Thêm ảnh' : 'Đề xuất thêm ảnh'),
+            ),
             body: Column(
               children: [
                 Expanded(
@@ -223,8 +296,12 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
-                            'Thêm ảnh cho $personName. '
-                            'Ảnh được lưu ngay vào hồ sơ.',
+                            isAdmin
+                                ? 'Thêm ảnh cho $personName. '
+                                    'Ảnh được lưu ngay vào hồ sơ.'
+                                : 'Bạn đang đề xuất thêm ảnh cho $personName. '
+                                    'Ảnh chỉ hiện trong hồ sơ sau khi '
+                                    'quản trị viên duyệt.',
                             style: const TextStyle(fontSize: 16, height: 1.4),
                           ),
                         ),
@@ -257,7 +334,10 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
                               height: 56,
                               child: FilledButton.icon(
                                 onPressed: _submitting ? null : _pick,
-                                icon: const Icon(Icons.add_a_photo_outlined, size: 28),
+                                icon: const Icon(
+                                  Icons.add_a_photo_outlined,
+                                  size: 28,
+                                ),
                                 label: Text(
                                   photo == null ? 'Chọn ảnh' : 'Chọn ảnh khác',
                                   style: const TextStyle(
@@ -287,6 +367,7 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
                             ),
                           ],
                         ),
+                        if (!isAdmin) SenderCard(noteController: _note),
                       ],
                     ),
                   ),
@@ -294,9 +375,9 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
                 SubmitBar(
                   submitting: _submitting,
                   onPressed: _save,
-                  label: 'Lưu ảnh',
+                  label: isAdmin ? 'Lưu ảnh' : 'Gửi đề xuất ảnh',
                   submittingLabel: 'Đang tải lên...',
-                  icon: Icons.save,
+                  icon: isAdmin ? Icons.save : Icons.send,
                 ),
               ],
             ),

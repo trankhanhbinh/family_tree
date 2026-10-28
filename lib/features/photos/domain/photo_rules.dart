@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:familytree/core/errors/app_error_messages.dart';
 import 'package:familytree/features/person/domain/person_photo.dart';
+import 'package:familytree/features/review/domain/change_request.dart';
 
 /// Giới hạn của bucket (3 MB/tệp, JPEG/PNG/WebP).
 const int kMaxPhotoBytes = 3 * 1024 * 1024;
@@ -113,4 +114,99 @@ int nextSortOrder(Iterable<PersonPhoto> photos) {
     }
   }
   return max + 1;
+}
+
+// ---------- 4F-2: ảnh chờ duyệt ----------
+
+/// Mỗi người đóng góp tối đa 10 ảnh chờ (khớp policy của bucket pending-photos).
+const int kMaxPendingPhotos = 10;
+
+const String kPendingPhotoLimitMessage =
+    'Bạn đang có $kMaxPendingPhotos ảnh chờ duyệt. '
+    'Hãy đợi quản trị viên xử lý bớt rồi gửi tiếp.';
+const String kPhotoPendingMissingMessage =
+    'Không tìm thấy tệp ảnh của đề xuất này (có thể người gửi đã xóa). '
+    'Hãy từ chối đề xuất này.';
+const String kInvalidPhotoRequestMessage =
+    'Đề xuất ảnh này có nội dung không hợp lệ. Hãy từ chối đề xuất này.';
+const String kPhotoInvalidFileMessage =
+    'Tệp ảnh của đề xuất không hợp lệ (sai loại hoặc quá lớn). '
+    'Hãy từ chối đề xuất này.';
+
+/// Trả về câu báo lỗi nếu đã đủ số ảnh chờ, hoặc null nếu còn được gửi.
+String? validatePendingLimit(int currentCount) {
+  return currentCount >= kMaxPendingPhotos ? kPendingPhotoLimitMessage : null;
+}
+
+/// Đường dẫn file chờ trong bucket pending-photos: {uid}/{photo_id}.{đuôi}
+String buildPendingPhotoPath({
+  required String requesterId,
+  required String photoId,
+  required String extension,
+}) {
+  return '$requesterId/$photoId.$extension';
+}
+
+/// Đuôi tệp (jpg/png/webp) của một đường dẫn, hoặc null nếu không nhận ra.
+String? extensionOfStoragePath(String path) {
+  final dot = path.lastIndexOf('.');
+  if (dot < 0 || dot == path.length - 1) {
+    return null;
+  }
+  final extension = path.substring(dot + 1).toLowerCase();
+  const allowed = ['jpg', 'png', 'webp'];
+  return allowed.contains(extension) ? extension : null;
+}
+
+/// Một ảnh cần chép từ bucket chờ sang bucket công khai khi duyệt.
+class PhotoMove {
+  const PhotoMove({
+    required this.photoId,
+    required this.pendingPath,
+    required this.publicPath,
+  });
+
+  final String photoId;
+  final String pendingPath;
+  final String publicPath;
+}
+
+/// Dựng đường dẫn chép từ payload của đề xuất ảnh. null nếu payload thiếu/sai.
+PhotoMove? photoMoveOf({
+  required String requesterId,
+  required Map<String, dynamic> payload,
+}) {
+  final id = payload['id'];
+  final storagePath = payload['storage_path'];
+  if (id is! String || storagePath is! String) {
+    return null;
+  }
+  final extension = extensionOfStoragePath(storagePath);
+  if (extension == null) {
+    return null;
+  }
+  return PhotoMove(
+    photoId: id,
+    pendingPath: buildPendingPhotoPath(
+      requesterId: requesterId,
+      photoId: id,
+      extension: extension,
+    ),
+    publicPath: storagePath,
+  );
+}
+
+/// Các ảnh cần chép của một nhóm đề xuất (chỉ dòng person_photo + create).
+List<PhotoMove> photoMovesOf(Iterable<ChangeRequest> requests) {
+  final moves = <PhotoMove>[];
+  for (final r in requests) {
+    if (r.entityType != 'person_photo' || r.action != 'create') {
+      continue;
+    }
+    final move = photoMoveOf(requesterId: r.requesterId, payload: r.payload);
+    if (move != null) {
+      moves.add(move);
+    }
+  }
+  return moves;
 }

@@ -66,6 +66,7 @@ const List<String> kReviewableEntityTypes = [
   'person',
   'parent_child',
   'marriage',
+  'person_photo',
 ];
 
 /// Thứ tự áp dụng (giống hệt hàm SQL approve_change_bundle):

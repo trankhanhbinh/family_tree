@@ -6,6 +6,9 @@ import 'package:familytree/core/ui/choice_dialog.dart';
 import 'package:familytree/core/ui/form_widgets.dart';
 import 'package:familytree/features/person/domain/person_edit_form.dart';
 import 'package:familytree/features/person/domain/relation_changes.dart';
+import 'package:familytree/features/photos/data/photo_review_service.dart';
+import 'package:familytree/features/photos/domain/photo_rules.dart';
+import 'package:familytree/features/photos/ui/review_photo_preview.dart';
 import 'package:familytree/features/review/data/review_repository.dart';
 import 'package:familytree/features/review/domain/change_request.dart';
 import 'package:familytree/features/review/domain/request_describer.dart';
@@ -14,6 +17,7 @@ import 'package:familytree/features/tree/data/tree_repository.dart';
 const Color _kWarningColor = Color(0xFFB26A00);
 
 /// Chi tiết một gói đề xuất: xem từng thay đổi, rồi Duyệt hoặc Từ chối cả gói.
+/// [readOnly] = true: người đóng góp chỉ xem (không có nút Duyệt/Từ chối).
 class BundleDetailScreen extends ConsumerStatefulWidget {
   const BundleDetailScreen({
     super.key,
@@ -22,8 +26,6 @@ class BundleDetailScreen extends ConsumerStatefulWidget {
   });
 
   final ReviewBundle bundle;
-
-  /// true = người đóng góp chỉ xem (không có nút Duyệt/Từ chối).
   final bool readOnly;
 
   @override
@@ -48,7 +50,7 @@ class _BundleDetailScreenState extends ConsumerState<BundleDetailScreen> {
       await showMessageDialog(
         context,
         title: 'Chưa duyệt được',
-        message: 'Gói này có mục mà app chưa hỗ trợ duyệt (ví dụ ảnh). '
+        message: 'Gói này có mục mà app chưa hỗ trợ duyệt. '
             'Hãy xử lý trong Supabase.',
         icon: Icons.info_outline,
         isError: true,
@@ -71,8 +73,16 @@ class _BundleDetailScreenState extends ConsumerState<BundleDetailScreen> {
     }
 
     setState(() => _busy = true);
+    // Lấy sẵn các dịch vụ cần dùng sau các lệnh await.
+    final photoReview = ref.read(photoReviewServiceProvider);
+    final repository = ref.read(reviewRepositoryProvider);
+    var copied = const <PhotoMove>[];
     try {
-      await ref.read(reviewRepositoryProvider).approveBundle(bundle.requestIds);
+      // Đề xuất ảnh: chép file sang bucket công khai TRƯỚC khi duyệt
+      // (database bắt file phải có sẵn).
+      copied = await photoReview.copyForApproval(bundle);
+      await repository.approveBundle(bundle.requestIds);
+      await photoReview.deletePendingFiles(bundle);
       if (!mounted) {
         return;
       }
@@ -88,6 +98,8 @@ class _BundleDetailScreenState extends ConsumerState<BundleDetailScreen> {
         Navigator.of(context).pop();
       }
     } catch (error) {
+      // An toàn: không xóa bản sao nếu dòng ảnh đã tồn tại.
+      await photoReview.rollbackCopies(copied);
       if (!mounted) {
         return;
       }
@@ -110,10 +122,12 @@ class _BundleDetailScreenState extends ConsumerState<BundleDetailScreen> {
     }
 
     setState(() => _busy = true);
+    final photoReview = ref.read(photoReviewServiceProvider);
+    final repository = ref.read(reviewRepositoryProvider);
     try {
-      await ref
-          .read(reviewRepositoryProvider)
-          .rejectBundle(widget.bundle.requestIds, reason);
+      await repository.rejectBundle(widget.bundle.requestIds, reason);
+      // Từ chối xong thì xóa file chờ (nếu xóa lỗi thì bỏ qua).
+      await photoReview.deletePendingFiles(widget.bundle);
       if (!mounted) {
         return;
       }
@@ -187,13 +201,17 @@ class _BundleDetailScreenState extends ConsumerState<BundleDetailScreen> {
                     FormCard(
                       title: 'Ghi chú của người gửi',
                       children: [
-                        Text(note, style: const TextStyle(fontSize: 17, height: 1.4)),
+                        Text(
+                          note,
+                          style: const TextStyle(fontSize: 17, height: 1.4),
+                        ),
                       ],
                     ),
                   FormCard(
                     title: 'Các thay đổi (${described.length})',
                     children: [
-                      for (final item in described) _RequestTile(item: item),
+                      for (final item in described)
+                        _RequestTile(item: item, bundleStatus: bundle.status),
                     ],
                   ),
                 ],
@@ -287,14 +305,16 @@ class _BundleDetailScreenState extends ConsumerState<BundleDetailScreen> {
 }
 
 class _RequestTile extends StatelessWidget {
-  const _RequestTile({required this.item});
+  const _RequestTile({required this.item, required this.bundleStatus});
 
   final DescribedRequest item;
+  final String bundleStatus;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final warning = item.warning;
+    final photo = item.photo;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -315,6 +335,11 @@ class _RequestTile extends StatelessWidget {
                 '• $line',
                 style: const TextStyle(fontSize: 16, height: 1.4),
               ),
+            ),
+          if (photo != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: ReviewPhotoPreview(photo: photo, bundleStatus: bundleStatus),
             ),
           if (warning != null)
             Padding(

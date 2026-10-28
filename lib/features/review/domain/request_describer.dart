@@ -1,5 +1,6 @@
 import 'package:familytree/features/person/domain/branch_path.dart';
 import 'package:familytree/features/person/domain/person.dart';
+import 'package:familytree/features/photos/domain/photo_rules.dart';
 import 'package:familytree/features/review/domain/change_request.dart';
 import 'package:familytree/features/tree/domain/tree_data.dart';
 
@@ -15,6 +16,7 @@ class DescribedRequest {
     this.details = const [],
     this.warning,
     this.supported = true,
+    this.photo,
   });
 
   final String title;
@@ -24,8 +26,19 @@ class DescribedRequest {
   /// Chỉ có với gói ĐANG CHỜ duyệt.
   final String? warning;
 
-  /// false = app chưa hỗ trợ duyệt loại này (ví dụ ảnh).
+  /// false = app chưa hỗ trợ duyệt loại này (ví dụ chi/nhánh).
   final bool supported;
+
+  /// Có giá trị với đề xuất thêm ảnh: để hiện ảnh xem trước.
+  final PhotoRef? photo;
+}
+
+/// Hai đường dẫn của một ảnh: file chờ (bucket riêng) và file công khai.
+class PhotoRef {
+  const PhotoRef({required this.pendingPath, required this.publicPath});
+
+  final String pendingPath;
+  final String publicPath;
 }
 
 /// Giờ địa phương dạng 28/10/2026 10:15.
@@ -106,6 +119,7 @@ DescribedRequest _describe(
     title: described.title,
     details: described.details,
     supported: described.supported,
+    photo: described.photo,
   );
 }
 
@@ -129,6 +143,8 @@ DescribedRequest _describeCore(
       return _describePerson(r, tree, mode);
     case 'parent_child':
       return _describeParentChild(r, tree, names, mode);
+    case 'person_photo':
+      return _describePhoto(r, tree, names);
     default:
       return _describeMarriage(r, tree, names, mode);
   }
@@ -362,6 +378,44 @@ DescribedRequest _describeParentChild(
   return const DescribedRequest(title: 'Gỡ một quan hệ cha mẹ - con');
 }
 
+// ---------- Ảnh ----------
+
+const Map<String, String> _photoLabels = {
+  'caption': 'Mô tả',
+  'is_avatar': 'Ảnh đại diện',
+  'sort_order': 'Thứ tự',
+};
+
+DescribedRequest _describePhoto(
+  ChangeRequest r,
+  TreeData tree,
+  _NameBook names,
+) {
+  if (r.action == 'create') {
+    final personName = names.nameOf(r.payload['person_id']);
+    final caption = _textOf(r.payload['caption']);
+    final move = photoMoveOf(requesterId: r.requesterId, payload: r.payload);
+    return DescribedRequest(
+      title: 'Thêm ảnh cho ${personName ?? '(người không còn trong gia phả)'}',
+      details: [if (caption != null) 'Mô tả: $caption'],
+      warning: personName == null ? _kMissingPersonWarning : null,
+      photo: move == null
+          ? null
+          : PhotoRef(
+              pendingPath: move.pendingPath,
+              publicPath: move.publicPath,
+            ),
+    );
+  }
+  if (r.action == 'update') {
+    return DescribedRequest(
+      title: 'Sửa thông tin một ảnh',
+      details: _diffLines(r.payload, tree, _photoLabels, null),
+    );
+  }
+  return const DescribedRequest(title: 'Xóa một ảnh khỏi hồ sơ');
+}
+
 // ---------- Hôn nhân ----------
 
 const Map<String, String> _marriageLabels = {
@@ -481,6 +535,7 @@ String _display(String column, Object? value, TreeData tree) {
     case 'is_alive':
       return value == true ? 'Còn sống' : 'Đã mất';
     case 'memorial_is_leap':
+    case 'is_avatar':
       return value == true ? 'Có' : 'Không';
     case 'branch_id':
       return branchPathOf(value.toString(), tree.branches) ?? 'Không rõ';

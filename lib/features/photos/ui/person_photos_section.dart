@@ -11,7 +11,7 @@ import 'package:familytree/features/photos/ui/photo_viewer_screen.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 
 /// Card "Ảnh" ở màn chi tiết người: lưới ảnh thu nhỏ, chạm để xem toàn màn hình.
-/// Admin có thêm nút "Thêm ảnh".
+/// Admin: "Thêm ảnh" (lưu ngay). Người thường: "Đề xuất thêm ảnh" (chờ duyệt).
 class PersonPhotosSection extends ConsumerWidget {
   const PersonPhotosSection({super.key, required this.personId});
 
@@ -70,21 +70,22 @@ class PersonPhotosSection extends ConsumerWidget {
                     ),
                 ],
               ),
-            if (isAdmin) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: OutlinedButton.icon(
-                  onPressed: () => context.push('/person/$personId/add-photo'),
-                  icon: const Icon(Icons.add_a_photo_outlined, size: 28),
-                  label: const Text(
-                    'Thêm ảnh',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/person/$personId/add-photo'),
+                icon: const Icon(Icons.add_a_photo_outlined, size: 28),
+                label: Text(
+                  isAdmin ? 'Thêm ảnh' : 'Đề xuất thêm ảnh',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-            ],
+            ),
           ],
         ),
       ),

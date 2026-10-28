@@ -122,8 +122,8 @@ void main() {
     expect(result.single.warning, isNotNull);
   });
 
-  test('ảnh -> app chưa hỗ trợ', () {
-    final result = _describe([_req(entityType: 'person_photo')], _tree());
+  test('chi/nhánh -> app chưa hỗ trợ', () {
+    final result = _describe([_req(entityType: 'branch')], _tree());
     expect(result.single.supported, isFalse);
   });
 
