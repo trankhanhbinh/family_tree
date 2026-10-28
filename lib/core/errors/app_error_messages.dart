@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Câu chung cho mọi mã lỗi lạ.
@@ -23,6 +24,24 @@ const String kTooManyAttemptsMessage =
 const String kRelatedDataMissingMessage =
     'Dữ liệu liên quan không còn tồn tại. '
     'Hãy bấm "Làm mới" ở màn hình cây rồi thử lại.';
+
+/// Lỗi ảnh.
+const String kPhotoTooLargeMessage =
+    'Ảnh quá lớn (tối đa 3 MB). Hãy chọn ảnh nhỏ hơn.';
+const String kPhotoTypeMessage = 'Chỉ nhận ảnh JPEG, PNG hoặc WebP.';
+const String kPhotoPermissionMessage =
+    'Ứng dụng chưa được cấp quyền truy cập ảnh hoặc camera. '
+    'Hãy cấp quyền trong phần Cài đặt của điện thoại rồi thử lại.';
+
+/// Lỗi do chính app tạo ra, đã có sẵn câu tiếng Việt để hiện cho người dùng.
+class UserFacingException implements Exception {
+  const UserFacingException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'UserFacingException';
+}
 
 /// Ném khi đăng nhập thành công nhưng is_admin() trả về false.
 class AdminAccessDeniedException implements Exception {
@@ -85,6 +104,9 @@ String vietnameseErrorMessage(Object error) {
   if (error is AdminAccessDeniedException) {
     return kWrongAdminCodeMessage;
   }
+  if (error is UserFacingException) {
+    return error.message;
+  }
 
   for (final match in _codeToken.allMatches(text)) {
     final message = kErrorMessagesVi[match.group(0)];
@@ -100,6 +122,20 @@ String vietnameseErrorMessage(Object error) {
     }
   }
 
+  if (error is StorageException) {
+    final storageMessage = _storageErrorMessage(error);
+    if (storageMessage != null) {
+      return storageMessage;
+    }
+  }
+
+  if (error is PlatformException) {
+    final code = error.code;
+    if (code.contains('access_denied') || code.contains('permission')) {
+      return kPhotoPermissionMessage;
+    }
+  }
+
   // 42501 = Postgres từ chối quyền (RLS).
   if (error is PostgrestException && error.code == '42501') {
     return kErrorMessagesVi['FORBIDDEN']!;
@@ -109,7 +145,7 @@ String vietnameseErrorMessage(Object error) {
   if (error is PostgrestException && error.code == '23503') {
     return kRelatedDataMissingMessage;
   }
-  
+
   if (_isNetworkError(error, text)) {
     return kNetworkErrorMessage;
   }
@@ -149,6 +185,30 @@ String? _authErrorMessage(AuthException error) {
   if (code == 'invalid_credentials' ||
       message.contains('invalid login credentials')) {
     return kWrongAdminCodeMessage;
+  }
+  return null;
+}
+
+/// Lỗi của Supabase Storage. Trả null nếu không nhận ra.
+String? _storageErrorMessage(StorageException error) {
+  final status = error.statusCode ?? '';
+  final message = error.message.toLowerCase();
+
+  if (status == '413' ||
+      message.contains('too large') ||
+      message.contains('exceeded the maximum')) {
+    return kPhotoTooLargeMessage;
+  }
+  if (status == '415' ||
+      message.contains('mime type') ||
+      message.contains('not supported')) {
+    return kPhotoTypeMessage;
+  }
+  if (status == '401' ||
+      status == '403' ||
+      message.contains('row-level security') ||
+      message.contains('unauthorized')) {
+    return kErrorMessagesVi['FORBIDDEN'];
   }
   return null;
 }

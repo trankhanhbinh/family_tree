@@ -5,13 +5,15 @@ import 'package:familytree/core/utils/date_format.dart';
 import 'package:familytree/features/person/domain/branch_path.dart';
 import 'package:familytree/features/person/domain/person.dart';
 import 'package:familytree/features/person/domain/person_relations.dart';
+import 'package:familytree/features/photos/ui/person_photos_section.dart';
+import 'package:familytree/features/photos/ui/photo_avatar.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/domain/marriage.dart';
 import 'package:familytree/features/tree/domain/parent_child.dart';
 import 'package:familytree/features/tree/data/family_forest_provider.dart';
 import 'package:familytree/features/tree/data/focus_request_provider.dart';
 
-/// Màn hình chi tiết người. Giai đoạn 4 sẽ thêm danh sách ảnh và nút "Đề xuất sửa".
+/// Màn hình chi tiết người (thông tin, ảnh, gia đình, các nút đề xuất).
 class PersonScreen extends ConsumerWidget {
   const PersonScreen({super.key, required this.personId});
 
@@ -87,6 +89,7 @@ class PersonScreen extends ConsumerWidget {
         children: _infoRows(person, branchPath),
       ),
       if (!person.isAlive) _memorialSection(person),
+      PersonPhotosSection(personId: person.id),
       ..._familySection(context, relations),
       _SectionCard(
         title: 'Thêm / sửa người thân',
@@ -373,18 +376,12 @@ class _Header extends StatelessWidget {
 
     return Column(
       children: [
-        // Giai đoạn 5: thay chữ cái bằng ảnh đại diện nếu có.
-        CircleAvatar(
+        PhotoAvatar(
+          personId: person.id,
           radius: 44,
-          backgroundColor: accent.withValues(alpha: 0.15),
-          child: Text(
-            _initialOf(person.fullName),
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: accent,
-            ),
-          ),
+          accent: accent,
+          initial: _initialOf(person.fullName),
+          fontSize: 36,
         ),
         const SizedBox(height: 12),
         Text(
@@ -503,13 +500,11 @@ class _PersonTile extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
-      leading: CircleAvatar(
+      leading: PhotoAvatar(
+        personId: person.id,
         radius: 18,
-        backgroundColor: accent.withValues(alpha: 0.15),
-        child: Text(
-          _initialOf(person.fullName),
-          style: TextStyle(fontWeight: FontWeight.bold, color: accent),
-        ),
+        accent: accent,
+        initial: _initialOf(person.fullName),
       ),
       title: Text(person.fullName),
       subtitle: Text(subtitle),

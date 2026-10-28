@@ -2,6 +2,7 @@
 const String kEntityPerson = 'person';
 const String kEntityParentChild = 'parent_child';
 const String kEntityMarriage = 'marriage';
+const String kEntityPersonPhoto = 'person_photo';
 
 const String kActionCreate = 'create';
 const String kActionUpdate = 'update';
