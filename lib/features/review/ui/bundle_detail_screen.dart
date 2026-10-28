@@ -15,9 +15,16 @@ const Color _kWarningColor = Color(0xFFB26A00);
 
 /// Chi tiết một gói đề xuất: xem từng thay đổi, rồi Duyệt hoặc Từ chối cả gói.
 class BundleDetailScreen extends ConsumerStatefulWidget {
-  const BundleDetailScreen({super.key, required this.bundle});
+  const BundleDetailScreen({
+    super.key,
+    required this.bundle,
+    this.readOnly = false,
+  });
 
   final ReviewBundle bundle;
+
+  /// true = người đóng góp chỉ xem (không có nút Duyệt/Từ chối).
+  final bool readOnly;
 
   @override
   ConsumerState<BundleDetailScreen> createState() => _BundleDetailScreenState();
@@ -160,7 +167,9 @@ class _BundleDetailScreenState extends ConsumerState<BundleDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Đề xuất của ${bundle.nickname}',
+                    widget.readOnly
+                        ? 'Đề xuất của bạn'
+                        : 'Đề xuất của ${bundle.nickname}',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -172,7 +181,8 @@ class _BundleDetailScreenState extends ConsumerState<BundleDetailScreen> {
                     style: const TextStyle(fontSize: 15),
                   ),
                   const SizedBox(height: 12),
-                  if (!bundle.isPending) _statusCard(bundle, scheme),
+                  if (!bundle.isPending || widget.readOnly)
+                    _statusCard(bundle, scheme),
                   if (note != null)
                     FormCard(
                       title: 'Ghi chú của người gửi',
@@ -190,7 +200,8 @@ class _BundleDetailScreenState extends ConsumerState<BundleDetailScreen> {
               ),
             ),
           ),
-          if (bundle.isPending) _actionBar(described.length, scheme),
+          if (bundle.isPending && !widget.readOnly)
+            _actionBar(described.length, scheme),
         ],
       ),
     );
@@ -203,6 +214,11 @@ class _BundleDetailScreenState extends ConsumerState<BundleDetailScreen> {
     return FormCard(
       title: bundle.statusLabel,
       children: [
+        if (bundle.isPending)
+          const Text(
+            'Quản trị viên chưa xem đề xuất này.',
+            style: TextStyle(fontSize: 16),
+          ),
         if (reviewed != null)
           Text(
             'Xử lý lúc ${formatDateTime(reviewed)}',

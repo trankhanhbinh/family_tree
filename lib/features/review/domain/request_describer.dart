@@ -8,7 +8,7 @@ const String _kMissingWarning =
 const String _kMissingPersonWarning =
     'Có người trong đề xuất này không còn trong gia phả.';
 
-/// Một đề xuất đã được "đọc hiểu" để hiện cho admin.
+/// Một đề xuất đã được "đọc hiểu" để hiện cho người xem.
 class DescribedRequest {
   const DescribedRequest({
     required this.title,
@@ -21,6 +21,7 @@ class DescribedRequest {
   final List<String> details;
 
   /// Cảnh báo (màu cam), ví dụ mục bị sửa/xóa không còn trên cây.
+  /// Chỉ có với gói ĐANG CHỜ duyệt.
   final String? warning;
 
   /// false = app chưa hỗ trợ duyệt loại này (ví dụ ảnh).
@@ -34,11 +35,27 @@ String formatDateTime(DateTime value) {
       '${_two(local.hour)}:${_two(local.minute)}';
 }
 
+/// Cách đọc hiểu tùy trạng thái của gói:
+/// - pending: so "cũ → mới" với cây hiện tại, có cảnh báo mục lỗi thời.
+/// - rejected: so "cũ → mới" (cây không đổi), không cảnh báo.
+/// - approved: thay đổi đã được áp dụng vào cây, nên chỉ hiện giá trị mới.
+class _Mode {
+  const _Mode({required this.pending, required this.applied});
+
+  final bool pending;
+  final bool applied;
+}
+
 /// Đọc hiểu cả gói, giữ đúng thứ tự của bundle.requests.
 List<DescribedRequest> describeBundle(ReviewBundle bundle, TreeData tree) {
   final names = _NameBook(bundle, tree);
+  final mode = _Mode(
+    pending: bundle.isPending,
+    applied: bundle.status == 'approved',
+  );
   return [
-    for (final request in bundle.requests) _describe(request, tree, names),
+    for (final request in bundle.requests)
+      _describe(request, tree, names, mode),
   ];
 }
 
@@ -74,7 +91,30 @@ class _NameBook {
 
 // ---------- Điều phối ----------
 
-DescribedRequest _describe(ChangeRequest r, TreeData tree, _NameBook names) {
+DescribedRequest _describe(
+  ChangeRequest r,
+  TreeData tree,
+  _NameBook names,
+  _Mode mode,
+) {
+  final described = _describeCore(r, tree, names, mode);
+  if (mode.pending || described.warning == null) {
+    return described;
+  }
+  // Gói đã xử lý: cảnh báo "mục lỗi thời" không còn ý nghĩa.
+  return DescribedRequest(
+    title: described.title,
+    details: described.details,
+    supported: described.supported,
+  );
+}
+
+DescribedRequest _describeCore(
+  ChangeRequest r,
+  TreeData tree,
+  _NameBook names,
+  _Mode mode,
+) {
   if (!kReviewableEntityTypes.contains(r.entityType)) {
     return DescribedRequest(title: _unsupportedTitle(r), supported: false);
   }
@@ -86,11 +126,11 @@ DescribedRequest _describe(ChangeRequest r, TreeData tree, _NameBook names) {
   }
   switch (r.entityType) {
     case 'person':
-      return _describePerson(r, tree);
+      return _describePerson(r, tree, mode);
     case 'parent_child':
-      return _describeParentChild(r, tree, names);
+      return _describeParentChild(r, tree, names, mode);
     default:
-      return _describeMarriage(r, tree, names);
+      return _describeMarriage(r, tree, names, mode);
   }
 }
 
@@ -123,7 +163,7 @@ const Map<String, String> _personLabels = {
   'notes': 'Ghi chú',
 };
 
-DescribedRequest _describePerson(ChangeRequest r, TreeData tree) {
+DescribedRequest _describePerson(ChangeRequest r, TreeData tree, _Mode mode) {
   final person = tree.people.where((p) => p.id == r.entityId).firstOrNull;
 
   if (r.action == 'create') {
@@ -142,21 +182,28 @@ DescribedRequest _describePerson(ChangeRequest r, TreeData tree) {
         r.payload,
         tree,
         _personLabels,
-        person == null ? null : (column) => _personColumn(person, column),
+        (person == null || mode.applied)
+            ? null
+            : (column) => _personColumn(person, column),
       ),
       warning: person == null ? _kMissingWarning : null,
     );
   }
 
   // delete
-  return DescribedRequest(
-    title: 'Xóa người: '
-        '${person?.fullName ?? '(người không còn trong gia phả)'}',
-    details: person == null
-        ? const []
-        : const ['Người này sẽ bị xóa khỏi gia phả.'],
-    warning: person == null ? _kMissingWarning : null,
-  );
+  if (person != null) {
+    return DescribedRequest(
+      title: 'Xóa người: ${person.fullName}',
+      details: const ['Người này sẽ bị xóa khỏi gia phả.'],
+    );
+  }
+  if (mode.pending) {
+    return const DescribedRequest(
+      title: 'Xóa người: (người không còn trong gia phả)',
+      warning: _kMissingWarning,
+    );
+  }
+  return const DescribedRequest(title: 'Xóa một người khỏi gia phả');
 }
 
 List<String> _personCreateDetails(Map<String, dynamic> payload, TreeData tree) {
@@ -274,6 +321,7 @@ DescribedRequest _describeParentChild(
   ChangeRequest r,
   TreeData tree,
   _NameBook names,
+  _Mode mode,
 ) {
   final link = tree.parentChildren.where((pc) => pc.id == r.entityId).firstOrNull;
 
@@ -293,21 +341,25 @@ DescribedRequest _describeParentChild(
   if (r.action == 'update') {
     final newType = r.payload['relation_type'];
     final oldType = link?.relationType.name;
+    final typeLine = mode.applied
+        ? 'Loại quan hệ mới: ${_capitalize(_relationName(newType))}'
+        : 'Loại quan hệ: ${_capitalize(_relationName(oldType))} → '
+            '${_capitalize(_relationName(newType))}';
     return DescribedRequest(
       title: 'Đổi loại quan hệ: ${child ?? '?'}',
-      details: [
-        'Cha/mẹ: ${parent ?? '?'}',
-        'Loại quan hệ: ${_capitalize(_relationName(oldType))} → '
-            '${_capitalize(_relationName(newType))}',
-      ],
+      details: ['Cha/mẹ: ${parent ?? '?'}', typeLine],
       warning: link == null ? _kMissingWarning : null,
     );
   }
 
-  return DescribedRequest(
-    title: 'Gỡ quan hệ: ${parent ?? '?'} là cha/mẹ của ${child ?? '?'}',
-    warning: link == null ? _kMissingWarning : null,
-  );
+  // delete
+  if (link != null || mode.pending) {
+    return DescribedRequest(
+      title: 'Gỡ quan hệ: ${parent ?? '?'} là cha/mẹ của ${child ?? '?'}',
+      warning: link == null ? _kMissingWarning : null,
+    );
+  }
+  return const DescribedRequest(title: 'Gỡ một quan hệ cha mẹ - con');
 }
 
 // ---------- Hôn nhân ----------
@@ -323,6 +375,7 @@ DescribedRequest _describeMarriage(
   ChangeRequest r,
   TreeData tree,
   _NameBook names,
+  _Mode mode,
 ) {
   if (r.action == 'create') {
     final n1 = names.nameOf(r.payload['person1_id']);
@@ -359,7 +412,7 @@ DescribedRequest _describeMarriage(
         r.payload,
         tree,
         _marriageLabels,
-        marriage == null
+        (marriage == null || mode.applied)
             ? null
             : (column) {
                 switch (column) {
@@ -380,10 +433,14 @@ DescribedRequest _describeMarriage(
     );
   }
 
-  return DescribedRequest(
-    title: 'Gỡ hôn nhân: $pair',
-    warning: marriage == null ? _kMissingWarning : null,
-  );
+  // delete
+  if (marriage != null || mode.pending) {
+    return DescribedRequest(
+      title: 'Gỡ hôn nhân: $pair',
+      warning: marriage == null ? _kMissingWarning : null,
+    );
+  }
+  return const DescribedRequest(title: 'Gỡ một hôn nhân');
 }
 
 // ---------- Hàm nhỏ dùng chung ----------

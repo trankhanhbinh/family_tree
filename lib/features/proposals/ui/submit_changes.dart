@@ -7,6 +7,7 @@ import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/auth/ui/contributor_gate.dart';
 import 'package:familytree/features/proposals/data/change_request_repository.dart';
 import 'package:familytree/features/proposals/domain/request_draft.dart';
+import 'package:familytree/features/review/data/review_repository.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 
 enum SubmitOutcome {
@@ -46,6 +47,7 @@ Future<SubmitOutcome> submitChanges(
       note: note,
       noteIndex: noteIndex,
     );
+    container.invalidate(myBundlesProvider);
     return SubmitOutcome.proposed;
   }
 
@@ -67,7 +69,8 @@ Future<void> showSubmitDone(BuildContext context, SubmitOutcome outcome) {
   return showMessageDialog(
     context,
     title: 'Đã gửi đề xuất',
-    message: 'Quản trị viên sẽ xem và duyệt đề xuất của bạn.\n'
+    message:
+        'Quản trị viên sẽ xem và duyệt đề xuất của bạn.\n'
         'Thay đổi sẽ hiện trên cây sau khi được duyệt.',
     icon: Icons.check_circle_outline,
   );
@@ -95,7 +98,8 @@ Future<bool> confirmSubmit(
   return showChoiceDialog(
     context,
     title: 'Gửi đề xuất này?',
-    message: '$summary\n\n'
+    message:
+        '$summary\n\n'
         'Đề xuất dùng $slots trong tối đa 10 suất chờ duyệt.',
     primaryLabel: 'Gửi đề xuất',
     secondaryLabel: 'Xem lại',

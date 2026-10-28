@@ -121,7 +121,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final bundle = bundles[index];
-        return _BundleCard(
+        return BundleCard(
           bundle: bundle,
           described: describeBundle(bundle, tree),
           onTap: () => _open(bundle),
@@ -131,8 +131,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   }
 }
 
-class _BundleCard extends StatelessWidget {
-  const _BundleCard({
+class BundleCard extends StatelessWidget {
+  const BundleCard({
+    super.key,
     required this.bundle,
     required this.described,
     required this.onTap,
@@ -215,6 +216,14 @@ class _BundleCard extends StatelessWidget {
                           ? const Color(0xFF2E7D32)
                           : scheme.error,
                     ),
+                  ),
+                ),
+              if (bundle.status == 'rejected' && bundle.rejectReason != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Lý do: ${bundle.rejectReason}',
+                    style: const TextStyle(fontSize: 16, height: 1.3),
                   ),
                 ),
               const SizedBox(height: 12),

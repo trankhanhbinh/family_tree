@@ -9,6 +9,7 @@ import 'package:familytree/features/person/ui/person_screen.dart';
 import 'package:familytree/features/person/ui/relation_type_screen.dart';
 import 'package:familytree/features/person/ui/relations_screen.dart';
 import 'package:familytree/features/person/ui/remove_screens.dart';
+import 'package:familytree/features/review/ui/my_requests_screen.dart';
 import 'package:familytree/features/review/ui/review_screen.dart';
 import 'package:familytree/features/tree/ui/search_screen.dart';
 import 'package:familytree/features/tree/ui/splash_screen.dart';
@@ -37,6 +38,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/requests',
         builder: (context, state) => const ReviewScreen(),
+      ),
+      GoRoute(
+        path: '/my-requests',
+        builder: (context, state) => const MyRequestsScreen(),
       ),
       GoRoute(
         path: '/person/:id',

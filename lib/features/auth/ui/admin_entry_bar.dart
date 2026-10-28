@@ -7,7 +7,8 @@ import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/review/data/review_repository.dart';
 
 /// Thanh cao 56 ở cuối màn hình cây.
-/// Người thường: nút "Quản trị viên". Admin: "Duyệt đề xuất (N)" + "Đăng xuất".
+/// Người thường: "Đề xuất của tôi (N)" | "Quản trị viên".
+/// Admin: "Duyệt đề xuất (N)" | "Đăng xuất".
 class AdminEntryBar extends ConsumerWidget {
   const AdminEntryBar({super.key});
 
@@ -31,69 +32,81 @@ class AdminEntryBar extends ConsumerWidget {
     await notifier.signOut();
   }
 
+  Widget _halfButton({
+    required String label,
+    required VoidCallback onPressed,
+    required Color color,
+  }) {
+    return Expanded(
+      child: TextButton(
+        style: TextButton.styleFrom(
+          minimumSize: const Size.fromHeight(56),
+          foregroundColor: color,
+        ),
+        onPressed: onPressed,
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdmin = ref.watch(isAdminProvider);
     final notifier = ref.read(isAdminProvider.notifier);
     final pendingCount = ref.watch(pendingCountProvider);
+    final myPendingCount = ref.watch(myPendingCountProvider);
     final scheme = Theme.of(context).colorScheme;
 
-    final Widget content;
+    final String leftLabel;
+    final VoidCallback leftAction;
+    final String rightLabel;
+    final VoidCallback rightAction;
+    final Color rightColor;
+
     if (isAdmin) {
-      final reviewLabel = (pendingCount == null || pendingCount == 0)
+      leftLabel = (pendingCount == null || pendingCount == 0)
           ? 'Duyệt đề xuất'
           : 'Duyệt đề xuất ($pendingCount)';
-      content = Row(
-        children: [
-          Expanded(
-            child: TextButton(
-              style: TextButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
-                foregroundColor: scheme.onSurface,
-              ),
-              onPressed: () => context.push('/admin/requests'),
-              child: Text(
-                reviewLabel,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-          const VerticalDivider(width: 1, indent: 10, endIndent: 10),
-          Expanded(
-            child: TextButton(
-              style: TextButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
-                foregroundColor: scheme.error,
-              ),
-              onPressed: () => _confirmLogout(context, notifier),
-              child: const Text(
-                'Đăng xuất',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-        ],
-      );
+      leftAction = () => context.push('/admin/requests');
+      rightLabel = 'Đăng xuất';
+      rightAction = () => _confirmLogout(context, notifier);
+      rightColor = scheme.error;
     } else {
-      content = TextButton.icon(
-        style: TextButton.styleFrom(
-          minimumSize: const Size.fromHeight(56),
-          foregroundColor: scheme.onSurface,
-        ),
-        onPressed: () => context.push('/admin-login'),
-        icon: const Icon(Icons.admin_panel_settings_outlined, size: 24),
-        label: const Text(
-          'Quản trị viên',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-        ),
-      );
+      leftLabel = (myPendingCount == null || myPendingCount == 0)
+          ? 'Đề xuất của tôi'
+          : 'Đề xuất của tôi ($myPendingCount)';
+      leftAction = () => context.push('/my-requests');
+      rightLabel = 'Quản trị viên';
+      rightAction = () => context.push('/admin-login');
+      rightColor = scheme.onSurface;
     }
 
     return Material(
       color: scheme.surfaceContainerHighest,
       child: SafeArea(
         top: false,
-        child: SizedBox(height: 56, child: content),
+        child: SizedBox(
+          height: 56,
+          child: Row(
+            children: [
+              _halfButton(
+                label: leftLabel,
+                onPressed: leftAction,
+                color: scheme.onSurface,
+              ),
+              const VerticalDivider(width: 1, indent: 10, endIndent: 10),
+              _halfButton(
+                label: rightLabel,
+                onPressed: rightAction,
+                color: rightColor,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

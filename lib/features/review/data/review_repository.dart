@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:familytree/features/auth/data/admin_provider.dart';
+import 'package:familytree/features/auth/data/auth_service.dart';
 import 'package:familytree/features/review/domain/change_request.dart';
 import 'package:familytree/features/tree/data/clan_info_provider.dart';
 
@@ -27,6 +28,18 @@ class ReviewRepository {
         .from('change_requests')
         .select()
         .neq('status', 'pending')
+        .order('created_at', ascending: false)
+        .limit(300)
+        .timeout(const Duration(seconds: 20));
+    return rows.map(ChangeRequest.fromJson).toList();
+  }
+
+  /// Mọi dòng đề xuất do người dùng [requesterId] gửi (mới nhất trước).
+  Future<List<ChangeRequest>> fetchMine(String requesterId) async {
+    final rows = await _client
+        .from('change_requests')
+        .select()
+        .eq('requester_id', requesterId)
         .order('created_at', ascending: false)
         .limit(300)
         .timeout(const Duration(seconds: 20));
@@ -86,4 +99,36 @@ final pendingCountProvider = Provider<int?>((ref) {
     return null;
   }
   return ref.watch(pendingBundlesProvider).value?.length;
+});
+
+/// Các gói đề xuất do CHÍNH máy này gửi (danh tính ẩn danh hiện tại),
+/// mới nhất trước. Admin: danh sách rỗng (admin dùng màn "Duyệt đề xuất").
+final myBundlesProvider = FutureProvider<List<ReviewBundle>>(
+  retry: (retryCount, error) => null,
+  (ref) async {
+    if (ref.watch(isAdminProvider)) {
+      return const <ReviewBundle>[];
+    }
+    final repository = ref.watch(reviewRepositoryProvider);
+    final auth = ref.read(authServiceProvider);
+    await auth.trySignInQuietly();
+    final userId = auth.currentUser?.id;
+    if (userId == null) {
+      return const <ReviewBundle>[];
+    }
+    final requests = await repository.fetchMine(userId);
+    return groupRequests(requests, oldestFirst: false);
+  },
+);
+
+/// Số gói của tôi đang chờ duyệt (hiện trên thanh dưới). null = chưa biết.
+final myPendingCountProvider = Provider<int?>((ref) {
+  if (ref.watch(isAdminProvider)) {
+    return null;
+  }
+  final bundles = ref.watch(myBundlesProvider).value;
+  if (bundles == null) {
+    return null;
+  }
+  return bundles.where((b) => b.isPending).length;
 });
