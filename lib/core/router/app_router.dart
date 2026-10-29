@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:familytree/features/auth/ui/admin_login_screen.dart';
+import 'package:familytree/features/backup/ui/backup_screen.dart';
 import 'package:familytree/features/history/ui/history_screen.dart';
 import 'package:familytree/features/history/ui/deleted_people_screen.dart';
 import 'package:familytree/features/person/ui/add_child_screen.dart';
@@ -50,6 +51,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/photo-cleanup',
         builder: (context, state) => const PhotoCleanupScreen(),
+      ),
+      GoRoute(
+        path: '/backup',
+        builder: (context, state) => const BackupScreen(),
       ),
       GoRoute(
         path: '/my-requests',

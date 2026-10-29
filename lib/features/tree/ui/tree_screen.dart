@@ -34,6 +34,16 @@ class TreeScreen extends ConsumerWidget {
               foregroundColor: Theme.of(context).colorScheme.onSurface,
             ),
           ),
+          TextButton(
+            onPressed: () => context.push('/backup'),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.onSurface,
+            ),
+            child: const Text(
+              'Sao lưu',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+          ),
           IconButton(
             tooltip: 'Làm mới',
             icon: const Icon(Icons.refresh),
