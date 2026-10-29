@@ -107,6 +107,7 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
       return;
     }
     final drafts = planDeletePhoto(photo);
+    final photoService = ref.read(photoServiceProvider);
     final proceed = await confirmSubmit(
       context,
       isAdmin: true,
@@ -120,6 +121,11 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
     setState(() => _busy = true);
     try {
       final outcome = await submitChanges(context, ref, drafts: drafts);
+      // Dòng ảnh đã xóa thành công thì mới xóa file thật. Lỗi xóa file được
+      // bỏ qua lặng lẽ (file thừa sẽ được dọn bằng công cụ "Dọn file ảnh thừa").
+      if (outcome == SubmitOutcome.saved) {
+        await photoService.removeQuietly(photo.storagePath);
+      }
       if (outcome == SubmitOutcome.cancelled || !mounted) {
         return;
       }
@@ -139,7 +145,6 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
       }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final tree = ref.watch(treeDataProvider).value;
