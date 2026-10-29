@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:familytree/core/ui/form_widgets.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/history/data/history_repository.dart';
-import 'package:familytree/features/history/ui/history_list.dart';
+import 'package:familytree/features/history/ui/history_tab.dart';
 import 'package:familytree/features/proposals/ui/proposal_placeholder_screen.dart';
 import 'package:familytree/features/review/data/review_repository.dart';
 import 'package:familytree/features/review/domain/change_request.dart';
@@ -91,7 +91,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           ),
           Expanded(
             child: listAsync == null
-                ? const HistoryList()
+                ? const HistoryTab()
                 : _content(listAsync, treeAsync),
           ),
         ],
