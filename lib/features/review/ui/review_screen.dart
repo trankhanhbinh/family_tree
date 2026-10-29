@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:familytree/core/ui/form_widgets.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
+import 'package:familytree/features/history/data/history_repository.dart';
+import 'package:familytree/features/history/ui/history_list.dart';
 import 'package:familytree/features/proposals/ui/proposal_placeholder_screen.dart';
 import 'package:familytree/features/review/data/review_repository.dart';
 import 'package:familytree/features/review/domain/change_request.dart';
@@ -11,7 +13,9 @@ import 'package:familytree/features/review/ui/bundle_detail_screen.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/domain/tree_data.dart';
 
-/// Màn hình admin: danh sách gói đề xuất chờ duyệt / đã xử lý.
+enum _ReviewTab { pending, processed, history }
+
+/// Màn hình admin: gói đề xuất chờ duyệt / đã xử lý / lịch sử thay đổi.
 class ReviewScreen extends ConsumerStatefulWidget {
   const ReviewScreen({super.key});
 
@@ -20,11 +24,12 @@ class ReviewScreen extends ConsumerStatefulWidget {
 }
 
 class _ReviewScreenState extends ConsumerState<ReviewScreen> {
-  bool _showPending = true;
+  _ReviewTab _tab = _ReviewTab.pending;
 
   void _refresh() {
     ref.invalidate(pendingBundlesProvider);
     ref.invalidate(processedBundlesProvider);
+    ref.invalidate(historyFeedProvider(null));
     ref.invalidate(treeDataProvider);
   }
 
@@ -47,9 +52,11 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     }
 
     final treeAsync = ref.watch(treeDataProvider);
-    final listAsync = ref.watch(
-      _showPending ? pendingBundlesProvider : processedBundlesProvider,
-    );
+    final AsyncValue<List<ReviewBundle>>? listAsync = switch (_tab) {
+      _ReviewTab.pending => ref.watch(pendingBundlesProvider),
+      _ReviewTab.processed => ref.watch(processedBundlesProvider),
+      _ReviewTab.history => null,
+    };
 
     return Scaffold(
       appBar: AppBar(
@@ -72,16 +79,21 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: BigSegmented<bool>(
+            child: BigSegmented<_ReviewTab>(
               options: const [
-                (true, 'Chờ duyệt'),
-                (false, 'Đã xử lý'),
+                (_ReviewTab.pending, 'Chờ duyệt'),
+                (_ReviewTab.processed, 'Đã xử lý'),
+                (_ReviewTab.history, 'Lịch sử'),
               ],
-              selected: _showPending,
-              onChanged: (value) => setState(() => _showPending = value),
+              selected: _tab,
+              onChanged: (value) => setState(() => _tab = value),
             ),
           ),
-          Expanded(child: _content(listAsync, treeAsync)),
+          Expanded(
+            child: listAsync == null
+                ? const HistoryList()
+                : _content(listAsync, treeAsync),
+          ),
         ],
       ),
     );
@@ -105,7 +117,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            _showPending
+            _tab == _ReviewTab.pending
                 ? 'Không có đề xuất nào đang chờ duyệt.'
                 : 'Chưa có đề xuất nào được xử lý.',
             textAlign: TextAlign.center,

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:familytree/features/auth/ui/admin_login_screen.dart';
+import 'package:familytree/features/history/ui/history_screen.dart';
 import 'package:familytree/features/person/ui/add_child_screen.dart';
 import 'package:familytree/features/person/ui/add_spouse_screen.dart';
 import 'package:familytree/features/person/ui/marriage_edit_screen.dart';
@@ -99,6 +100,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/person/:id/add-photo',
         builder: (context, state) =>
             AddPhotoScreen(personId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/person/:id/history',
+        builder: (context, state) =>
+            HistoryScreen(personId: state.pathParameters['id']!),
       ),
     ],
   );

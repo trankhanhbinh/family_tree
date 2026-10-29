@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:familytree/core/utils/date_format.dart';
+import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/person/domain/branch_path.dart';
 import 'package:familytree/features/person/domain/person.dart';
 import 'package:familytree/features/person/domain/person_relations.dart';
@@ -50,6 +51,7 @@ class PersonScreen extends ConsumerWidget {
       marriages: data.marriages,
     );
     final branchPath = branchPathOf(person.branchId, data.branches);
+    final isAdmin = ref.watch(isAdminProvider);
 
     final sections = <Widget>[
       _Header(person: person),
@@ -135,7 +137,21 @@ class PersonScreen extends ConsumerWidget {
         ],
       ),
       ..._notesSection(person),
-            const SizedBox(height: 8),
+      if (isAdmin) ...[
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 56,
+          child: OutlinedButton.icon(
+            onPressed: () => context.push('/person/${person.id}/history'),
+            icon: const Icon(Icons.history, size: 28),
+            label: const Text(
+              'Lịch sử thay đổi',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+      ],
+      const SizedBox(height: 8),
       SizedBox(
         height: 56,
         child: OutlinedButton.icon(
