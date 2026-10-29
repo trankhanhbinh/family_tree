@@ -12,6 +12,7 @@ import 'package:familytree/features/person/ui/relation_type_screen.dart';
 import 'package:familytree/features/person/ui/relations_screen.dart';
 import 'package:familytree/features/person/ui/remove_screens.dart';
 import 'package:familytree/features/photos/ui/add_photo_screen.dart';
+import 'package:familytree/features/photos/ui/photo_cleanup_screen.dart';
 import 'package:familytree/features/review/ui/my_requests_screen.dart';
 import 'package:familytree/features/review/ui/review_screen.dart';
 import 'package:familytree/features/tree/ui/search_screen.dart';
@@ -45,6 +46,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/deleted',
         builder: (context, state) => const DeletedPeopleScreen(),
+      ),
+      GoRoute(
+        path: '/admin/photo-cleanup',
+        builder: (context, state) => const PhotoCleanupScreen(),
       ),
       GoRoute(
         path: '/my-requests',
