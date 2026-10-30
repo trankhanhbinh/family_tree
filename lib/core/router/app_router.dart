@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:familytree/features/auth/ui/admin_login_screen.dart';
 import 'package:familytree/features/backup/ui/backup_screen.dart';
+import 'package:familytree/features/clan/ui/clan_info_screen.dart';
 import 'package:familytree/features/history/ui/history_screen.dart';
 import 'package:familytree/features/history/ui/deleted_people_screen.dart';
 import 'package:familytree/features/memorial/ui/memorials_screen.dart';
@@ -48,6 +49,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/deleted',
         builder: (context, state) => const DeletedPeopleScreen(),
+      ),
+      GoRoute(
+        path: '/admin/clan',
+        builder: (context, state) => const ClanInfoScreen(),
       ),
       GoRoute(
         path: '/admin/photo-cleanup',

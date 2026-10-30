@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:familytree/features/memorial/domain/upcoming_memorials.dart';
+import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/tree/data/clan_info_provider.dart';
 import 'package:familytree/features/tree/data/collapsed_ids_provider.dart';
 import 'package:familytree/features/tree/data/family_forest_provider.dart';
@@ -36,7 +37,10 @@ class TreeScreen extends ConsumerWidget {
             ),
           ),
           TextButton(
-            onPressed: () => _showMoreSheet(context),
+            onPressed: () => _showMoreSheet(
+              context,
+              isAdmin: ref.read(isAdminProvider),
+            ),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.onSurface,
             ),
@@ -83,20 +87,32 @@ class TreeScreen extends ConsumerWidget {
   }
 }
 
-/// Bảng "Thêm": ngày giỗ sắp tới và sao lưu. Chạm mục nào thì đóng bảng rồi
-/// mở màn đó; "Đóng" hoặc chạm ra ngoài thì không làm gì.
-Future<void> _showMoreSheet(BuildContext context) async {
+/// Bảng "Thêm". Admin thấy thêm các mục quản trị ở TRÊN CÙNG.
+/// Chạm mục nào thì đóng bảng rồi mở màn đó; "Đóng" hoặc chạm ra ngoài thì không làm gì.
+Future<void> _showMoreSheet(
+  BuildContext context, {
+  required bool isAdmin,
+}) async {
   final route = await showModalBottomSheet<String>(
     context: context,
     showDragHandle: true,
+    isScrollControlled: true,
     builder: (sheetContext) {
       return SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (isAdmin) ...[
+                _MoreSheetItem(
+                  title: 'Thông tin dòng họ',
+                  subtitle: 'Sửa tên, nguồn gốc, giới thiệu',
+                  onTap: () => Navigator.of(sheetContext).pop('/admin/clan'),
+                ),
+                const SizedBox(height: 8),
+              ],
               _MoreSheetItem(
                 title: 'Ngày giỗ sắp tới',
                 subtitle: 'Giỗ trong $kMemorialLookaheadDays ngày tới',
@@ -130,7 +146,6 @@ Future<void> _showMoreSheet(BuildContext context) async {
   }
   context.push(route);
 }
-
 class _MoreSheetItem extends StatelessWidget {
   const _MoreSheetItem({
     required this.title,
