@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:familytree/features/memorial/domain/upcoming_memorials.dart';
 import 'package:familytree/features/tree/data/clan_info_provider.dart';
 import 'package:familytree/features/tree/data/collapsed_ids_provider.dart';
 import 'package:familytree/features/tree/data/family_forest_provider.dart';
@@ -35,12 +36,12 @@ class TreeScreen extends ConsumerWidget {
             ),
           ),
           TextButton(
-            onPressed: () => context.push('/backup'),
+            onPressed: () => _showMoreSheet(context),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.onSurface,
             ),
             child: const Text(
-              'Sao lưu',
+              'Thêm',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
           ),
@@ -77,6 +78,83 @@ class TreeScreen extends ConsumerWidget {
             onFocusHandled: ref.read(focusRequestProvider.notifier).clear,
           );
         },
+      ),
+    );
+  }
+}
+
+/// Bảng "Thêm": ngày giỗ sắp tới và sao lưu. Chạm mục nào thì đóng bảng rồi
+/// mở màn đó; "Đóng" hoặc chạm ra ngoài thì không làm gì.
+Future<void> _showMoreSheet(BuildContext context) async {
+  final route = await showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheetContext) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _MoreSheetItem(
+                title: 'Ngày giỗ sắp tới',
+                subtitle: 'Giỗ trong $kMemorialLookaheadDays ngày tới',
+                onTap: () => Navigator.of(sheetContext).pop('/memorials'),
+              ),
+              const SizedBox(height: 8),
+              _MoreSheetItem(
+                title: 'Sao lưu dữ liệu',
+                subtitle: 'Xuất file JSON',
+                onTap: () => Navigator.of(sheetContext).pop('/backup'),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 56,
+                child: TextButton(
+                  onPressed: () => Navigator.of(sheetContext).pop(),
+                  child: const Text(
+                    'Đóng',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+  if (route == null || !context.mounted) {
+    return;
+  }
+  context.push(route);
+}
+
+class _MoreSheetItem extends StatelessWidget {
+  const _MoreSheetItem({
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        subtitle: Text(subtitle, style: const TextStyle(fontSize: 15)),
+        trailing: const Icon(Icons.chevron_right, size: 28),
+        onTap: onTap,
       ),
     );
   }

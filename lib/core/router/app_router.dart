@@ -4,6 +4,7 @@ import 'package:familytree/features/auth/ui/admin_login_screen.dart';
 import 'package:familytree/features/backup/ui/backup_screen.dart';
 import 'package:familytree/features/history/ui/history_screen.dart';
 import 'package:familytree/features/history/ui/deleted_people_screen.dart';
+import 'package:familytree/features/memorial/ui/memorials_screen.dart';
 import 'package:familytree/features/person/ui/add_child_screen.dart';
 import 'package:familytree/features/person/ui/add_spouse_screen.dart';
 import 'package:familytree/features/person/ui/marriage_edit_screen.dart';
@@ -55,6 +56,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/backup',
         builder: (context, state) => const BackupScreen(),
+      ),
+      GoRoute(
+        path: '/memorials',
+        builder: (context, state) => const MemorialsScreen(),
       ),
       GoRoute(
         path: '/my-requests',
