@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'package:familytree/core/ui/app_dialogs.dart';
+import 'package:familytree/core/ui/choice_dialog.dart';
 import 'package:familytree/core/ui/form_widgets.dart';
 import 'package:familytree/features/person/domain/branch_path.dart';
+import 'package:familytree/features/person/domain/memorial_from_death.dart';
+import 'package:familytree/features/person/domain/memorial_labels.dart';
 import 'package:familytree/features/person/domain/person.dart';
 import 'package:familytree/features/person/domain/person_edit_form.dart';
 import 'package:familytree/features/person/ui/person_form_controller.dart';
@@ -284,11 +288,108 @@ class PersonFormFields extends StatelessWidget {
     );
   }
 
+  Future<void> _calculateMemorial(BuildContext context) async {
+    final computed = computeMemorialFromDeath(
+      deathDay: controller.deathDay.text,
+      deathMonth: controller.deathMonth.text,
+      deathYear: controller.deathYear.text,
+      nowYear: DateTime.now().year,
+    );
+    final day = computed.day;
+    final month = computed.month;
+    if (!computed.ok || day == null || month == null) {
+      await showMessageDialog(
+        context,
+        title: 'Chưa tính được ngày giỗ',
+        message: computed.error ?? 'Không tính được ngày giỗ từ ngày mất.',
+        icon: Icons.error_outline,
+        isError: true,
+      );
+      return;
+    }
+
+    final newText = formatMemorialLunar(
+      day: day,
+      month: month,
+      isLeap: computed.isLeap,
+    );
+
+    if (hasMemorialInput(
+      controller.memorialDay.text,
+      controller.memorialMonth.text,
+    )) {
+      final same = isSameMemorial(
+        currentDay: controller.memorialDay.text,
+        currentMonth: controller.memorialMonth.text,
+        currentIsLeap: controller.memorialIsLeap,
+        computed: computed,
+      );
+      if (same) {
+        await showMessageDialog(
+          context,
+          title: 'Ngày giỗ đã đúng',
+          message: 'Ngày giỗ đang nhập ($newText) đã khớp với ngày mất.',
+        );
+        return;
+      }
+      final oldText = describeMemorialInput(
+        day: controller.memorialDay.text,
+        month: controller.memorialMonth.text,
+        isLeap: controller.memorialIsLeap,
+      );
+      if (!context.mounted) {
+        return;
+      }
+      final keep = await showChoiceDialog(
+        context,
+        title: 'Thay ngày giỗ?',
+        message: 'Ngày giỗ đang nhập: $oldText\n'
+            'Ngày giỗ tính từ ngày mất: $newText\n\n'
+            'Bạn muốn giữ ngày giỗ nào?',
+        primaryLabel: 'Giữ nguyên',
+        secondaryLabel: 'Dùng ngày tính được',
+      );
+      if (keep || !context.mounted) {
+        return;
+      }
+    }
+
+    controller.applyMemorial(
+      day: day,
+      month: month,
+      isLeap: computed.isLeap,
+    );
+  }
+
   Widget _memorialCard() {
     final error = controller.errors[PersonField.memorial];
     return FormCard(
       title: 'Ngày giỗ (âm lịch)',
       children: [
+        Builder(
+          builder: (context) {
+            return SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: OutlinedButton.icon(
+                onPressed: () => _calculateMemorial(context),
+                icon: const Icon(Icons.calculate_outlined, size: 28),
+                label: const Text(
+                  'Tính ngày giỗ từ ngày mất',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+              ),
+            );
+          },
+        ),
+        const Padding(
+          padding: EdgeInsets.only(top: 8, bottom: 16),
+          child: Text(
+            'Giỗ tính theo ngày âm lịch của ngày mất. '
+            'Bạn vẫn có thể sửa tay các ô bên dưới.',
+            style: TextStyle(fontSize: 15),
+          ),
+        ),
         KeyedSubtree(
           key: controller.keys[PersonField.memorial],
           child: Column(

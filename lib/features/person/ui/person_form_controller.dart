@@ -104,6 +104,19 @@ class PersonFormController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Điền ô giỗ từ kết quả tính (chưa lưu, người dùng vẫn phải bấm Lưu/Gửi).
+  void applyMemorial({
+    required int day,
+    required int month,
+    required bool isLeap,
+  }) {
+    memorialDay.text = '$day';
+    memorialMonth.text = '$month';
+    _memorialIsLeap = isLeap;
+    errors.remove(PersonField.memorial);
+    notifyListeners();
+  }
+  
   void clearError(PersonField field) {
     if (errors.remove(field) != null) {
       notifyListeners();

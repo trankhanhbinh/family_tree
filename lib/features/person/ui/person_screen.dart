@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:familytree/core/utils/date_format.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/person/domain/branch_path.dart';
+import 'package:familytree/features/person/domain/memorial_date.dart';
+import 'package:familytree/features/person/domain/memorial_labels.dart';
 import 'package:familytree/features/person/domain/person.dart';
 import 'package:familytree/features/person/domain/person_relations.dart';
 import 'package:familytree/features/photos/ui/person_photos_section.dart';
@@ -205,18 +207,39 @@ class PersonScreen extends ConsumerWidget {
   // ---------- Ngày giỗ ----------
 
   Widget _memorialSection(Person person) {
-    final Object? day = person.memorialLunarDay;
-    final Object? month = person.memorialLunarMonth;
-    final leap = person.memorialIsLeap == true;
+    final int? day = person.memorialLunarDay;
+    final int? month = person.memorialLunarMonth;
 
-    String text = 'Chưa cập nhật';
-    if (day != null && month != null) {
-      text = leap ? '$day/$month (nhuận) âm lịch' : '$day/$month âm lịch';
+    final rows = <Widget>[];
+    if (day == null || month == null) {
+      rows.add(const _InfoRow(label: 'Ngày giỗ', value: 'Chưa cập nhật'));
+    } else {
+      rows.add(
+        _InfoRow(
+          label: 'Ngày giỗ',
+          value: formatMemorialLunar(
+            day: day,
+            month: month,
+            isLeap: person.memorialIsLeap,
+          ),
+        ),
+      );
+      final now = DateTime.now();
+      final next = nextMemorialDate(
+        lunarDay: day,
+        lunarMonth: month,
+        today: now,
+      );
+      if (next != null) {
+        rows.add(
+          _InfoRow(
+            label: 'Giỗ tiếp theo',
+            value: formatNextMemorial(next, daysBetween(now, next)),
+          ),
+        );
+      }
     }
-    return _SectionCard(
-      title: 'Ngày giỗ',
-      children: [_InfoRow(label: 'Ngày giỗ', value: text)],
-    );
+    return _SectionCard(title: 'Ngày giỗ', children: rows);
   }
 
   // ---------- Gia đình ----------
