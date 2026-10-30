@@ -994,6 +994,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "15.4.0"
+  vnlunar:
+    dependency: "direct main"
+    description:
+      name: vnlunar
+      sha256: "52b47bbc92b5c507a1363d054b598a5c21839f279fdd4e4527f9f390d6391052"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
   web:
     dependency: transitive
     description:
