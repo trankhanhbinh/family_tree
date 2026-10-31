@@ -38,15 +38,22 @@ Future<bool> _initFirebase() async {
   }
 }
 
-/// TẠM THỜI cho 5F-1 (xóa ở 5F-2): xin quyền thông báo và in token ra log
-/// để thử gửi từ Firebase Console.
+/// TẠM THỜI cho 5F-1 (xóa ở 5F-2): xin quyền thông báo, đăng ký với FCM và in
+/// Firebase Installation ID (FID) ra log để thử gửi.
 Future<void> _debugFirebaseCheck() async {
   try {
-    final settings = await FirebaseMessaging.instance.requestPermission();
+    final messaging = FirebaseMessaging.instance;
+
+    final settings = await messaging.requestPermission();
     debugPrint('FCM_PERMISSION: ${settings.authorizationStatus.name}');
-    final token = await FirebaseMessaging.instance.getToken();
+
+    // Phải lắng nghe onRegistered TRƯỚC khi gọi register().
+    final fidFuture = messaging.onRegistered.first;
+    await messaging.register();
+    final fid = await fidFuture.timeout(const Duration(seconds: 30));
+
     debugPrint('FCM_OK');
-    debugPrint('FCM_TOKEN: $token');
+    debugPrint('FCM_FID: $fid');
   } catch (error) {
     debugPrint('FCM_CHECK_FAILED: $error');
   }
