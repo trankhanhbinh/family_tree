@@ -4,6 +4,7 @@ import 'package:familytree/features/auth/ui/admin_login_screen.dart';
 import 'package:familytree/features/backup/ui/backup_screen.dart';
 import 'package:familytree/features/clan/ui/clan_info_screen.dart';
 import 'package:familytree/features/branch/ui/branch_form_screen.dart';
+import 'package:familytree/features/branch/ui/branch_blocked_screen.dart';
 import 'package:familytree/features/branch/ui/branch_manage_screen.dart';
 import 'package:familytree/features/history/ui/history_screen.dart';
 import 'package:familytree/features/history/ui/deleted_people_screen.dart';
@@ -70,6 +71,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/admin/branches/:id/edit',
         builder: (context, state) => BranchFormScreen(
           branchId: state.pathParameters['id'],
+        ),
+      ),
+      GoRoute(
+        path: '/admin/branches/:id/why-not-delete',
+        builder: (context, state) => BranchBlockedScreen(
+          branchId: state.pathParameters['id']!,
         ),
       ),
       GoRoute(

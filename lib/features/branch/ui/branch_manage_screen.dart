@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:familytree/core/ui/app_dialogs.dart';
+import 'package:familytree/core/ui/choice_dialog.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/branch/data/branch_usage_repository.dart';
 import 'package:familytree/features/branch/domain/branch_changes.dart';
+import 'package:familytree/features/branch/domain/branch_delete_check.dart';
 import 'package:familytree/features/branch/domain/branch_move.dart';
 import 'package:familytree/features/branch/domain/branch_rows.dart';
 import 'package:familytree/features/branch/domain/branch_rules.dart';
@@ -92,7 +94,7 @@ class _BranchBody extends ConsumerWidget {
         const Padding(
           padding: EdgeInsets.only(bottom: 12),
           child: Text(
-            'Chạm vào một chi để đổi tên, chuyển chi hoặc thêm chi con.',
+            'Chạm vào một chi để đổi tên, chuyển chi, thêm chi con hoặc xóa chi.',
             style: TextStyle(fontSize: 16, height: 1.4),
           ),
         ),
@@ -271,7 +273,7 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-/// Bảng thao tác cho một chi. 5E-2c-2 sẽ thêm "Xóa chi".
+/// Bảng thao tác cho một chi.
 Future<void> _showBranchActions(
   BuildContext context,
   WidgetRef ref, {
@@ -317,6 +319,12 @@ Future<void> _showBranchActions(
                 onTap: () => Navigator.of(sheetContext).pop('add-child'),
               ),
               const SizedBox(height: 8),
+              _ActionTile(
+                title: 'Xóa chi',
+                subtitle: 'Chỉ xóa được khi chi đã trống',
+                onTap: () => Navigator.of(sheetContext).pop('delete'),
+              ),
+              const SizedBox(height: 8),
               SizedBox(
                 height: 56,
                 child: TextButton(
@@ -342,6 +350,14 @@ Future<void> _showBranchActions(
     context.push('/admin/branches/new?parent=${branch.id}');
   } else if (choice == 'move') {
     await _moveBranch(
+      context,
+      ref,
+      branch: branch,
+      branches: branches,
+      usage: usage,
+    );
+  } else if (choice == 'delete') {
+    await _deleteBranch(
       context,
       ref,
       branch: branch,
@@ -385,45 +401,37 @@ Future<void> _moveBranch(
     newParentId: newParentId,
     branches: branches,
   );
-  if (error != null) {
-    await showMessageDialog(
-      context,
-      title: 'Chưa chuyển được',
-      message: error,
-      isError: true,
-    );
+}
+/// Xóa chi: chi chưa trống thì mở màn giải thích; chi trống thì xác nhận rồi xóa.
+Future<void> _deleteBranch(
+  BuildContext context,
+  WidgetRef ref, {
+  required Branch branch,
+  required List<Branch> branches,
+  required BranchUsage usage,
+}) async {
+  final blockers = checkBranchDelete(
+    branchId: branch.id,
+    branches: branches,
+    usage: usage,
+  );
+  if (!blockers.canDelete) {
+    context.push('/admin/branches/${branch.id}/why-not-delete');
     return;
   }
 
-  final summary = describeBranchMove(
-    name: branch.name,
-    fromPath: branchPathOf(branch.parentBranchId, branches),
-    toPath: branchPathOf(newParentId, branches),
-    descendantBranchCount: descendantIdsOf(branch.id, branches).length,
-    livingPeopleCount: countLivingInSubtree(
-      branchId: branch.id,
-      branches: branches,
-      usage: usage,
-    ),
-  );
-  final proceed = await confirmSubmit(
+  // Nút chính là lựa chọn AN TOÀN ("Giữ lại"); chạm ra ngoài = giữ lại.
+  final keep = await showChoiceDialog(
     context,
-    isAdmin: true,
-    summary: summary,
-    slots: 0,
+    title: 'Xóa chi này?',
+    message: 'Chi "${branch.name}" đang trống. '
+        'Sau khi xóa sẽ không hoàn lại được.',
+    primaryLabel: 'Giữ lại',
+    secondaryLabel: 'Xóa chi',
   );
-  if (!proceed || !context.mounted) {
+  if (keep || !context.mounted) {
     return;
   }
-
-  final payload = buildBranchMovePayload(
-    newParentId: newParentId,
-    newSortOrder: nextSortOrder(
-      branches: branches,
-      parentBranchId: newParentId,
-      excludeBranchId: branch.id,
-    ),
-  );
 
   SubmitOutcome? outcome;
   try {
@@ -433,9 +441,9 @@ Future<void> _moveBranch(
       drafts: [
         RequestDraft(
           entityType: kEntityBranch,
-          action: kActionUpdate,
+          action: kActionDelete,
           entityId: branch.id,
-          payload: payload,
+          payload: const <String, dynamic>{},
         ),
       ],
     );
@@ -449,5 +457,9 @@ Future<void> _moveBranch(
   if (!context.mounted || outcome != SubmitOutcome.saved) {
     return;
   }
-  await showSubmitDone(context, outcome);
+  await showMessageDialog(
+    context,
+    title: 'Đã xóa chi',
+    message: 'Chi "${branch.name}" đã được xóa.',
+  );
 }
