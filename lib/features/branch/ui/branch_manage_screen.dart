@@ -2,11 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:familytree/core/ui/app_dialogs.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/branch/data/branch_usage_repository.dart';
+import 'package:familytree/features/branch/domain/branch_changes.dart';
+import 'package:familytree/features/branch/domain/branch_move.dart';
 import 'package:familytree/features/branch/domain/branch_rows.dart';
+import 'package:familytree/features/branch/domain/branch_rules.dart';
+import 'package:familytree/features/branch/domain/branch_usage.dart';
+import 'package:familytree/features/branch/ui/branch_picker_sheet.dart';
 import 'package:familytree/features/person/domain/branch_path.dart';
+import 'package:familytree/features/proposals/domain/request_draft.dart';
+import 'package:familytree/features/proposals/ui/submit_changes.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
+import 'package:familytree/features/tree/domain/branch.dart';
 
 /// /admin/branches: danh sách chi/nhánh thụt lề, chạm một chi để thao tác.
 class BranchManageScreen extends ConsumerWidget {
@@ -83,7 +92,7 @@ class _BranchBody extends ConsumerWidget {
         const Padding(
           padding: EdgeInsets.only(bottom: 12),
           child: Text(
-            'Chạm vào một chi để đổi tên hoặc thêm chi con.',
+            'Chạm vào một chi để đổi tên, chuyển chi hoặc thêm chi con.',
             style: TextStyle(fontSize: 16, height: 1.4),
           ),
         ),
@@ -92,9 +101,10 @@ class _BranchBody extends ConsumerWidget {
             row: row,
             onTap: () => _showBranchActions(
               context,
-              branchId: row.branch.id,
-              name: row.branch.name,
-              path: branchPathOf(row.branch.id, tree.branches),
+              ref,
+              branch: row.branch,
+              branches: tree.branches,
+              usage: usage,
             ),
           ),
         const SizedBox(height: 16),
@@ -261,13 +271,15 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-/// Bảng thao tác cho một chi. 5E-2c sẽ thêm "Chuyển sang chi khác" và "Xóa chi".
+/// Bảng thao tác cho một chi. 5E-2c-2 sẽ thêm "Xóa chi".
 Future<void> _showBranchActions(
-  BuildContext context, {
-  required String branchId,
-  required String name,
-  required String? path,
+  BuildContext context,
+  WidgetRef ref, {
+  required Branch branch,
+  required List<Branch> branches,
+  required BranchUsage usage,
 }) async {
+  final path = branchPathOf(branch.id, branches);
   final choice = await showModalBottomSheet<String>(
     context: context,
     showDragHandle: true,
@@ -283,7 +295,7 @@ Future<void> _showBranchActions(
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
-                  path ?? name,
+                  path ?? branch.name,
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
               ),
@@ -291,6 +303,12 @@ Future<void> _showBranchActions(
                 title: 'Đổi tên',
                 subtitle: 'Sửa tên và mô tả của chi này',
                 onTap: () => Navigator.of(sheetContext).pop('rename'),
+              ),
+              const SizedBox(height: 8),
+              _ActionTile(
+                title: 'Chuyển sang chi khác',
+                subtitle: 'Đưa chi này cùng các nhánh con vào chi khác',
+                onTap: () => Navigator.of(sheetContext).pop('move'),
               ),
               const SizedBox(height: 8),
               _ActionTile(
@@ -319,8 +337,117 @@ Future<void> _showBranchActions(
     return;
   }
   if (choice == 'rename') {
-    context.push('/admin/branches/$branchId/edit');
+    context.push('/admin/branches/${branch.id}/edit');
   } else if (choice == 'add-child') {
-    context.push('/admin/branches/new?parent=$branchId');
+    context.push('/admin/branches/new?parent=${branch.id}');
+  } else if (choice == 'move') {
+    await _moveBranch(
+      context,
+      ref,
+      branch: branch,
+      branches: branches,
+      usage: usage,
+    );
   }
+}
+
+/// Chọn chi cha mới, kiểm tra, xác nhận rồi lưu.
+Future<void> _moveBranch(
+  BuildContext context,
+  WidgetRef ref, {
+  required Branch branch,
+  required List<Branch> branches,
+  required BranchUsage usage,
+}) async {
+  // Không cho chọn chính nó và các chi con cháu của nó.
+  final excluded = <String>{branch.id, ...descendantIdsOf(branch.id, branches)};
+  final rows = buildBranchRows(
+    branches: branches,
+    usage: usage,
+    excludeIds: excluded,
+  );
+
+  final pick = await showBranchPickerSheet(
+    context,
+    title: 'Chuyển "${branch.name}" vào chi nào?',
+    rows: rows,
+    currentId: branch.parentBranchId,
+    rootIsCurrent: branch.parentBranchId == null,
+    allowRoot: true,
+  );
+  if (pick == null || !context.mounted) {
+    return;
+  }
+  final newParentId = pick.branchId;
+
+  final error = validateBranchMoveTarget(
+    branch: branch,
+    newParentId: newParentId,
+    branches: branches,
+  );
+  if (error != null) {
+    await showMessageDialog(
+      context,
+      title: 'Chưa chuyển được',
+      message: error,
+      isError: true,
+    );
+    return;
+  }
+
+  final summary = describeBranchMove(
+    name: branch.name,
+    fromPath: branchPathOf(branch.parentBranchId, branches),
+    toPath: branchPathOf(newParentId, branches),
+    descendantBranchCount: descendantIdsOf(branch.id, branches).length,
+    livingPeopleCount: countLivingInSubtree(
+      branchId: branch.id,
+      branches: branches,
+      usage: usage,
+    ),
+  );
+  final proceed = await confirmSubmit(
+    context,
+    isAdmin: true,
+    summary: summary,
+    slots: 0,
+  );
+  if (!proceed || !context.mounted) {
+    return;
+  }
+
+  final payload = buildBranchMovePayload(
+    newParentId: newParentId,
+    newSortOrder: nextSortOrder(
+      branches: branches,
+      parentBranchId: newParentId,
+      excludeBranchId: branch.id,
+    ),
+  );
+
+  SubmitOutcome? outcome;
+  try {
+    outcome = await submitChanges(
+      context,
+      ref,
+      drafts: [
+        RequestDraft(
+          entityType: kEntityBranch,
+          action: kActionUpdate,
+          entityId: branch.id,
+          payload: payload,
+        ),
+      ],
+    );
+  } catch (e) {
+    if (!context.mounted) {
+      return;
+    }
+    await showErrorDialog(context, e);
+    return;
+  }
+  if (!context.mounted || outcome != SubmitOutcome.saved) {
+    return;
+  }
+  await showSubmitDone(context, outcome);
 }
