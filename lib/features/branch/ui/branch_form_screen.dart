@@ -14,7 +14,7 @@ import 'package:familytree/features/proposals/ui/submit_changes.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/domain/branch.dart';
 
-/// Thêm chi (/admin/branches/new?parent=<id>) hoặc đổi tên chi (/admin/branches/:id/edit).
+/// Thêm chi (`/admin/branches/new?parent=<id>`) hoặc đổi tên chi (`/admin/branches/:id/edit`).
 class BranchFormScreen extends ConsumerWidget {
   const BranchFormScreen({super.key, this.branchId, this.parentId});
 

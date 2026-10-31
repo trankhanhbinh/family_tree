@@ -401,6 +401,71 @@ Future<void> _moveBranch(
     newParentId: newParentId,
     branches: branches,
   );
+  if (error != null) {
+    await showMessageDialog(
+      context,
+      title: 'Chưa chuyển được',
+      message: error,
+      isError: true,
+    );
+    return;
+  }
+
+  final summary = describeBranchMove(
+    name: branch.name,
+    fromPath: branchPathOf(branch.parentBranchId, branches),
+    toPath: branchPathOf(newParentId, branches),
+    descendantBranchCount: descendantIdsOf(branch.id, branches).length,
+    livingPeopleCount: countLivingInSubtree(
+      branchId: branch.id,
+      branches: branches,
+      usage: usage,
+    ),
+  );
+
+  // Admin: nút chính "Xem lại" (an toàn), nút phụ "Lưu thay đổi".
+  final proceed = await confirmSubmit(
+    context,
+    isAdmin: true,
+    summary: summary,
+    slots: 0,
+  );
+  if (!proceed || !context.mounted) {
+    return;
+  }
+
+  SubmitOutcome? outcome;
+  try {
+    outcome = await submitChanges(
+      context,
+      ref,
+      drafts: [
+        RequestDraft(
+          entityType: kEntityBranch,
+          action: kActionUpdate,
+          entityId: branch.id,
+          payload: buildBranchMovePayload(
+            newParentId: newParentId,
+            newSortOrder: nextSortOrder(
+              branches: branches,
+              parentBranchId: newParentId,
+              excludeBranchId: branch.id,
+            ),
+          ),
+        ),
+      ],
+    );
+  } catch (e) {
+    if (!context.mounted) {
+      return;
+    }
+    await showErrorDialog(context, e);
+    return;
+  }
+  if (!context.mounted || outcome != SubmitOutcome.saved) {
+    return;
+  }
+  await showSubmitDone(context, outcome);
 }
 /// Xóa chi: chi chưa trống thì mở màn giải thích; chi trống thì xác nhận rồi xóa.
 Future<void> _deleteBranch(
