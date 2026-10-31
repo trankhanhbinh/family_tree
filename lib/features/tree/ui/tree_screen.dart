@@ -112,6 +112,12 @@ Future<void> _showMoreSheet(
                   onTap: () => Navigator.of(sheetContext).pop('/admin/clan'),
                 ),
                 const SizedBox(height: 8),
+                _MoreSheetItem(
+                  title: 'Quản lý chi/nhánh',
+                  subtitle: 'Thêm, đổi tên các chi và nhánh',
+                  onTap: () => Navigator.of(sheetContext).pop('/admin/branches'),
+                ),
+                const SizedBox(height: 8),
               ],
               _MoreSheetItem(
                 title: 'Ngày giỗ sắp tới',
