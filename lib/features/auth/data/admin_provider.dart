@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:familytree/core/config/env.dart';
 import 'package:familytree/core/errors/app_error_messages.dart';
 import 'package:familytree/features/auth/domain/admin_login_rules.dart';
+import 'package:familytree/features/push/data/push_device_controller.dart';
 import 'package:familytree/features/tree/data/clan_info_provider.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 
@@ -81,6 +82,9 @@ class AdminNotifier extends Notifier<bool> {
   }
 
   Future<void> signOut() async {
+    // Xóa dòng thiết bị của máy này TRƯỚC khi đăng xuất (quyền xóa chỉ dành
+    // cho admin). Tối đa 5 giây, không bao giờ ném lỗi.
+    await ref.read(pushDeviceControllerProvider).removeThisDevice();
     await _signOutQuietly();
     if (ref.mounted) {
       state = false;

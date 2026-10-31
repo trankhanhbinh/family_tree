@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:familytree/features/auth/data/admin_provider.dart';
+import 'package:familytree/features/push/data/push_device_controller.dart';
 
 /// Bọc toàn bộ app (qua builder của MaterialApp.router): khi là admin thì
 /// hiện dải vàng ở đầu MỌI màn hình.
@@ -14,6 +17,18 @@ class AdminShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdmin = ref.watch(isAdminProvider);
+
+    // Vừa thành admin (đăng nhập hoặc mở lại app còn phiên cũ): nếu quyền
+    // thông báo đã được cấp thì đăng ký thiết bị âm thầm, không hộp thoại.
+    ref.listen(isAdminProvider, (_, next) {
+      if (next) {
+        unawaited(
+          ref
+              .read(pushDeviceControllerProvider)
+              .registerSilentlyIfGranted(isAdmin: true),
+        );
+      }
+    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -6,6 +6,7 @@ import 'package:familytree/core/config/env.dart';
 import 'package:familytree/core/ui/app_dialogs.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/auth/domain/admin_login_rules.dart';
+import 'package:familytree/features/push/ui/push_prompt.dart';
 
 class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
@@ -59,6 +60,11 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       await ref
           .read(isAdminProvider.notifier)
           .signIn(normalizeAdminCode(_codeController.text));
+      if (!mounted) {
+        return;
+      }
+      // Đăng nhập xong: hỏi bật thông báo (nếu cần) rồi mới đóng màn.
+      await promptEnablePush(context, ref);
       if (!mounted) {
         return;
       }
