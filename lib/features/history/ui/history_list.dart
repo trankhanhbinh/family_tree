@@ -55,6 +55,7 @@ class HistoryList extends ConsumerWidget {
     }
 
     final nameOf = buildHistoryNameLookup(tree: tree, entries: feed.entries);
+    final branches = buildHistoryBranches(tree: tree, entries: feed.entries);
     final showFooter =
         feed.hasMore || feed.loadingMore || feed.loadError != null;
 
@@ -72,7 +73,7 @@ class HistoryList extends ConsumerWidget {
         return _HistoryGroupCard(
           group: groups[index],
           nameOf: nameOf,
-          branches: tree.branches,
+          branches: branches,
         );
       },
     );

@@ -104,6 +104,7 @@ int historyDisplayRank(HistoryEntry entry) {
   }
   if (entry.action == 'create') {
     return switch (entry.entityType) {
+      'branch' => 9,
       'person' => 10,
       'parent_child' => 20,
       'marriage' => 21,

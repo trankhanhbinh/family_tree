@@ -34,14 +34,37 @@ const Map<String, String> kHistoryPhotoLabels = {
   'sort_order': 'Thứ tự',
 };
 
-/// Giá trị một cột dưới dạng chữ tiếng Việt.
+/// Chi/nhánh. KHÔNG có sort_order: chưa có giao diện đổi thứ tự và mỗi lần
+/// chuyển chi nó tự đổi kèm, hiện ra chỉ gây rối cho người lớn tuổi.
+const Map<String, String> kHistoryBranchLabels = {
+  'name': 'Tên chi',
+  'parent_branch_id': 'Chi cha',
+  'description': 'Mô tả',
+};
+
+const Map<String, String> kHistoryClanLabels = {
+  'name': 'Tên dòng họ',
+  'origin': 'Nguồn gốc',
+  'description': 'Giới thiệu',
+};
+
+/// Văn bản dài (nguồn gốc, giới thiệu, mô tả chi) bị cắt ở số ký tự này.
+const int kHistoryLongTextLimit = 60;
+
+/// Giá trị một cột dưới dạng chữ tiếng Việt. [shorten] = false: không cắt
+/// văn bản dài (dùng để so sánh trước/sau).
 String displayHistoryValue(
   String column,
   Object? value,
-  List<Branch> branches,
-) {
+  List<Branch> branches, {
+  bool shorten = true,
+}) {
   if (value == null) {
-    return column == 'branch_id' ? 'Không thuộc chi nào' : '(trống)';
+    return switch (column) {
+      'branch_id' => 'Không thuộc chi nào',
+      'parent_branch_id' => 'Chi gốc',
+      _ => '(trống)',
+    };
   }
   switch (column) {
     case 'gender':
@@ -53,6 +76,8 @@ String displayHistoryValue(
       return value == true ? 'Có' : 'Không';
     case 'branch_id':
       return branchPathOf(value.toString(), branches) ?? 'Không rõ';
+    case 'parent_branch_id':
+      return branchPathOf(value.toString(), branches) ?? '(chi đã xóa)';
     case 'birth_date':
     case 'death_date':
     case 'start_date':
@@ -60,6 +85,9 @@ String displayHistoryValue(
       return _dateText(value);
     case 'status':
       return _marriageStatusLabel(value.toString());
+    case 'origin':
+    case 'description':
+      return _longText(value.toString(), shorten);
     default:
       final text = value.toString().trim();
       return text.isEmpty ? '(trống)' : text;
@@ -77,9 +105,26 @@ List<String> diffHistoryLines({
   final lines = <String>[];
   for (final entry in labels.entries) {
     final column = entry.key;
+    final oldFull = displayHistoryValue(
+      column,
+      before?[column],
+      branches,
+      shorten: false,
+    );
+    final newFull = displayHistoryValue(
+      column,
+      after?[column],
+      branches,
+      shorten: false,
+    );
+    if (oldFull == newFull) {
+      continue;
+    }
     final oldText = displayHistoryValue(column, before?[column], branches);
     final newText = displayHistoryValue(column, after?[column], branches);
     if (oldText == newText) {
+      // Khác nhau chỉ ở phần bị cắt: vẫn phải báo là có sửa.
+      lines.add('${entry.value}: đã sửa phần nội dung phía sau');
       continue;
     }
     lines.add('${entry.value}: $oldText → $newText');
@@ -117,6 +162,21 @@ List<String> filledHistoryLines({
     lines.add('${entry.value}: ${displayHistoryValue(column, value, branches)}');
   }
   return lines;
+}
+
+String _longText(String raw, bool shorten) {
+  final text = raw.trim();
+  if (text.isEmpty) {
+    return '(trống)';
+  }
+  if (!shorten) {
+    return text;
+  }
+  final runes = text.runes.toList();
+  if (runes.length <= kHistoryLongTextLimit) {
+    return text;
+  }
+  return '${String.fromCharCodes(runes.take(kHistoryLongTextLimit))}…';
 }
 
 String _genderLabel(String value) {

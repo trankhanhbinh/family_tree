@@ -41,6 +41,42 @@ HistoryNameLookup buildHistoryNameLookup({
   return (Object? id) => id is String ? names[id] : null;
 }
 
+/// Danh sách chi để dựng đường dẫn trong lịch sử: chi trong cây hiện tại
+/// (ưu tiên) cộng thêm chi đã xóa, dựng từ before/after của lịch sử
+/// (dòng mới nhất của mỗi chi). Chi đã xóa chỉ cần id, tên, chi cha.
+List<Branch> buildHistoryBranches({
+  required TreeData tree,
+  required Iterable<HistoryEntry> entries,
+}) {
+  final inTree = {for (final branch in tree.branches) branch.id};
+  final fromHistory = <String, Branch>{};
+  for (final entry in entries) {
+    if (entry.entityType != 'branch') {
+      continue;
+    }
+    if (inTree.contains(entry.entityId) ||
+        fromHistory.containsKey(entry.entityId)) {
+      continue;
+    }
+    final data = entry.data;
+    final name = data?['name'];
+    if (name is! String || name.trim().isEmpty) {
+      continue;
+    }
+    final parent = data?['parent_branch_id'];
+    fromHistory[entry.entityId] = Branch(
+      id: entry.entityId,
+      name: name,
+      parentBranchId: parent is String ? parent : null,
+      sortOrder: 0,
+    );
+  }
+  if (fromHistory.isEmpty) {
+    return tree.branches;
+  }
+  return [...tree.branches, ...fromHistory.values];
+}
+
 DescribedHistoryEntry describeHistoryEntry(
   HistoryEntry entry, {
   required HistoryNameLookup nameOf,
@@ -55,6 +91,10 @@ DescribedHistoryEntry describeHistoryEntry(
       return _describeMarriage(entry, nameOf, branches);
     case 'person_photo':
       return _describePhoto(entry, nameOf);
+    case 'branch':
+      return _describeBranch(entry, branches);
+    case 'clan_info':
+      return _describeClan(entry);
     default:
       return DescribedHistoryEntry(
         title: 'Thay đổi khác (${entry.entityType}, ${entry.action})',
@@ -227,4 +267,70 @@ DescribedHistoryEntry _describePhoto(
     default:
       return DescribedHistoryEntry(title: 'Xóa một ảnh của $person');
   }
+}
+
+// ---------- Chi/nhánh ----------
+
+bool _changed(HistoryEntry entry, String column) {
+  return entry.before?[column] != entry.after?[column];
+}
+
+DescribedHistoryEntry _describeBranch(
+  HistoryEntry entry,
+  List<Branch> branches,
+) {
+  final name = _textOf(entry.data?['name']) ?? _kUnknownName;
+
+  switch (entry.action) {
+    case 'create':
+      return DescribedHistoryEntry(
+        title: 'Thêm chi: $name',
+        details: filledHistoryLines(
+          data: entry.after,
+          labels: kHistoryBranchLabels,
+          branches: branches,
+          skip: const {'name'},
+        ),
+      );
+    case 'update':
+      final nameChanged = _changed(entry, 'name');
+      final parentChanged = _changed(entry, 'parent_branch_id');
+      final descriptionChanged = _changed(entry, 'description');
+      final String title;
+      if (nameChanged && !parentChanged && !descriptionChanged) {
+        title = 'Đổi tên chi: $name';
+      } else if (parentChanged && !nameChanged && !descriptionChanged) {
+        title = 'Chuyển chi: $name';
+      } else {
+        title = 'Sửa chi: $name';
+      }
+      return DescribedHistoryEntry(
+        title: title,
+        details: diffHistoryLines(
+          before: entry.before,
+          after: entry.after,
+          labels: kHistoryBranchLabels,
+          branches: branches,
+        ),
+      );
+    default:
+      return DescribedHistoryEntry(
+        title: 'Xóa chi: $name',
+        details: const ['Chi này đã bị xóa khỏi gia phả.'],
+      );
+  }
+}
+
+// ---------- Thông tin dòng họ ----------
+
+DescribedHistoryEntry _describeClan(HistoryEntry entry) {
+  return DescribedHistoryEntry(
+    title: 'Sửa thông tin dòng họ',
+    details: diffHistoryLines(
+      before: entry.before,
+      after: entry.after,
+      labels: kHistoryClanLabels,
+      branches: const [],
+    ),
+  );
 }

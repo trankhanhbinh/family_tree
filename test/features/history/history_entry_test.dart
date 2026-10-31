@@ -106,6 +106,16 @@ void main() {
     expect(groups.single.entries.map((e) => e.id).toList(), ['c', 'b', 'a']);
   });
 
+
+  test('trong nhóm: thêm chi đứng trước thêm người', () {
+    final groups = groupHistory([
+      _entry(id: 'a', action: 'create'),
+      _entry(id: 'b', entityType: 'branch', action: 'create'),
+    ]);
+    expect(groups, hasLength(1));
+    expect(groups.single.entries.map((e) => e.id).toList(), ['b', 'a']);
+  });
+  
   test('phân trang: nhóm bị cắt giữa hai trang được ghép lại', () {
     final first = HistoryFeedState.firstPage([_entry(id: '1')]);
     final next = first.appendPage([
