@@ -49,3 +49,7 @@ app.*.map.json
 
 # Local secrets
 env.json
+
+# Local secrets
+env.json
+android/app/google-services.json
