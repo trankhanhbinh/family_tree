@@ -118,6 +118,13 @@ Future<void> _showMoreSheet(
                   onTap: () => Navigator.of(sheetContext).pop('/admin/branches'),
                 ),
                 const SizedBox(height: 8),
+                _MoreSheetItem(
+                  title: 'Thông báo đề xuất mới',
+                  subtitle: 'Bật hoặc tắt thông báo trên máy này',
+                  onTap: () =>
+                      Navigator.of(sheetContext).pop('/admin/notifications'),
+                ),
+                const SizedBox(height: 8),
               ],
               _MoreSheetItem(
                 title: 'Ngày giỗ sắp tới',

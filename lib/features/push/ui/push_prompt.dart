@@ -39,41 +39,50 @@ Future<void> promptEnablePush(BuildContext context, WidgetRef ref) async {
       return;
     }
 
-    switch (result) {
-      case PushEnableResult.enabled:
-        await showMessageDialog(
-          context,
-          title: 'Đã bật thông báo',
-          message: 'Từ giờ, khi có đề xuất mới, điện thoại sẽ báo cho bạn.',
-          icon: Icons.notifications_active_outlined,
-        );
-      case PushEnableResult.denied:
-        await showMessageDialog(
-          context,
-          title: 'Chưa bật được thông báo',
-          message: 'Để nhận thông báo, hãy mở Cài đặt của máy, vào Ứng dụng, '
-              'chọn familytree, chọn Thông báo rồi bật lên.',
-          icon: Icons.notifications_off_outlined,
-        );
-      case PushEnableResult.saveFailed:
-        await showMessageDialog(
-          context,
-          title: 'Chưa lưu được lên hệ thống',
-          message: 'Đã bật thông báo trên máy nhưng chưa lưu được lên hệ '
-              'thống. Hãy mở lại ứng dụng khi có mạng, máy sẽ tự thử lại.',
-          icon: Icons.cloud_off_outlined,
-          isError: true,
-        );
-      case PushEnableResult.unavailable:
-        await showMessageDialog(
-          context,
-          title: 'Chưa dùng được thông báo',
-          message: 'Máy này chưa dùng được thông báo đẩy. Bạn vẫn dùng ứng '
-              'dụng bình thường.',
-          icon: Icons.notifications_off_outlined,
-        );
-    }
+    await showPushEnableResultDialog(context, result);
   } catch (error) {
     debugPrint('Hỏi bật thông báo thất bại (bỏ qua): $error');
+  }
+}
+
+/// Hộp thoại báo kết quả sau khi bật thông báo. Dùng chung cho lúc đăng nhập
+/// và cho màn "Thông báo đề xuất mới".
+Future<void> showPushEnableResultDialog(
+  BuildContext context,
+  PushEnableResult result,
+) async {
+  switch (result) {
+    case PushEnableResult.enabled:
+      await showMessageDialog(
+        context,
+        title: 'Đã bật thông báo',
+        message: 'Từ giờ, khi có đề xuất mới, điện thoại sẽ báo cho bạn.',
+        icon: Icons.notifications_active_outlined,
+      );
+    case PushEnableResult.denied:
+      await showMessageDialog(
+        context,
+        title: 'Chưa bật được thông báo',
+        message: 'Để nhận thông báo, hãy mở Cài đặt của máy, vào Ứng dụng, '
+            'chọn familytree, chọn Thông báo rồi bật lên.',
+        icon: Icons.notifications_off_outlined,
+      );
+    case PushEnableResult.saveFailed:
+      await showMessageDialog(
+        context,
+        title: 'Chưa lưu được lên hệ thống',
+        message: 'Đã bật thông báo trên máy nhưng chưa lưu được lên hệ '
+            'thống. Hãy mở lại ứng dụng khi có mạng, máy sẽ tự thử lại.',
+        icon: Icons.cloud_off_outlined,
+        isError: true,
+      );
+    case PushEnableResult.unavailable:
+      await showMessageDialog(
+        context,
+        title: 'Chưa dùng được thông báo',
+        message: 'Máy này chưa dùng được thông báo đẩy. Bạn vẫn dùng ứng '
+            'dụng bình thường.',
+        icon: Icons.notifications_off_outlined,
+      );
   }
 }
