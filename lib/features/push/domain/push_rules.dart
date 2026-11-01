@@ -44,3 +44,46 @@ bool shouldAskAtLogin({
 }) {
   return firebaseReady && permission != PushPermission.granted;
 }
+
+
+/// Trạng thái thông báo của máy này, hiển thị ở màn "Thông báo đề xuất mới".
+enum PushStatus {
+  /// Firebase không khởi tạo được: máy này không dùng được thông báo.
+  unavailable,
+
+  /// Admin đã chủ động tắt thông báo trên máy này.
+  turnedOff,
+
+  /// Chưa cấp quyền hiện thông báo.
+  notEnabled,
+
+  /// Đã cấp quyền nhưng máy chưa có FID đã lưu (đăng ký hoặc lưu bị lỗi).
+  notSaved,
+
+  /// Đang bật: đã cấp quyền và đã lưu FID.
+  enabled,
+}
+
+/// Suy ra trạng thái từ bản ghi trên máy (không hỏi server).
+/// Thứ tự xét: không dùng được, rồi đã tắt, rồi chưa bật, rồi chưa lưu được,
+/// cuối cùng là đang bật.
+PushStatus pushStatusFrom({
+  required bool firebaseReady,
+  required PushPermission permission,
+  required bool hasSavedFid,
+  required bool optedOut,
+}) {
+  if (!firebaseReady) {
+    return PushStatus.unavailable;
+  }
+  if (optedOut) {
+    return PushStatus.turnedOff;
+  }
+  if (permission != PushPermission.granted) {
+    return PushStatus.notEnabled;
+  }
+  if (!hasSavedFid) {
+    return PushStatus.notSaved;
+  }
+  return PushStatus.enabled;
+}

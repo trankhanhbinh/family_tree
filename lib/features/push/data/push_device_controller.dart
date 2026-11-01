@@ -10,7 +10,7 @@ import 'package:familytree/features/push/data/push_messaging_service.dart';
 import 'package:familytree/features/push/domain/push_rules.dart';
 
 /// Điều phối thông báo đẩy của admin: xin quyền, đăng ký, lưu FID lên server,
-/// nhớ FID trên máy và xóa khi đăng xuất.
+/// nhớ FID trên máy và xóa khi đăng xuất hoặc khi admin tắt thông báo.
 /// Các hàm "âm thầm" không bao giờ ném lỗi, chỉ ghi log.
 class PushDeviceController {
   PushDeviceController({
@@ -35,9 +35,34 @@ class PushDeviceController {
   // lưu lại dòng vừa xóa.
   int _epoch = 0;
 
+  /// Trạng thái thông báo của máy này, suy từ bản ghi trên máy (không hỏi
+  /// server). Không bao giờ ném lỗi.
+  Future<PushStatus> status() async {
+    final optedOut = await _fidStore.isOptedOut();
+    var permission = PushPermission.notDetermined;
+    if (_firebaseReady) {
+      try {
+        permission = await _messaging.currentPermission();
+      } catch (error) {
+        debugPrint('Không đọc được quyền thông báo (bỏ qua): $error');
+      }
+    }
+    final fid = _lastSavedFid ?? await _fidStore.read();
+    return pushStatusFrom(
+      firebaseReady: _firebaseReady,
+      permission: permission,
+      hasSavedFid: fid != null && fid.isNotEmpty,
+      optedOut: optedOut,
+    );
+  }
+
   /// Có nên hiện hộp thoại xin bật thông báo sau khi đăng nhập không.
+  /// Admin đã tắt thông báo trên máy này thì không hỏi lại.
   Future<bool> needsLoginPrompt() async {
     if (!_firebaseReady) {
+      return false;
+    }
+    if (await _fidStore.isOptedOut()) {
       return false;
     }
     try {
@@ -53,8 +78,12 @@ class PushDeviceController {
   }
 
   /// Đăng ký âm thầm nếu quyền đã được cấp. Trả về true nếu đã đăng ký.
+  /// Admin đã tắt thông báo trên máy này thì không đăng ký.
   Future<bool> registerSilentlyIfGranted({required bool isAdmin}) async {
     if (!_firebaseReady || !isAdmin) {
+      return false;
+    }
+    if (await _fidStore.isOptedOut()) {
       return false;
     }
     try {
@@ -74,11 +103,13 @@ class PushDeviceController {
     }
   }
 
-  /// Admin vừa bấm "Bật thông báo": xin quyền rồi đăng ký và lưu.
+  /// Admin vừa bấm "Bật thông báo": xóa cờ đã tắt, xin quyền rồi đăng ký và
+  /// lưu.
   Future<PushEnableResult> enable() async {
     if (!_firebaseReady) {
       return PushEnableResult.unavailable;
     }
+    await _fidStore.clearOptedOut();
     try {
       final permission = await _messaging.requestPermission();
       if (permission != PushPermission.granted) {
@@ -97,22 +128,39 @@ class PushDeviceController {
     }
   }
 
+  /// Admin bấm "Tắt thông báo trên máy này": ghi cờ đã tắt, rồi xóa dòng của
+  /// máy này trên server và FID đã nhớ. Cờ được ghi TRƯỚC nên dù xóa server
+  /// lỗi thì app cũng không tự đăng ký lại. Trả về true nếu xóa server thành
+  /// công (hoặc không có gì để xóa), false nếu lỗi mạng. Không bao giờ ném
+  /// lỗi.
+  Future<bool> disable() async {
+    await _fidStore.setOptedOut();
+    return _forgetThisDevice();
+  }
+
   /// Gọi TRƯỚC khi đăng xuất (lúc còn là admin). Không bao giờ ném lỗi.
   /// Lỗi mạng thì vẫn cho đăng xuất; dòng thừa sẽ được dọn khi FCM báo FID
-  /// không còn tồn tại (5F-3).
+  /// không còn tồn tại (5F-3). Không đụng cờ đã tắt.
   Future<void> removeThisDevice() async {
+    await _forgetThisDevice();
+  }
+
+  Future<bool> _forgetThisDevice() async {
     _epoch++;
     await _stopWatching();
+    var removed = true;
     try {
       final fid = _lastSavedFid ?? await _fidStore.read();
       if (fid != null && fid.isNotEmpty) {
         await _repository.deleteDevice(fid, timeout: _removeTimeout);
       }
     } catch (error) {
+      removed = false;
       debugPrint('Không xóa được thiết bị admin (bỏ qua): $error');
     }
     _lastSavedFid = null;
     await _fidStore.clear();
+    return removed;
   }
 
   void dispose() {

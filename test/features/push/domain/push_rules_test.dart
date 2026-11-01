@@ -101,4 +101,71 @@ void main() {
       );
     });
   });
+
+  group('pushStatusFrom', () {
+    test('Firebase không dùng được thì unavailable, bất kể gì khác', () {
+      expect(
+        pushStatusFrom(
+          firebaseReady: false,
+          permission: PushPermission.granted,
+          hasSavedFid: true,
+          optedOut: true,
+        ),
+        PushStatus.unavailable,
+      );
+    });
+
+    test('đã tắt thì turnedOff dù quyền và FID còn nguyên', () {
+      expect(
+        pushStatusFrom(
+          firebaseReady: true,
+          permission: PushPermission.granted,
+          hasSavedFid: true,
+          optedOut: true,
+        ),
+        PushStatus.turnedOff,
+      );
+    });
+
+    test('chưa cấp quyền thì notEnabled (cả từ chối lẫn chưa hỏi)', () {
+      for (final permission in [
+        PushPermission.denied,
+        PushPermission.notDetermined,
+      ]) {
+        expect(
+          pushStatusFrom(
+            firebaseReady: true,
+            permission: permission,
+            hasSavedFid: true,
+            optedOut: false,
+          ),
+          PushStatus.notEnabled,
+        );
+      }
+    });
+
+    test('đã cấp quyền nhưng chưa có FID thì notSaved', () {
+      expect(
+        pushStatusFrom(
+          firebaseReady: true,
+          permission: PushPermission.granted,
+          hasSavedFid: false,
+          optedOut: false,
+        ),
+        PushStatus.notSaved,
+      );
+    });
+
+    test('đã cấp quyền và có FID thì enabled', () {
+      expect(
+        pushStatusFrom(
+          firebaseReady: true,
+          permission: PushPermission.granted,
+          hasSavedFid: true,
+          optedOut: false,
+        ),
+        PushStatus.enabled,
+      );
+    });
+  });
 }

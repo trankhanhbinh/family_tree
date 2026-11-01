@@ -44,6 +44,7 @@ class _FakeRepository implements AdminDeviceRepository {
 class _FakeMessaging implements PushMessagingService {
   PushPermission current = PushPermission.granted;
   PushPermission afterRequest = PushPermission.granted;
+  Object? currentError;
   String fid = 'fid-1';
   Completer<void>? registerGate;
   int registerCalls = 0;
@@ -51,7 +52,13 @@ class _FakeMessaging implements PushMessagingService {
   final StreamController<String> changes = StreamController<String>.broadcast();
 
   @override
-  Future<PushPermission> currentPermission() async => current;
+  Future<PushPermission> currentPermission() async {
+    final error = currentError;
+    if (error != null) {
+      throw error;
+    }
+    return current;
+  }
 
   @override
   Future<PushPermission> requestPermission() async {
@@ -77,6 +84,7 @@ class _FakeMessaging implements PushMessagingService {
 
 class _FakeFidStore implements PushFidStore {
   String? value;
+  bool optedOut = false;
 
   @override
   Future<String?> read() async => value;
@@ -89,6 +97,19 @@ class _FakeFidStore implements PushFidStore {
   @override
   Future<void> clear() async {
     value = null;
+  }
+
+  @override
+  Future<bool> isOptedOut() async => optedOut;
+
+  @override
+  Future<void> setOptedOut() async {
+    optedOut = true;
+  }
+
+  @override
+  Future<void> clearOptedOut() async {
+    optedOut = false;
   }
 }
 
@@ -157,6 +178,26 @@ void main() {
       expect(result, PushEnableResult.unavailable);
       expect(messaging.requestCalls, 0);
       expect(messaging.registerCalls, 0);
+    });
+
+    test('bật lại sau khi đã tắt thì xóa cờ đã tắt', () async {
+      store.optedOut = true;
+      final controller = makeController();
+
+      final result = await controller.enable();
+
+      expect(result, PushEnableResult.enabled);
+      expect(store.optedOut, isFalse);
+    });
+
+    test('Firebase chưa sẵn sàng thì không xóa cờ đã tắt', () async {
+      store.optedOut = true;
+      final controller = makeController(firebaseReady: false);
+
+      final result = await controller.enable();
+
+      expect(result, PushEnableResult.unavailable);
+      expect(store.optedOut, isTrue);
     });
   });
 
@@ -316,6 +357,103 @@ void main() {
     test('Firebase chưa sẵn sàng thì không hỏi', () async {
       messaging.current = PushPermission.notDetermined;
       final controller = makeController(firebaseReady: false);
+
+      expect(await controller.needsLoginPrompt(), isFalse);
+    });
+  });
+
+  group('status', () {
+    test('Firebase chưa sẵn sàng thì unavailable', () async {
+      final controller = makeController(firebaseReady: false);
+
+      expect(await controller.status(), PushStatus.unavailable);
+    });
+
+    test('đã cấp quyền và có FID đã nhớ thì enabled', () async {
+      store.value = 'fid-1';
+      final controller = makeController();
+
+      expect(await controller.status(), PushStatus.enabled);
+    });
+
+    test('đã cấp quyền nhưng chưa có FID thì notSaved', () async {
+      final controller = makeController();
+
+      expect(await controller.status(), PushStatus.notSaved);
+    });
+
+    test('chưa cấp quyền thì notEnabled', () async {
+      messaging.current = PushPermission.denied;
+      store.value = 'fid-1';
+      final controller = makeController();
+
+      expect(await controller.status(), PushStatus.notEnabled);
+    });
+
+    test('có cờ đã tắt thì turnedOff', () async {
+      store.value = 'fid-1';
+      store.optedOut = true;
+      final controller = makeController();
+
+      expect(await controller.status(), PushStatus.turnedOff);
+    });
+
+    test('đọc quyền lỗi thì không ném ra ngoài, coi như chưa bật', () async {
+      messaging.currentError = Exception('lỗi plugin');
+      store.value = 'fid-1';
+      final controller = makeController();
+
+      expect(await controller.status(), PushStatus.notEnabled);
+    });
+
+    test('sau khi bật thành công thì enabled', () async {
+      final controller = makeController();
+      await controller.enable();
+
+      expect(await controller.status(), PushStatus.enabled);
+    });
+  });
+
+  group('disable', () {
+    test('ghi cờ, xóa dòng trên server, xóa FID nhớ và trả về true', () async {
+      final controller = makeController();
+      await controller.enable();
+
+      final removed = await controller.disable();
+
+      expect(removed, isTrue);
+      expect(store.optedOut, isTrue);
+      expect(repo.deleted, ['fid-1']);
+      expect(store.value, isNull);
+      expect(await controller.status(), PushStatus.turnedOff);
+    });
+
+    test('xóa server lỗi thì trả về false nhưng cờ vẫn được ghi', () async {
+      final controller = makeController();
+      await controller.enable();
+      repo.deleteError = Exception('mất mạng');
+
+      final removed = await controller.disable();
+
+      expect(removed, isFalse);
+      expect(store.optedOut, isTrue);
+      expect(store.value, isNull);
+    });
+
+    test('sau khi tắt thì không đăng ký âm thầm nữa', () async {
+      final controller = makeController();
+      await controller.disable();
+
+      final result = await controller.registerSilentlyIfGranted(isAdmin: true);
+
+      expect(result, isFalse);
+      expect(messaging.registerCalls, 0);
+    });
+
+    test('sau khi tắt thì đăng nhập không hỏi lại', () async {
+      messaging.current = PushPermission.notDetermined;
+      final controller = makeController();
+      await controller.disable();
 
       expect(await controller.needsLoginPrompt(), isFalse);
     });
