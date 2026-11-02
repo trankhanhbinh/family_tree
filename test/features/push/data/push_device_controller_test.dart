@@ -80,6 +80,13 @@ class _FakeMessaging implements PushMessagingService {
 
   @override
   Stream<String> get fidChanges => changes.stream;
+
+  @override
+  Future<Map<String, dynamic>?> initialMessageData() async => null;
+
+  @override
+  Stream<Map<String, dynamic>> get openedMessageData =>
+      const Stream<Map<String, dynamic>>.empty();
 }
 
 class _FakeFidStore implements PushFidStore {

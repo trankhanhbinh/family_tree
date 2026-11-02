@@ -51,6 +51,17 @@ class PushMessagingService {
   /// FID mới mỗi khi FCM cấp lại (đổi FID, đăng ký lại).
   Stream<String> get fidChanges => _messaging.onRegistered;
 
+  /// Dữ liệu (data) của thông báo đã mở app từ trạng thái TẮT HẲN.
+  /// Chỉ trả về một lần; các lần sau là null. Không có thông báo thì null.
+  Future<Map<String, dynamic>?> initialMessageData() async {
+    final message = await _messaging.getInitialMessage();
+    return message?.data;
+  }
+
+  /// Dữ liệu của thông báo được bấm khi app đang ở NỀN (chưa bị tắt hẳn).
+  Stream<Map<String, dynamic>> get openedMessageData =>
+      FirebaseMessaging.onMessageOpenedApp.map((message) => message.data);
+      
   static PushPermission _permissionFrom(AuthorizationStatus status) {
     return switch (status) {
       AuthorizationStatus.authorized ||
