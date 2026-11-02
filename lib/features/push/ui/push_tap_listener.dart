@@ -7,12 +7,17 @@ import 'package:go_router/go_router.dart';
 import 'package:familytree/core/router/app_router.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/push/data/firebase_ready_provider.dart';
+import 'package:familytree/features/push/data/local_notification_service.dart';
 import 'package:familytree/features/push/data/push_messaging_service.dart';
+import 'package:familytree/features/push/domain/foreground_notification_rules.dart';
 import 'package:familytree/features/push/domain/push_route_rules.dart';
+import 'package:familytree/features/review/data/review_repository.dart';
 
 /// Bọc ngoài AdminShell (qua builder của MaterialApp.router).
-/// Khi admin bấm thông báo (app đang ở nền hoặc đã tắt hẳn) thì nhớ đích,
-/// đợi qua splash và đợi xác nhận quyền admin, rồi mở màn đề xuất.
+/// - Admin bấm thông báo (nền, đã tắt, hoặc thông báo cục bộ): nhớ đích, đợi
+///   qua splash và đợi xác nhận quyền admin, rồi mở màn đề xuất.
+/// - App đang mở: FCM không tự hiện thông báo nên hiện bằng thông báo cục bộ
+///   và làm mới danh sách "Chờ duyệt".
 class PushTapListener extends ConsumerStatefulWidget {
   const PushTapListener({super.key, required this.child});
 
@@ -24,7 +29,8 @@ class PushTapListener extends ConsumerStatefulWidget {
 
 class _PushTapListenerState extends ConsumerState<PushTapListener> {
   late final GoRouter _router;
-  StreamSubscription<Map<String, dynamic>>? _subscription;
+  StreamSubscription<Map<String, dynamic>>? _openedSubscription;
+  StreamSubscription<ForegroundNotificationContent>? _foregroundSubscription;
   Timer? _expiryTimer;
   String? _pendingRoute;
   DateTime? _pendingSince;
@@ -39,9 +45,13 @@ class _PushTapListenerState extends ConsumerState<PushTapListener> {
     if (!ref.read(firebaseReadyProvider)) {
       return;
     }
-    final service = ref.read(pushMessagingServiceProvider);
-    _subscription = service.openedMessageData.listen(_onTap);
-    unawaited(_checkInitialMessage(service));
+    final messaging = ref.read(pushMessagingServiceProvider);
+    final local = ref.read(localNotificationServiceProvider);
+
+    _openedSubscription = messaging.openedMessageData.listen(_onTap);
+    _foregroundSubscription = local.foregroundContents.listen(_onForeground);
+    unawaited(_checkInitialMessage(messaging));
+    unawaited(_startLocalNotifications(local));
   }
 
   Future<void> _checkInitialMessage(PushMessagingService service) async {
@@ -50,6 +60,37 @@ class _PushTapListenerState extends ConsumerState<PushTapListener> {
       _onTap(data);
     } catch (error) {
       debugPrint('Không đọc được thông báo đã mở app: $error');
+    }
+  }
+
+  Future<void> _startLocalNotifications(LocalNotificationService local) async {
+    try {
+      await local.initialize(onTap: _onLocalTap);
+      _onLocalTap(await local.launchPayload());
+    } catch (error) {
+      debugPrint('Không khởi tạo được thông báo cục bộ: $error');
+    }
+  }
+
+  /// Bấm thông báo cục bộ: payload chính là đích, vẫn qua danh sách cho phép.
+  void _onLocalTap(String? payload) {
+    _onTap(payload == null ? null : <String, dynamic>{'route': payload});
+  }
+
+  /// Nhận thông báo FCM khi app đang mở: hiện cục bộ và làm mới danh sách.
+  void _onForeground(ForegroundNotificationContent content) {
+    if (!mounted || !ref.read(isAdminProvider)) {
+      return;
+    }
+    ref.invalidate(pendingBundlesProvider);
+    unawaited(_showLocal(content));
+  }
+
+  Future<void> _showLocal(ForegroundNotificationContent content) async {
+    try {
+      await ref.read(localNotificationServiceProvider).show(content);
+    } catch (error) {
+      debugPrint('Không hiện được thông báo cục bộ: $error');
     }
   }
 
@@ -111,7 +152,8 @@ class _PushTapListenerState extends ConsumerState<PushTapListener> {
   @override
   void dispose() {
     _router.routerDelegate.removeListener(_evaluate);
-    _subscription?.cancel();
+    _openedSubscription?.cancel();
+    _foregroundSubscription?.cancel();
     _expiryTimer?.cancel();
     super.dispose();
   }
