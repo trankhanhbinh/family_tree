@@ -22,6 +22,7 @@ const Duration kMemorialReminderMinLead = Duration(minutes: 1);
 /// (không đụng thông báo đề xuất, vốn dùng mã lớn hơn nhiều).
 const int kMemorialReminderIdBase = 1000000;
 const int kMemorialReminderIdLimit = 2000000;
+const int kMemorialTestReminderId = kMemorialReminderIdLimit - 1;
 
 const String kMemorialChannelId = 'memorial_reminders';
 const String kMemorialChannelName = 'Nhắc ngày giỗ';

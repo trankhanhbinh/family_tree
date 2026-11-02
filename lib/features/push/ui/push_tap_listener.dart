@@ -14,8 +14,9 @@ import 'package:familytree/features/push/domain/push_route_rules.dart';
 import 'package:familytree/features/review/data/review_repository.dart';
 
 /// Bọc ngoài AdminShell (qua builder của MaterialApp.router).
-/// - Admin bấm thông báo (nền, đã tắt, hoặc thông báo cục bộ): nhớ đích, đợi
-///   qua splash và đợi xác nhận quyền admin, rồi mở màn đề xuất.
+/// - Bấm thông báo (nền, đã tắt, hoặc thông báo cục bộ như nhắc ngày giỗ):
+///   nhớ đích, đợi qua splash (và đợi xác nhận quyền admin nếu đích dành cho
+///   admin), rồi mở màn tương ứng.
 /// - App đang mở: FCM không tự hiện thông báo nên hiện bằng thông báo cục bộ
 ///   và làm mới danh sách "Chờ duyệt".
 class PushTapListener extends ConsumerStatefulWidget {
@@ -42,16 +43,18 @@ class _PushTapListenerState extends ConsumerState<PushTapListener> {
     // Router đổi màn thì xét lại (vd. splash vừa chuyển sang /home).
     _router.routerDelegate.addListener(_evaluate);
 
+    // Thông báo cục bộ (nhắc ngày giỗ, thông báo khi app mở) dùng được cả khi
+    // Firebase lỗi, nên khởi tạo trước và KHÔNG phụ thuộc Firebase.
+    final local = ref.read(localNotificationServiceProvider);
+    unawaited(_startLocalNotifications(local));
+
     if (!ref.read(firebaseReadyProvider)) {
       return;
     }
     final messaging = ref.read(pushMessagingServiceProvider);
-    final local = ref.read(localNotificationServiceProvider);
-
     _openedSubscription = messaging.openedMessageData.listen(_onTap);
     _foregroundSubscription = local.foregroundContents.listen(_onForeground);
     unawaited(_checkInitialMessage(messaging));
-    unawaited(_startLocalNotifications(local));
   }
 
   Future<void> _checkInitialMessage(PushMessagingService service) async {

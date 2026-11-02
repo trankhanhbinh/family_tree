@@ -17,12 +17,50 @@ class LocalNotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
-  /// Khởi tạo plugin và tạo hai kênh: "Đề xuất mới" (ưu tiên cao) và
-  /// "Nhắc ngày giỗ" (ưu tiên thường, đỡ phiền).
-  /// [onTap] nhận payload khi người dùng bấm thông báo cục bộ.
+  Future<void>? _initialization;
+
+  static const NotificationDetails _memorialDetails = NotificationDetails(
+    android: AndroidNotificationDetails(
+      kMemorialChannelId,
+      kMemorialChannelName,
+      channelDescription: kMemorialChannelDescription,
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+    ),
+  );
+
+  AndroidFlutterLocalNotificationsPlugin? get _android {
+    return _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+  }
+
+  /// Khởi tạo plugin (chỉ chạy một lần; gọi lại trả về kết quả lần đầu).
+  /// Tạo hai kênh: "Đề xuất mới" (ưu tiên cao) và "Nhắc ngày giỗ" (ưu tiên
+  /// thường, đỡ phiền). [onTap] nhận payload khi bấm thông báo cục bộ.
   Future<void> initialize({
     required void Function(String? payload) onTap,
-  }) async {
+  }) {
+    final existing = _initialization;
+    if (existing != null) {
+      return existing;
+    }
+    final future = _initializeOnce(onTap);
+    _initialization = future;
+    // Khởi tạo lỗi thì cho phép thử lại ở lần gọi sau.
+    unawaited(
+      future.then<void>(
+        (_) {},
+        onError: (Object _) {
+          _initialization = null;
+        },
+      ),
+    );
+    return future;
+  }
+
+  Future<void> _initializeOnce(
+    void Function(String? payload) onTap,
+  ) async {
     const settings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     );
@@ -33,8 +71,7 @@ class LocalNotificationService {
       },
     );
 
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final android = _android;
     await android?.createNotificationChannel(
       const AndroidNotificationChannel(
         kRequestsChannelId,
@@ -51,6 +88,29 @@ class LocalNotificationService {
         importance: Importance.defaultImportance,
       ),
     );
+  }
+
+  /// Hoàn tất khi plugin đã khởi tạo xong. Ném lỗi nếu chưa ai gọi
+  /// [initialize] hoặc khởi tạo thất bại.
+  Future<void> get ready async {
+    final initialization = _initialization;
+    if (initialization == null) {
+      throw StateError('Thông báo cục bộ chưa được khởi tạo');
+    }
+    await initialization;
+  }
+
+  /// Ứng dụng có được phép hiện thông báo không (Android).
+  Future<bool> notificationsEnabled() async {
+    await ready;
+    return await _android?.areNotificationsEnabled() ?? false;
+  }
+
+  /// Hiện hộp thoại xin quyền thông báo của hệ thống (Android 13 trở lên).
+  /// Trả về true nếu đã được cấp (kể cả khi đã cấp từ trước).
+  Future<bool> requestNotificationPermission() async {
+    await ready;
+    return await _android?.requestNotificationsPermission() ?? false;
   }
 
   /// Payload của thông báo cục bộ đã mở app từ trạng thái tắt hẳn, hoặc null.
@@ -113,16 +173,6 @@ class LocalNotificationService {
   ) async {
     await cancelMemorialReminders();
 
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        kMemorialChannelId,
-        kMemorialChannelName,
-        channelDescription: kMemorialChannelDescription,
-        importance: Importance.defaultImportance,
-        priority: Priority.defaultPriority,
-      ),
-    );
-
     var scheduled = 0;
     for (final reminder in reminders) {
       try {
@@ -131,7 +181,7 @@ class LocalNotificationService {
           title: reminder.title,
           body: reminder.body,
           scheduledDate: tz.TZDateTime.from(reminder.fireAtUtc, tz.UTC),
-          notificationDetails: details,
+          notificationDetails: _memorialDetails,
           // Không dùng báo thức chính xác: khỏi xin quyền SCHEDULE_EXACT_ALARM,
           // chấp nhận trễ vài phút.
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -143,6 +193,22 @@ class LocalNotificationService {
       }
     }
     return scheduled;
+  }
+
+  /// Hẹn một thông báo thử sau [delay] (dành cho admin kiểm tra).
+  Future<void> scheduleTestMemorialReminder({
+    Duration delay = const Duration(seconds: 10),
+  }) async {
+    await ready;
+    await _plugin.zonedSchedule(
+      id: kMemorialTestReminderId,
+      title: kMemorialReminderTitle,
+      body: 'Đây là thông báo thử. Nhắc ngày giỗ đang hoạt động.',
+      scheduledDate: tz.TZDateTime.now(tz.UTC).add(delay),
+      notificationDetails: _memorialDetails,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      payload: kMemorialReminderPayload,
+    );
   }
 }
 

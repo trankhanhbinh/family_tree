@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:familytree/core/router/app_router.dart';
 import 'package:familytree/core/theme/app_theme.dart';
 import 'package:familytree/features/auth/ui/admin_shell.dart';
+import 'package:familytree/features/memorial/ui/memorial_reminder_sync.dart';
 import 'package:familytree/features/push/ui/push_tap_listener.dart';
 
 class FamilyTreeApp extends ConsumerWidget {
@@ -18,7 +19,9 @@ class FamilyTreeApp extends ConsumerWidget {
       theme: AppTheme.light(),
       routerConfig: router,
       builder: (context, child) => PushTapListener(
-        child: AdminShell(child: child ?? const SizedBox.shrink()),
+        child: MemorialReminderSync(
+          child: AdminShell(child: child ?? const SizedBox.shrink()),
+        ),
       ),
     );
   }

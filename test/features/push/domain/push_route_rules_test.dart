@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:familytree/features/memorial/domain/memorial_reminders.dart';
 import 'package:familytree/features/push/domain/push_route_rules.dart';
 
 void main() {
@@ -16,6 +17,10 @@ void main() {
       );
     });
 
+    test('nhận đúng /memorials', () {
+      expect(allowedPushRoute({'route': '/memorials'}), '/memorials');
+    });
+
     test('route khác trong ứng dụng bị bỏ', () {
       expect(allowedPushRoute({'route': '/admin/clan'}), isNull);
       expect(allowedPushRoute({'route': '/home'}), isNull);
@@ -23,10 +28,23 @@ void main() {
 
     test('route có thêm tham số bị bỏ (chỉ nhận khớp tuyệt đối)', () {
       expect(allowedPushRoute({'route': '/admin/requests?x=1'}), isNull);
+      expect(allowedPushRoute({'route': '/memorials?x=1'}), isNull);
     });
 
     test('route sai kiểu bị bỏ', () {
       expect(allowedPushRoute({'route': 5}), isNull);
+    });
+
+    test('payload của nhắc giỗ khớp đích /memorials', () {
+      expect(kMemorialReminderPayload, kMemorialsRoute);
+      expect(allowedPushRoute({'route': kMemorialReminderPayload}), isNotNull);
+    });
+  });
+
+  group('routeRequiresAdmin', () {
+    test('route /admin/... cần admin, /memorials thì không', () {
+      expect(routeRequiresAdmin(kRequestsRoute), isTrue);
+      expect(routeRequiresAdmin(kMemorialsRoute), isFalse);
     });
   });
 
@@ -70,7 +88,7 @@ void main() {
       );
     });
 
-    test('chưa là admin thì đợi', () {
+    test('đích dành cho admin mà chưa là admin thì đợi', () {
       expect(
         decidePendingRoute(
           route: route,
@@ -82,11 +100,32 @@ void main() {
       );
     });
 
-    test('còn ở splash thì đợi', () {
+    test('đích công khai (/memorials) thì không cần là admin', () {
+      expect(
+        decidePendingRoute(
+          route: kMemorialsRoute,
+          isAdmin: false,
+          currentPath: '/home',
+          age: fresh,
+        ),
+        PendingRouteAction.open,
+      );
+    });
+
+    test('còn ở splash thì đợi (cả đích công khai)', () {
       expect(
         decidePendingRoute(
           route: route,
           isAdmin: true,
+          currentPath: '/',
+          age: fresh,
+        ),
+        PendingRouteAction.wait,
+      );
+      expect(
+        decidePendingRoute(
+          route: kMemorialsRoute,
+          isAdmin: false,
           currentPath: '/',
           age: fresh,
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:familytree/features/memorial/ui/memorial_reminder_card.dart';
 import 'package:familytree/features/memorial/domain/upcoming_memorials.dart';
 import 'package:familytree/features/person/domain/memorial_labels.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
@@ -43,6 +44,8 @@ class _MemorialList extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        const MemorialReminderCard(),
+        const SizedBox(height: 16),
         const Text(
           'Những người đã mất có giỗ trong $kMemorialLookaheadDays ngày tới '
           '(tính từ hôm nay).',
