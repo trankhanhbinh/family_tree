@@ -10,6 +10,7 @@ import 'package:familytree/features/tree/data/focus_request_provider.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/ui/tree_view.dart';
 import 'package:familytree/features/auth/ui/admin_entry_bar.dart';
+import 'package:familytree/core/ui/app_version_label.dart';
 
 class TreeScreen extends ConsumerWidget {
   const TreeScreen({super.key});
@@ -137,6 +138,8 @@ Future<void> _showMoreSheet(
                 subtitle: 'Xuất file JSON',
                 onTap: () => Navigator.of(sheetContext).pop('/backup'),
               ),
+              const SizedBox(height: 16),
+              const AppVersionLabel(),
               const SizedBox(height: 8),
               SizedBox(
                 height: 56,
