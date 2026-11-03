@@ -67,8 +67,9 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
-            // Bật R8 (rút gọn mã). Các lớp cần giữ nằm trong proguard-rules.pro.
-            isMinifyEnabled = true
+            // R8 đang TẮT: bật lên thì app đứng ở màn logo (mất lớp lúc khởi động).
+            // Muốn thử lại cần log lỗi từ emulator; luật giữ lớp nằm trong proguard-rules.pro.
+            isMinifyEnabled = false
             // Không cắt tài nguyên: lợi ít, dễ làm mất biểu tượng thông báo.
             isShrinkResources = false
             proguardFiles(

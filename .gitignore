@@ -53,3 +53,4 @@ env.json
 # Local secrets
 env.json
 android/app/google-services.json
+android/build/reports/problems/problems-report.html
