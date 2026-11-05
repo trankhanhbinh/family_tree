@@ -24,7 +24,8 @@ Future<void> promptEnablePush(BuildContext context, WidgetRef ref) async {
     final later = await showChoiceDialog(
       context,
       title: 'Bật thông báo đề xuất mới?',
-      message: 'Khi có người gửi đề xuất mới, điện thoại sẽ báo cho bạn biết. '
+      message:
+          'Khi có người gửi đề xuất mới, điện thoại sẽ báo cho bạn biết. '
           'Sau khi bấm “Bật thông báo”, máy sẽ hỏi thêm một lần nữa, '
           'bạn hãy chọn “Cho phép”.',
       primaryLabel: 'Để sau',
@@ -63,7 +64,8 @@ Future<void> showPushEnableResultDialog(
       await showMessageDialog(
         context,
         title: 'Chưa bật được thông báo',
-        message: 'Để nhận thông báo, hãy mở Cài đặt của máy, vào Ứng dụng, '
+        message:
+            'Để nhận thông báo, hãy mở Cài đặt của máy, vào Ứng dụng, '
             'chọn familytree, chọn Thông báo rồi bật lên.',
         icon: Icons.notifications_off_outlined,
       );
@@ -71,7 +73,8 @@ Future<void> showPushEnableResultDialog(
       await showMessageDialog(
         context,
         title: 'Chưa lưu được lên hệ thống',
-        message: 'Đã bật thông báo trên máy nhưng chưa lưu được lên hệ '
+        message:
+            'Đã bật thông báo trên máy nhưng chưa lưu được lên hệ '
             'thống. Hãy mở lại ứng dụng khi có mạng, máy sẽ tự thử lại.',
         icon: Icons.cloud_off_outlined,
         isError: true,
@@ -80,7 +83,8 @@ Future<void> showPushEnableResultDialog(
       await showMessageDialog(
         context,
         title: 'Chưa dùng được thông báo',
-        message: 'Máy này chưa dùng được thông báo đẩy. Bạn vẫn dùng ứng '
+        message:
+            'Máy này chưa dùng được thông báo đẩy. Bạn vẫn dùng ứng '
             'dụng bình thường.',
         icon: Icons.notifications_off_outlined,
       );

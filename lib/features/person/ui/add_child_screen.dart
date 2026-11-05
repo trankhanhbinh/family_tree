@@ -123,11 +123,15 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
     final isAdmin = ref.read(isAdminProvider);
     final nowYear = DateTime.now().year;
 
-    final errors = _form.validate(nowYear: nowYear, validateGeneration: isAdmin);
+    final errors = _form.validate(
+      nowYear: nowYear,
+      validateGeneration: isAdmin,
+    );
     final otherMissing = _otherChoice == null;
     setState(() {
-      _otherError =
-          otherMissing ? 'Vui lòng chọn con này sinh cùng với ai.' : null;
+      _otherError = otherMissing
+          ? 'Vui lòng chọn con này sinh cùng với ai.'
+          : null;
     });
 
     if (errors.isNotEmpty || otherMissing) {
@@ -138,7 +142,8 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
       await showMessageDialog(
         context,
         title: isAdmin ? 'Chưa lưu được' : 'Chưa gửi được',
-        message: 'Vui lòng sửa các mục báo đỏ rồi '
+        message:
+            'Vui lòng sửa các mục báo đỏ rồi '
             '${isAdmin ? 'lưu' : 'gửi'} lại:\n\n$lines',
         icon: Icons.error_outline,
         isError: true,
@@ -184,7 +189,8 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
     final proceed = await confirmSubmit(
       context,
       isAdmin: isAdmin,
-      summary: 'Thêm "$childName" là ${_relationLabel(_relation)} của '
+      summary:
+          'Thêm "$childName" là ${_relationLabel(_relation)} của '
           '$parentsText.',
       slots: drafts.length,
     );
@@ -313,8 +319,8 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
             '${widget.person.fullName} chưa có vợ/chồng nào trong gia phả, '
             'nên con sẽ chỉ được gắn với ${widget.person.fullName}. '
             '${isAdmin ? 'Muốn ghi cả cha/mẹ còn lại, hãy "Thêm vợ/chồng" '
-                'trước rồi quay lại thêm con.' : 'Muốn ghi cả cha/mẹ còn lại, '
-                'hãy gửi đề xuất "Thêm vợ/chồng" trước và đợi được duyệt.'}',
+                      'trước rồi quay lại thêm con.' : 'Muốn ghi cả cha/mẹ còn lại, '
+                      'hãy gửi đề xuất "Thêm vợ/chồng" trước và đợi được duyệt.'}',
             style: const TextStyle(fontSize: 16, height: 1.4),
           ),
         ],

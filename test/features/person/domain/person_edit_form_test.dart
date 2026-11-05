@@ -103,10 +103,13 @@ void main() {
       expect(_payload(p, v), {'birth_date': null});
     });
 
-    test('có ngày nhưng database thiếu birth_year: không đổi thì không gửi', () {
-      final p = _person(birthDate: DateTime(1950, 3, 5));
-      expect(_payload(p, PersonFormValues.fromPerson(p)), isEmpty);
-    });
+    test(
+      'có ngày nhưng database thiếu birth_year: không đổi thì không gửi',
+      () {
+        final p = _person(birthDate: DateTime(1950, 3, 5));
+        expect(_payload(p, PersonFormValues.fromPerson(p)), isEmpty);
+      },
+    );
 
     test('còn sống -> đã mất', () {
       final p = _person();
@@ -339,7 +342,12 @@ void main() {
     });
 
     test('đủ ngày tháng năm', () {
-      final r = parseDateParts(day: '5', month: '3', year: '1950', nowYear: _now);
+      final r = parseDateParts(
+        day: '5',
+        month: '3',
+        year: '1950',
+        nowYear: _now,
+      );
       expect(r.date, DateTime(1950, 3, 5));
       expect(r.year, 1950);
     });

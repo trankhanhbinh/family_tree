@@ -72,10 +72,9 @@ void main() {
   });
 
   test('hôm nay có giờ trong ngày vẫn tính là còn 0 ngày', () {
-    final r = _build(
-      [_p('a', 'Một', day: 27, month: 6)],
-      today: DateTime(2024, 8, 1, 23, 59),
-    );
+    final r = _build([
+      _p('a', 'Một', day: 27, month: 6),
+    ], today: DateTime(2024, 8, 1, 23, 59));
     expect(r.items.length, 1);
     expect(r.items.first.daysLeft, 0);
   });
@@ -126,14 +125,11 @@ void main() {
   });
 
   test('withinDays tùy chỉnh: chỉ lấy giỗ trong 10 ngày tới', () {
-    final r = _build(
-      [
-        _p('a', 'Một', day: 27, month: 6),
-        _p('b', 'Hai', day: 28, month: 6),
-        _p('c', 'Ba', day: 15, month: 7),
-      ],
-      withinDays: 10,
-    );
+    final r = _build([
+      _p('a', 'Một', day: 27, month: 6),
+      _p('b', 'Hai', day: 28, month: 6),
+      _p('c', 'Ba', day: 15, month: 7),
+    ], withinDays: 10);
     expect(r.items.map((e) => e.person.id).toList(), ['a', 'b']);
   });
 }

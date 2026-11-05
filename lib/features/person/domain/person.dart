@@ -6,10 +6,10 @@ enum Gender {
   other;
 
   static Gender fromString(String? value) => switch (value) {
-        'male' => Gender.male,
-        'female' => Gender.female,
-        _ => Gender.other,
-      };
+    'male' => Gender.male,
+    'female' => Gender.female,
+    _ => Gender.other,
+  };
 }
 
 class Person {

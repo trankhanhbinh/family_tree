@@ -121,7 +121,8 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
       tree?.photos ?? const <PersonPhoto>[],
       widget.personId,
     );
-    final personName = tree?.people
+    final personName =
+        tree?.people
             .where((p) => p.id == widget.personId)
             .firstOrNull
             ?.fullName ??
@@ -245,7 +246,7 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
         message: isAdmin
             ? 'Ảnh đã được thêm vào hồ sơ.'
             : 'Quản trị viên sẽ xem và duyệt.\n'
-                'Ảnh sẽ hiện trong hồ sơ sau khi được duyệt.',
+                  'Ảnh sẽ hiện trong hồ sơ sau khi được duyệt.',
         icon: Icons.check_circle_outline,
       );
       if (mounted) {
@@ -258,7 +259,8 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
   Widget build(BuildContext context) {
     final isAdmin = ref.watch(isAdminProvider);
     final tree = ref.watch(treeDataProvider).value;
-    final personName = tree?.people
+    final personName =
+        tree?.people
             .where((p) => p.id == widget.personId)
             .firstOrNull
             ?.fullName ??
@@ -298,10 +300,10 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
                           child: Text(
                             isAdmin
                                 ? 'Thêm ảnh cho $personName. '
-                                    'Ảnh được lưu ngay vào hồ sơ.'
+                                      'Ảnh được lưu ngay vào hồ sơ.'
                                 : 'Bạn đang đề xuất thêm ảnh cho $personName. '
-                                    'Ảnh chỉ hiện trong hồ sơ sau khi '
-                                    'quản trị viên duyệt.',
+                                      'Ảnh chỉ hiện trong hồ sơ sau khi '
+                                      'quản trị viên duyệt.',
                             style: const TextStyle(fontSize: 16, height: 1.4),
                           ),
                         ),

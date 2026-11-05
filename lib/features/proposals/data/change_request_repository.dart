@@ -69,6 +69,8 @@ class ChangeRequestRepository {
   }
 }
 
-final changeRequestRepositoryProvider = Provider<ChangeRequestRepository>((ref) {
+final changeRequestRepositoryProvider = Provider<ChangeRequestRepository>((
+  ref,
+) {
   return ChangeRequestRepository(ref.watch(supabaseClientProvider));
 });

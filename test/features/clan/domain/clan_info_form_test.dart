@@ -154,11 +154,7 @@ void main() {
     test('thứ tự dòng cố định: tên, nguồn gốc, giới thiệu', () {
       final lines = describeClanChanges(
         original: _original,
-        payload: {
-          'description': 'D',
-          'origin': 'O',
-          'name': 'N',
-        },
+        payload: {'description': 'D', 'origin': 'O', 'name': 'N'},
       );
       expect(lines.length, 3);
       expect(lines[0], startsWith('Tên dòng họ:'));

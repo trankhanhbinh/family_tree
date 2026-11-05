@@ -7,6 +7,7 @@ import 'package:familytree/features/tree/domain/family_node.dart';
 import 'package:familytree/features/tree/domain/tree_layout.dart';
 import 'package:familytree/features/tree/domain/tree_layout_engine.dart';
 import 'package:familytree/features/tree/ui/tree_painter.dart';
+import 'package:familytree/features/clan/ui/clan_title_banner.dart';
 
 /// Canvas cây gia phả: zoom/pan, bấm thẻ, thu gọn/mở rộng nhánh,
 /// cuộn tới người được tìm, nút "về gốc".
@@ -95,8 +96,10 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
   void didUpdateWidget(TreeView oldWidget) {
     super.didUpdateWidget(oldWidget);
     final forestChanged = !identical(oldWidget.forest, widget.forest);
-    final collapsedChanged =
-        !identical(oldWidget.collapsedIds, widget.collapsedIds);
+    final collapsedChanged = !identical(
+      oldWidget.collapsedIds,
+      widget.collapsedIds,
+    );
     if (forestChanged || collapsedChanged) {
       if (forestChanged) {
         _collapsible = collapsibleNonRootIds(widget.forest);
@@ -167,12 +170,22 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
     );
     final center = card.rect.center;
     final target = Matrix4(
-      scale, 0, 0, 0,
-      0, scale, 0, 0,
-      0, 0, 1, 0,
+      scale,
+      0,
+      0,
+      0,
+      0,
+      scale,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
       _viewport.width / 2 - center.dx * scale,
       _viewport.height / 2 - center.dy * scale,
-      0, 1,
+      0,
+      1,
     );
 
     _moveTween = Matrix4Tween(begin: current, end: target);
@@ -193,8 +206,9 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
     if (tween == null || controller == null) {
       return;
     }
-    controller.value =
-        tween.transform(Curves.easeInOut.transform(_moveController.value));
+    controller.value = tween.transform(
+      Curves.easeInOut.transform(_moveController.value),
+    );
   }
 
   // ---------- Khung nhìn ----------
@@ -256,10 +270,22 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
     final ty = _topMargin - top * _initialScale;
     // Ma trận cột-chính: scale + translate.
     return Matrix4(
-      _initialScale, 0, 0, 0,
-      0, _initialScale, 0, 0,
-      0, 0, 1, 0,
-      tx, ty, 0, 1,
+      _initialScale,
+      0,
+      0,
+      0,
+      0,
+      _initialScale,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      tx,
+      ty,
+      0,
+      1,
     );
   }
 
@@ -301,11 +327,21 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const ClanTitleBanner(),
+        Expanded(child: _buildCanvas(context)),
+      ],
+    );
+  }
+
+  Widget _buildCanvas(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         _viewport = constraints.biggest;
-        final controller =
-            _controller ??= TransformationController(_homeMatrix(_viewport));
+        final controller = _controller ??= TransformationController(
+          _homeMatrix(_viewport),
+        );
         final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
 
         return Stack(

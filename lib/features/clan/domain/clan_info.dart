@@ -1,10 +1,6 @@
 /// Thông tin dòng họ (bảng clan_info, chỉ có 1 dòng id = 1).
 class ClanInfo {
-  const ClanInfo({
-    required this.name,
-    this.origin,
-    this.description,
-  });
+  const ClanInfo({required this.name, this.origin, this.description});
 
   final String name;
   final String? origin;

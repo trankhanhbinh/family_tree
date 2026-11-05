@@ -101,20 +101,23 @@ void main() {
     expect(newestFirst.first.requests.single.id, 'new');
   });
 
-  test('trong gói: tạo người trước quan hệ; xóa quan hệ trước khi xóa người', () {
-    final create = groupRequests([
-      _req(id: 'pc', entityType: 'parent_child'),
-      _req(id: 'p', entityType: 'person'),
-    ]).single;
-    expect(create.requests.map((r) => r.id).toList(), ['p', 'pc']);
+  test(
+    'trong gói: tạo người trước quan hệ; xóa quan hệ trước khi xóa người',
+    () {
+      final create = groupRequests([
+        _req(id: 'pc', entityType: 'parent_child'),
+        _req(id: 'p', entityType: 'person'),
+      ]).single;
+      expect(create.requests.map((r) => r.id).toList(), ['p', 'pc']);
 
-    final delete = groupRequests([
-      _req(id: 'p', entityType: 'person', action: 'delete'),
-      _req(id: 'm', entityType: 'marriage', action: 'delete'),
-      _req(id: 'pc', entityType: 'parent_child', action: 'delete'),
-    ]).single;
-    expect(delete.requests.map((r) => r.id).toList(), ['pc', 'm', 'p']);
-  });
+      final delete = groupRequests([
+        _req(id: 'p', entityType: 'person', action: 'delete'),
+        _req(id: 'm', entityType: 'marriage', action: 'delete'),
+        _req(id: 'pc', entityType: 'parent_child', action: 'delete'),
+      ]).single;
+      expect(delete.requests.map((r) => r.id).toList(), ['pc', 'm', 'p']);
+    },
+  );
 
   test('approvalRank: tạo < sửa < xóa', () {
     expect(
@@ -144,15 +147,18 @@ void main() {
     expect(bundle.requestIds.toSet(), {'a', 'b'});
   });
 
-  test('hasUnsupported: chi/nhánh -> true; người, cha-con, hôn nhân -> false', () {
-    final branch = groupRequests([_req(entityType: 'branch')]).single;
-    expect(branch.hasUnsupported, isTrue);
+  test(
+    'hasUnsupported: chi/nhánh -> true; người, cha-con, hôn nhân -> false',
+    () {
+      final branch = groupRequests([_req(entityType: 'branch')]).single;
+      expect(branch.hasUnsupported, isTrue);
 
-    final normal = groupRequests([
-      _req(id: 'a', entityType: 'person'),
-      _req(id: 'b', entityType: 'parent_child'),
-      _req(id: 'c', entityType: 'marriage'),
-    ]).single;
-    expect(normal.hasUnsupported, isFalse);
-  });
+      final normal = groupRequests([
+        _req(id: 'a', entityType: 'person'),
+        _req(id: 'b', entityType: 'parent_child'),
+        _req(id: 'c', entityType: 'marriage'),
+      ]).single;
+      expect(normal.hasUnsupported, isFalse);
+    },
+  );
 }

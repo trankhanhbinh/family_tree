@@ -27,7 +27,10 @@ void main() {
     expect(validatePendingLimit(0), isNull);
     expect(validatePendingLimit(kMaxPendingPhotos - 1), isNull);
     expect(validatePendingLimit(kMaxPendingPhotos), kPendingPhotoLimitMessage);
-    expect(validatePendingLimit(kMaxPendingPhotos + 3), kPendingPhotoLimitMessage);
+    expect(
+      validatePendingLimit(kMaxPendingPhotos + 3),
+      kPendingPhotoLimitMessage,
+    );
   });
 
   test('buildPendingPhotoPath: {uid}/{id}.{đuôi}', () {
@@ -68,8 +71,14 @@ void main() {
   test('photoMovesOf: chỉ lấy dòng ảnh tạo mới', () {
     final moves = photoMovesOf([
       _req(payload: {'id': 'f1', 'storage_path': 'p1/f1.jpg'}),
-      _req(entityType: 'person', payload: {'id': 'x', 'storage_path': 'a/x.jpg'}),
-      _req(action: 'update', payload: {'id': 'f2', 'storage_path': 'p1/f2.jpg'}),
+      _req(
+        entityType: 'person',
+        payload: {'id': 'x', 'storage_path': 'a/x.jpg'},
+      ),
+      _req(
+        action: 'update',
+        payload: {'id': 'f2', 'storage_path': 'p1/f2.jpg'},
+      ),
     ]);
     expect(moves.length, 1);
     expect(moves.single.photoId, 'f1');

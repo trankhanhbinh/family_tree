@@ -192,7 +192,8 @@ DescribedRequest _describePerson(ChangeRequest r, TreeData tree, _Mode mode) {
 
   if (r.action == 'update') {
     return DescribedRequest(
-      title: 'Sửa thông tin: '
+      title:
+          'Sửa thông tin: '
           '${person?.fullName ?? '(người không còn trong gia phả)'}',
       details: _diffLines(
         r.payload,
@@ -340,15 +341,20 @@ DescribedRequest _describeParentChild(
   _NameBook names,
   _Mode mode,
 ) {
-  final link = tree.parentChildren.where((pc) => pc.id == r.entityId).firstOrNull;
+  final link = tree.parentChildren
+      .where((pc) => pc.id == r.entityId)
+      .firstOrNull;
 
   if (r.action == 'create') {
     final parent = names.nameOf(r.payload['parent_id']);
     final child = names.nameOf(r.payload['child_id']);
     return DescribedRequest(
-      title: 'Gắn ${child ?? '?'} là '
+      title:
+          'Gắn ${child ?? '?'} là '
           '${_relationName(r.payload['relation_type'])} của ${parent ?? '?'}',
-      warning: (parent == null || child == null) ? _kMissingPersonWarning : null,
+      warning: (parent == null || child == null)
+          ? _kMissingPersonWarning
+          : null,
     );
   }
 
@@ -361,7 +367,7 @@ DescribedRequest _describeParentChild(
     final typeLine = mode.applied
         ? 'Loại quan hệ mới: ${_capitalize(_relationName(newType))}'
         : 'Loại quan hệ: ${_capitalize(_relationName(oldType))} → '
-            '${_capitalize(_relationName(newType))}';
+              '${_capitalize(_relationName(newType))}';
     return DescribedRequest(
       title: 'Đổi loại quan hệ: ${child ?? '?'}',
       details: ['Cha/mẹ: ${parent ?? '?'}', typeLine],

@@ -168,14 +168,13 @@ void main() {
         parentChildren: links,
         marriages: marriages,
       );
-      expect(
-        drafts.map((d) => d.entityType).toList(),
-        [kEntityParentChild, kEntityParentChild, kEntityMarriage, kEntityPerson],
-      );
-      expect(
-        drafts.map((d) => d.entityId).toList(),
-        ['pc1', 'pc2', 'm1', 'x'],
-      );
+      expect(drafts.map((d) => d.entityType).toList(), [
+        kEntityParentChild,
+        kEntityParentChild,
+        kEntityMarriage,
+        kEntityPerson,
+      ]);
+      expect(drafts.map((d) => d.entityId).toList(), ['pc1', 'pc2', 'm1', 'x']);
       expect(drafts.every((d) => d.action == kActionDelete), isTrue);
     });
 

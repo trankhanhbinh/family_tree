@@ -68,8 +68,9 @@ class _ReviewPhotoPreviewState extends ConsumerState<ReviewPhotoPreview> {
   @override
   Widget build(BuildContext context) {
     if (widget.bundleStatus == 'approved') {
-      final url =
-          ref.watch(photoServiceProvider).publicUrl(widget.photo.publicPath);
+      final url = ref
+          .watch(photoServiceProvider)
+          .publicUrl(widget.photo.publicPath);
       return _image(url, widget.photo.publicPath);
     }
     if (widget.bundleStatus == 'rejected') {

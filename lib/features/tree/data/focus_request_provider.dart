@@ -34,5 +34,5 @@ class FocusRequestNotifier extends Notifier<FocusRequest?> {
 
 final focusRequestProvider =
     NotifierProvider<FocusRequestNotifier, FocusRequest?>(
-  FocusRequestNotifier.new,
-);
+      FocusRequestNotifier.new,
+    );

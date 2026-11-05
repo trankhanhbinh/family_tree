@@ -47,14 +47,23 @@ void main() {
 
   group('validatePersonForm với số đời', () {
     test('admin: số đời sai -> lỗi ở PersonField.generation', () {
-      final values = PersonFormValues(fullName: 'Nguyễn Văn A', generation: 'x');
-      final errors =
-          validatePersonForm(values, nowYear: 2026, validateGeneration: true);
+      final values = PersonFormValues(
+        fullName: 'Nguyễn Văn A',
+        generation: 'x',
+      );
+      final errors = validatePersonForm(
+        values,
+        nowYear: 2026,
+        validateGeneration: true,
+      );
       expect(errors.containsKey(PersonField.generation), isTrue);
     });
 
     test('người thường: số đời sai KHÔNG bị kiểm tra', () {
-      final values = PersonFormValues(fullName: 'Nguyễn Văn A', generation: 'x');
+      final values = PersonFormValues(
+        fullName: 'Nguyễn Văn A',
+        generation: 'x',
+      );
       final errors = validatePersonForm(values, nowYear: 2026);
       expect(errors, isEmpty);
     });
@@ -64,8 +73,7 @@ void main() {
     test('includeGeneration = false: không bao giờ có khóa generation', () {
       final original = _person(generation: 2);
       final values = PersonFormValues.fromPerson(original)..generation = '9';
-      final payload =
-          buildPersonUpdatePayload(original, values, nowYear: 2026);
+      final payload = buildPersonUpdatePayload(original, values, nowYear: 2026);
       expect(payload, isEmpty);
     });
 

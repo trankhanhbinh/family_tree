@@ -88,7 +88,8 @@ class _MemorialReminderCardState extends ConsumerState<MemorialReminderCard> {
     final later = await showChoiceDialog(
       context,
       title: 'Bật nhắc ngày giỗ?',
-      message: 'Trước ngày giỗ $kMemorialReminderLeadDays ngày, điện thoại sẽ '
+      message:
+          'Trước ngày giỗ $kMemorialReminderLeadDays ngày, điện thoại sẽ '
           'nhắc bạn vào lúc ${_reminderTimeLabel()}. Thông báo chỉ ghi ngày '
           'giỗ, không ghi tên. Sau khi bấm “Bật nhắc”, máy có thể hỏi thêm '
           'một lần, bạn hãy chọn “Cho phép”.',
@@ -99,8 +100,9 @@ class _MemorialReminderCardState extends ConsumerState<MemorialReminderCard> {
       return;
     }
 
-    final outcome =
-        await ref.read(memorialReminderControllerProvider).enable(_people());
+    final outcome = await ref
+        .read(memorialReminderControllerProvider)
+        .enable(_people());
     if (!mounted) {
       return;
     }
@@ -116,11 +118,11 @@ class _MemorialReminderCardState extends ConsumerState<MemorialReminderCard> {
           title: 'Đã bật nhắc ngày giỗ',
           message: outcome.scheduledCount > 0
               ? 'Đã hẹn ${outcome.scheduledCount} lần nhắc cho các ngày giỗ '
-                  'sắp tới. Mỗi lần nhắc báo trước $kMemorialReminderLeadDays '
-                  'ngày, lúc ${_reminderTimeLabel()}.'
+                    'sắp tới. Mỗi lần nhắc báo trước $kMemorialReminderLeadDays '
+                    'ngày, lúc ${_reminderTimeLabel()}.'
               : 'Hiện chưa có ngày giỗ nào cần nhắc trong '
-                  '$kMemorialLookaheadDays ngày tới. Ứng dụng sẽ tự hẹn khi '
-                  'tới gần, bạn hãy thỉnh thoảng mở ứng dụng.',
+                    '$kMemorialLookaheadDays ngày tới. Ứng dụng sẽ tự hẹn khi '
+                    'tới gần, bạn hãy thỉnh thoảng mở ứng dụng.',
           icon: Icons.notifications_active_outlined,
         );
       case MemorialReminderEnableResult.denied:
@@ -128,7 +130,8 @@ class _MemorialReminderCardState extends ConsumerState<MemorialReminderCard> {
         await showMessageDialog(
           context,
           title: 'Chưa bật được nhắc ngày giỗ',
-          message: 'Để nhận nhắc, hãy mở Cài đặt của máy, vào Ứng dụng, chọn '
+          message:
+              'Để nhận nhắc, hãy mở Cài đặt của máy, vào Ứng dụng, chọn '
               'familytree, chọn Thông báo rồi bật lên. Sau đó quay lại đây '
               'bật công tắc.',
           icon: Icons.notifications_off_outlined,
@@ -170,7 +173,8 @@ class _MemorialReminderCardState extends ConsumerState<MemorialReminderCard> {
         await showMessageDialog(
           context,
           title: 'Đã hẹn thông báo thử',
-          message: 'Hãy thoát ra màn hình chính của điện thoại. Thông báo sẽ '
+          message:
+              'Hãy thoát ra màn hình chính của điện thoại. Thông báo sẽ '
               'hiện sau khoảng 10 giây (có thể trễ tới 1 đến 2 phút nếu máy '
               'đang tiết kiệm pin).',
           icon: Icons.schedule,
@@ -179,7 +183,8 @@ class _MemorialReminderCardState extends ConsumerState<MemorialReminderCard> {
         await showMessageDialog(
           context,
           title: 'Chưa hẹn được thông báo thử',
-          message: 'Máy chưa cho phép thông báo, hoặc có lỗi khi hẹn. Hãy '
+          message:
+              'Máy chưa cho phép thông báo, hoặc có lỗi khi hẹn. Hãy '
               'kiểm tra Cài đặt của máy, mục Thông báo của ứng dụng.',
           icon: Icons.notifications_off_outlined,
           isError: true,

@@ -11,10 +11,7 @@ void main() {
     });
 
     test('nhận đúng /admin/requests', () {
-      expect(
-        allowedPushRoute({'route': '/admin/requests'}),
-        '/admin/requests',
-      );
+      expect(allowedPushRoute({'route': '/admin/requests'}), '/admin/requests');
     });
 
     test('nhận đúng /memorials', () {

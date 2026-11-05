@@ -138,9 +138,9 @@ List<HistoryGroup> groupHistory(Iterable<HistoryEntry> entries) {
     for (final item in byKey.entries)
       HistoryGroup(
         key: item.key,
-        entries: [...item.value]..sort((a, b) {
-            final rank =
-                historyDisplayRank(a).compareTo(historyDisplayRank(b));
+        entries: [...item.value]
+          ..sort((a, b) {
+            final rank = historyDisplayRank(a).compareTo(historyDisplayRank(b));
             return rank != 0 ? rank : a.id.compareTo(b.id);
           }),
       ),

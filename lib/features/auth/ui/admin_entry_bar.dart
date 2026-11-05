@@ -21,7 +21,8 @@ class AdminEntryBar extends ConsumerWidget {
     final stay = await showChoiceDialog(
       context,
       title: 'Đăng xuất quản trị viên?',
-      message: 'Bạn sẽ quay về chế độ người đóng góp. '
+      message:
+          'Bạn sẽ quay về chế độ người đóng góp. '
           'Muốn sửa trực tiếp thì phải nhập lại mã.',
       primaryLabel: 'Ở lại',
       secondaryLabel: 'Đăng xuất',

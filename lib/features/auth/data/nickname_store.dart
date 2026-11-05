@@ -60,5 +60,6 @@ class NicknameNotifier extends AsyncNotifier<String?> {
   }
 }
 
-final nicknameProvider =
-    AsyncNotifierProvider<NicknameNotifier, String?>(NicknameNotifier.new);
+final nicknameProvider = AsyncNotifierProvider<NicknameNotifier, String?>(
+  NicknameNotifier.new,
+);

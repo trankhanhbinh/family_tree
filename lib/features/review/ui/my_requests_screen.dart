@@ -83,10 +83,7 @@ class _MyRequestsScreenState extends ConsumerState<MyRequestsScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             child: BigSegmented<bool>(
-              options: const [
-                (true, 'Đang chờ'),
-                (false, 'Đã xử lý'),
-              ],
+              options: const [(true, 'Đang chờ'), (false, 'Đã xử lý')],
               selected: _showPending,
               onChanged: (value) => setState(() => _showPending = value),
             ),

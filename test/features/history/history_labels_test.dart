@@ -24,10 +24,7 @@ void main() {
   });
 
   test('admin sửa trực tiếp (không có request_id)', () {
-    expect(
-      historyActorLabel(_group(actor: 'Admin')),
-      'Admin sửa trực tiếp',
-    );
+    expect(historyActorLabel(_group(actor: 'Admin')), 'Admin sửa trực tiếp');
   });
 
   test('đề xuất đã duyệt: hiện biệt danh người gửi', () {
@@ -37,11 +34,13 @@ void main() {
     );
   });
 
-  test('biệt danh "Admin" nhưng có request_id: không giả được admin sửa trực tiếp',
-      () {
-    expect(
-      historyActorLabel(_group(actor: 'Admin', requestId: 'r1')),
-      'Đề xuất của Admin, admin đã duyệt',
-    );
-  });
+  test(
+    'biệt danh "Admin" nhưng có request_id: không giả được admin sửa trực tiếp',
+    () {
+      expect(
+        historyActorLabel(_group(actor: 'Admin', requestId: 'r1')),
+        'Đề xuất của Admin, admin đã duyệt',
+      );
+    },
+  );
 }

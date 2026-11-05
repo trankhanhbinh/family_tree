@@ -34,16 +34,19 @@ void main() {
       expect(steps, [kStepChildren, kStepFinal]);
     });
 
-    test('còn người sống và người đã xóa: hai bước theo thứ tự rồi bước cuối', () {
-      final steps = branchBlockedSteps(
-        const BranchDeleteBlockers(
-          childBranches: [],
-          livingPeople: [_living],
-          deletedPeople: [_deleted],
-        ),
-      );
-      expect(steps, [kStepLiving, kStepDeleted, kStepFinal]);
-    });
+    test(
+      'còn người sống và người đã xóa: hai bước theo thứ tự rồi bước cuối',
+      () {
+        final steps = branchBlockedSteps(
+          const BranchDeleteBlockers(
+            childBranches: [],
+            livingPeople: [_living],
+            deletedPeople: [_deleted],
+          ),
+        );
+        expect(steps, [kStepLiving, kStepDeleted, kStepFinal]);
+      },
+    );
 
     test('còn cả ba thứ: chi con, người sống, người đã xóa, bước cuối', () {
       final steps = branchBlockedSteps(

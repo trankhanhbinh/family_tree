@@ -111,11 +111,7 @@ class LayoutLink {
 }
 
 class TreeLayout {
-  TreeLayout({
-    required this.cards,
-    required this.links,
-    required this.size,
-  });
+  TreeLayout({required this.cards, required this.links, required this.size});
 
   final List<CardLayout> cards;
   final List<LayoutLink> links;

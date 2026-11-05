@@ -27,19 +27,44 @@ void main() {
   });
 
   test('detectPhotoExtension nhận PNG', () {
-    final bytes = Uint8List.fromList([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0]);
+    final bytes = Uint8List.fromList([
+      0x89,
+      0x50,
+      0x4E,
+      0x47,
+      0x0D,
+      0x0A,
+      0x1A,
+      0x0A,
+      0,
+    ]);
     expect(detectPhotoExtension(bytes), 'png');
   });
 
   test('detectPhotoExtension nhận WebP', () {
     final bytes = Uint8List.fromList([
-      0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 0,
+      0x52,
+      0x49,
+      0x46,
+      0x46,
+      0,
+      0,
+      0,
+      0,
+      0x57,
+      0x45,
+      0x42,
+      0x50,
+      0,
     ]);
     expect(detectPhotoExtension(bytes), 'webp');
   });
 
   test('detectPhotoExtension: loại khác hoặc quá ngắn -> null', () {
-    expect(detectPhotoExtension(Uint8List.fromList([0x47, 0x49, 0x46, 0x38])), isNull);
+    expect(
+      detectPhotoExtension(Uint8List.fromList([0x47, 0x49, 0x46, 0x38])),
+      isNull,
+    );
     expect(detectPhotoExtension(Uint8List.fromList([0xFF])), isNull);
     expect(detectPhotoExtension(Uint8List(0)), isNull);
   });
@@ -78,14 +103,11 @@ void main() {
   });
 
   test('photosOfPerson: lọc theo người và xếp theo sort_order', () {
-    final result = photosOfPerson(
-      [
-        _photo('b', sortOrder: 2),
-        _photo('x', personId: 'p2'),
-        _photo('a', sortOrder: 1),
-      ],
-      'p1',
-    );
+    final result = photosOfPerson([
+      _photo('b', sortOrder: 2),
+      _photo('x', personId: 'p2'),
+      _photo('a', sortOrder: 1),
+    ], 'p1');
     expect(result.map((p) => p.id).toList(), ['a', 'b']);
   });
 
@@ -96,6 +118,9 @@ void main() {
 
   test('nextSortOrder: rỗng là 0, còn lại là lớn nhất + 1', () {
     expect(nextSortOrder(const <PersonPhoto>[]), 0);
-    expect(nextSortOrder([_photo('a', sortOrder: 3), _photo('b', sortOrder: 1)]), 4);
+    expect(
+      nextSortOrder([_photo('a', sortOrder: 3), _photo('b', sortOrder: 1)]),
+      4,
+    );
   });
 }

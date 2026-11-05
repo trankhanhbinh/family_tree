@@ -15,8 +15,7 @@ class PushSettingsScreen extends ConsumerStatefulWidget {
   const PushSettingsScreen({super.key});
 
   @override
-  ConsumerState<PushSettingsScreen> createState() =>
-      _PushSettingsScreenState();
+  ConsumerState<PushSettingsScreen> createState() => _PushSettingsScreenState();
 }
 
 class _PushSettingsScreenState extends ConsumerState<PushSettingsScreen>
@@ -75,7 +74,8 @@ class _PushSettingsScreenState extends ConsumerState<PushSettingsScreen>
     final keep = await showChoiceDialog(
       context,
       title: 'Tắt thông báo trên máy này?',
-      message: 'Máy này sẽ không báo khi có đề xuất mới nữa. '
+      message:
+          'Máy này sẽ không báo khi có đề xuất mới nữa. '
           'Bạn có thể bật lại bất cứ lúc nào.',
       primaryLabel: 'Giữ nguyên',
       secondaryLabel: 'Tắt thông báo',
@@ -95,7 +95,8 @@ class _PushSettingsScreenState extends ConsumerState<PushSettingsScreen>
       await showMessageDialog(
         context,
         title: 'Đã tắt thông báo',
-        message: 'Máy này sẽ không còn báo đề xuất mới. '
+        message:
+            'Máy này sẽ không còn báo đề xuất mới. '
             'Muốn nhận lại, hãy bấm “Bật thông báo”.',
         icon: Icons.notifications_off_outlined,
       );
@@ -103,7 +104,8 @@ class _PushSettingsScreenState extends ConsumerState<PushSettingsScreen>
       await showMessageDialog(
         context,
         title: 'Chưa tắt hết được',
-        message: 'Đã tắt thông báo trên máy, nhưng chưa xóa được máy này '
+        message:
+            'Đã tắt thông báo trên máy, nhưng chưa xóa được máy này '
             'khỏi hệ thống vì không có mạng. Máy có thể vẫn nhận thông báo. '
             'Khi có mạng, hãy bấm “Bật thông báo” rồi tắt lại.',
         icon: Icons.cloud_off_outlined,
@@ -130,9 +132,7 @@ class _PushSettingsScreenState extends ConsumerState<PushSettingsScreen>
         onDisable: _disable,
       );
     } else if (statusAsync.hasError) {
-      body = _LoadErrorView(
-        onRetry: () => ref.invalidate(pushStatusProvider),
-      );
+      body = _LoadErrorView(onRetry: () => ref.invalidate(pushStatusProvider));
     } else {
       body = const Center(child: CircularProgressIndicator());
     }
@@ -166,7 +166,8 @@ _StatusInfo _infoFor(PushStatus status) {
       return const _StatusInfo(
         icon: Icons.notifications_active_outlined,
         title: 'Đang bật',
-        message: 'Khi có người gửi đề xuất mới, điện thoại này sẽ báo '
+        message:
+            'Khi có người gửi đề xuất mới, điện thoại này sẽ báo '
             'cho bạn biết.',
         actionLabel: 'Tắt thông báo trên máy này',
         isDisableAction: true,
@@ -175,7 +176,8 @@ _StatusInfo _infoFor(PushStatus status) {
       return const _StatusInfo(
         icon: Icons.cloud_off_outlined,
         title: 'Chưa lưu được',
-        message: 'Máy đã cho phép thông báo nhưng chưa lưu được lên hệ '
+        message:
+            'Máy đã cho phép thông báo nhưng chưa lưu được lên hệ '
             'thống, nên chưa nhận được thông báo. Hãy kiểm tra mạng rồi '
             'bấm “Thử lại”.',
         actionLabel: 'Thử lại',
@@ -184,7 +186,8 @@ _StatusInfo _infoFor(PushStatus status) {
       return const _StatusInfo(
         icon: Icons.notifications_off_outlined,
         title: 'Chưa bật',
-        message: 'Máy này chưa được cho phép hiện thông báo. '
+        message:
+            'Máy này chưa được cho phép hiện thông báo. '
             'Bấm nút bên dưới để bật.',
         actionLabel: 'Bật thông báo',
       );
@@ -192,7 +195,8 @@ _StatusInfo _infoFor(PushStatus status) {
       return const _StatusInfo(
         icon: Icons.notifications_off_outlined,
         title: 'Đã tắt',
-        message: 'Bạn đã tắt thông báo trên máy này. '
+        message:
+            'Bạn đã tắt thông báo trên máy này. '
             'Muốn nhận lại thì bấm “Bật thông báo”.',
         actionLabel: 'Bật thông báo',
       );
@@ -200,7 +204,8 @@ _StatusInfo _infoFor(PushStatus status) {
       return const _StatusInfo(
         icon: Icons.block_outlined,
         title: 'Không dùng được',
-        message: 'Máy này chưa dùng được thông báo đẩy. '
+        message:
+            'Máy này chưa dùng được thông báo đẩy. '
             'Bạn vẫn dùng ứng dụng bình thường.',
       );
   }

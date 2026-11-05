@@ -25,16 +25,21 @@ void main() {
     expect(layout.cardById['09']!.descendantCount, 2);
   });
 
-  test('descendantCount không tính vợ/chồng và bằng 0 với thẻ lá, thẻ vợ/chồng',
-      () {
-    expect(layout.cardById['05']!.descendantCount, 0);
-    expect(layout.cardById['02']!.descendantCount, 0);
-    expect(layout.cardById['15']!.descendantCount, 0);
-  });
+  test(
+    'descendantCount không tính vợ/chồng và bằng 0 với thẻ lá, thẻ vợ/chồng',
+    () {
+      expect(layout.cardById['05']!.descendantCount, 0);
+      expect(layout.cardById['02']!.descendantCount, 0);
+      expect(layout.cardById['15']!.descendantCount, 0);
+    },
+  );
 
   test('descendantCount không đổi khi thu gọn (đếm trên toàn cây)', () {
-    final collapsed =
-        TreeLayoutEngine.compute(forest, config: cfg, collapsedIds: {'03'});
+    final collapsed = TreeLayoutEngine.compute(
+      forest,
+      config: cfg,
+      collapsedIds: {'03'},
+    );
     expect(collapsed.cardById['03']!.descendantCount, 5);
     expect(collapsed.cardById['01']!.descendantCount, 10);
   });
@@ -50,24 +55,38 @@ void main() {
       expect(footer.height, cfg.footerHeight);
     }
     for (final id in ['02', '05', '06', '10', '15', '16']) {
-      expect(layout.cardById[id]!.footerRect, isNull,
-          reason: 'người $id không được có dải');
+      expect(
+        layout.cardById[id]!.footerRect,
+        isNull,
+        reason: 'người $id không được có dải',
+      );
     }
   });
 
-  test('collapsibleNonRootIds: chỉ người chính hàng >= 1 có con = {03, 04, 09}',
-      () {
-    expect(collapsibleNonRootIds(forest), {'03', '04', '09'});
-  });
+  test(
+    'collapsibleNonRootIds: chỉ người chính hàng >= 1 có con = {03, 04, 09}',
+    () {
+      expect(collapsibleNonRootIds(forest), {'03', '04', '09'});
+    },
+  );
 
   test('thu gọn tất cả: còn gốc + đời 2 (8 thẻ), gốc vẫn mở', () {
     final ids = collapsibleNonRootIds(forest);
-    final collapsed =
-        TreeLayoutEngine.compute(forest, config: cfg, collapsedIds: ids);
-    expect(
-      collapsed.cards.map((c) => c.personId).toSet(),
-      {'01', '02', '03', '06', '08', '04', '07', '05'},
+    final collapsed = TreeLayoutEngine.compute(
+      forest,
+      config: cfg,
+      collapsedIds: ids,
     );
+    expect(collapsed.cards.map((c) => c.personId).toSet(), {
+      '01',
+      '02',
+      '03',
+      '06',
+      '08',
+      '04',
+      '07',
+      '05',
+    });
     expect(collapsed.cardById['01']!.isCollapsed, isFalse);
     expect(collapsed.cardById['03']!.isCollapsed, isTrue);
     expect(collapsed.cardById['04']!.isCollapsed, isTrue);

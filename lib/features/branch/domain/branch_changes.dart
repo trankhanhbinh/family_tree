@@ -42,10 +42,7 @@ Map<String, dynamic> buildBranchMovePayload({
   required String? newParentId,
   required int newSortOrder,
 }) {
-  return {
-    'parent_branch_id': newParentId,
-    'sort_order': newSortOrder,
-  };
+  return {'parent_branch_id': newParentId, 'sort_order': newSortOrder};
 }
 
 /// Payload đổi chi của một người (entity "person", action "update").

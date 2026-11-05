@@ -37,7 +37,8 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       await showMessageDialog(
         context,
         title: 'Chưa cấu hình',
-        message: 'Ứng dụng chưa có email quản trị (ADMIN_EMAIL trong '
+        message:
+            'Ứng dụng chưa có email quản trị (ADMIN_EMAIL trong '
             'env.json). Vui lòng báo người làm app.',
         icon: Icons.settings,
         isError: true,
@@ -129,8 +130,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
             SizedBox(
               height: 56,
               child: OutlinedButton(
-                onPressed:
-                    _busy ? null : () => setState(() => _obscure = !_obscure),
+                onPressed: _busy
+                    ? null
+                    : () => setState(() => _obscure = !_obscure),
                 child: Text(
                   _obscure ? 'Hiện mã' : 'Ẩn mã',
                   style: const TextStyle(fontSize: 18),

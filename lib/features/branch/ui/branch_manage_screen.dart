@@ -152,7 +152,8 @@ class _BranchTile extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        if (description != null && description.trim().isNotEmpty)
+                        if (description != null &&
+                            description.trim().isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 2),
                             child: Text(
@@ -261,7 +262,10 @@ class _ActionTile extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 2),
               Text(subtitle, style: const TextStyle(fontSize: 15)),
@@ -298,7 +302,10 @@ Future<void> _showBranchActions(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
                   path ?? branch.name,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _ActionTile(
@@ -467,6 +474,7 @@ Future<void> _moveBranch(
   }
   await showSubmitDone(context, outcome);
 }
+
 /// Xóa chi: chi chưa trống thì mở màn giải thích; chi trống thì xác nhận rồi xóa.
 Future<void> _deleteBranch(
   BuildContext context,
@@ -489,7 +497,8 @@ Future<void> _deleteBranch(
   final keep = await showChoiceDialog(
     context,
     title: 'Xóa chi này?',
-    message: 'Chi "${branch.name}" đang trống. '
+    message:
+        'Chi "${branch.name}" đang trống. '
         'Sau khi xóa sẽ không hoàn lại được.',
     primaryLabel: 'Giữ lại',
     secondaryLabel: 'Xóa chi',

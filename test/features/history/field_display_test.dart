@@ -24,7 +24,12 @@ void main() {
   test('chi cha tra được -> đường dẫn', () {
     const branches = [
       Branch(id: 'b1', name: 'Chi Nhất', sortOrder: 0),
-      Branch(id: 'b3', name: 'Nhánh Nhất-1', parentBranchId: 'b1', sortOrder: 0),
+      Branch(
+        id: 'b3',
+        name: 'Nhánh Nhất-1',
+        parentBranchId: 'b1',
+        sortOrder: 0,
+      ),
     ];
     expect(
       displayHistoryValue('parent_branch_id', 'b3', branches),

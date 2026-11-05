@@ -89,11 +89,10 @@ String buildPhotoStoragePath({
 
 /// Ảnh của một người, xếp theo sort_order rồi theo id.
 List<PersonPhoto> photosOfPerson(Iterable<PersonPhoto> all, String personId) {
-  return all.where((p) => p.personId == personId).toList()
-    ..sort((a, b) {
-      final order = a.sortOrder.compareTo(b.sortOrder);
-      return order != 0 ? order : a.id.compareTo(b.id);
-    });
+  return all.where((p) => p.personId == personId).toList()..sort((a, b) {
+    final order = a.sortOrder.compareTo(b.sortOrder);
+    return order != 0 ? order : a.id.compareTo(b.id);
+  });
 }
 
 PersonPhoto? avatarOf(Iterable<PersonPhoto> photos) {

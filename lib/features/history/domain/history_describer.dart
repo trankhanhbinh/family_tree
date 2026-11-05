@@ -8,10 +8,7 @@ typedef HistoryNameLookup = String? Function(Object? personId);
 
 /// Một dòng lịch sử đã được đọc hiểu.
 class DescribedHistoryEntry {
-  const DescribedHistoryEntry({
-    required this.title,
-    this.details = const [],
-  });
+  const DescribedHistoryEntry({required this.title, this.details = const []});
 
   final String title;
   final List<String> details;
@@ -185,11 +182,14 @@ DescribedHistoryEntry _describeParentChild(
   switch (entry.action) {
     case 'create':
       return DescribedHistoryEntry(
-        title: 'Gắn $child là ${_relationName(data?['relation_type'])} '
+        title:
+            'Gắn $child là ${_relationName(data?['relation_type'])} '
             'của $parent',
       );
     case 'update':
-      final oldType = _capitalize(_relationName(entry.before?['relation_type']));
+      final oldType = _capitalize(
+        _relationName(entry.before?['relation_type']),
+      );
       final newType = _capitalize(_relationName(entry.after?['relation_type']));
       return DescribedHistoryEntry(
         title: 'Đổi loại quan hệ: $child',

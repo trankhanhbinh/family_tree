@@ -42,8 +42,7 @@ String childBranchesTitle(int count) => 'Còn $count chi con';
 String livingPeopleTitle(int count) =>
     'Còn $count người đang sống thuộc chi này';
 
-String deletedPeopleTitle(int count) =>
-    'Còn $count người đã xóa thuộc chi này';
+String deletedPeopleTitle(int count) => 'Còn $count người đã xóa thuộc chi này';
 
 String moveMembersButtonLabel(int count) => 'Chuyển $count người sang chi khác';
 

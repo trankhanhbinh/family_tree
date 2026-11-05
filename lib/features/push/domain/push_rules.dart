@@ -45,7 +45,6 @@ bool shouldAskAtLogin({
   return firebaseReady && permission != PushPermission.granted;
 }
 
-
 /// Trạng thái thông báo của máy này, hiển thị ở màn "Thông báo đề xuất mới".
 enum PushStatus {
   /// Firebase không khởi tạo được: máy này không dùng được thông báo.

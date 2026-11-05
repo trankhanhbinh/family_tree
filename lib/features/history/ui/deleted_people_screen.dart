@@ -103,7 +103,8 @@ Future<void> _confirmAndRestore(
   final review = await showChoiceDialog(
     context,
     title: 'Khôi phục ${person.fullName}?',
-    message: 'Người này sẽ được đưa trở lại cây gia phả, cùng các quan hệ '
+    message:
+        'Người này sẽ được đưa trở lại cây gia phả, cùng các quan hệ '
         'đã bị gỡ lúc xóa (nếu người ở đầu kia vẫn còn trên cây).',
     primaryLabel: 'Xem lại',
     secondaryLabel: 'Khôi phục',

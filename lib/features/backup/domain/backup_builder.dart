@@ -69,8 +69,7 @@ class BackupData {
       marriages: marriages
           .where((row) => has(row['person1_id']) && has(row['person2_id']))
           .toList(),
-      personPhotos:
-          personPhotos.where((row) => has(row['person_id'])).toList(),
+      personPhotos: personPhotos.where((row) => has(row['person_id'])).toList(),
     );
   }
 }

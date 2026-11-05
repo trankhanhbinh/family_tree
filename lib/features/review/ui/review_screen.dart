@@ -160,8 +160,7 @@ class BundleCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final shown = described.take(3).toList();
     final more = described.length - shown.length;
-    final needsCheck =
-        described.any((d) => d.warning != null || !d.supported);
+    final needsCheck = described.any((d) => d.warning != null || !d.supported);
 
     return Card(
       margin: EdgeInsets.zero,

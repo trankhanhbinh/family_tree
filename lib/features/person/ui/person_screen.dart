@@ -64,7 +64,9 @@ class PersonScreen extends ConsumerWidget {
           onPressed: () {
             final forest = ref.read(familyForestProvider).value;
             if (forest != null) {
-              ref.read(focusRequestProvider.notifier).focusOn(person.id, forest);
+              ref
+                  .read(focusRequestProvider.notifier)
+                  .focusOn(person.id, forest);
             }
             context.go('/home');
           },
@@ -88,10 +90,7 @@ class PersonScreen extends ConsumerWidget {
         ),
       ),
       const SizedBox(height: 16),
-      _SectionCard(
-        title: 'Thông tin',
-        children: _infoRows(person, branchPath),
-      ),
+      _SectionCard(title: 'Thông tin', children: _infoRows(person, branchPath)),
       if (!person.isAlive) _memorialSection(person),
       PersonPhotosSection(personId: person.id),
       ..._familySection(context, relations),
@@ -174,10 +173,7 @@ class PersonScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(person.fullName)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: sections,
-      ),
+      body: ListView(padding: const EdgeInsets.all(16), children: sections),
     );
   }
 
@@ -422,7 +418,7 @@ class _Header extends StatelessWidget {
       children: [
         PhotoAvatar(
           personId: person.id,
-          radius: 44,
+          width: 84,
           accent: accent,
           initial: _initialOf(person.fullName),
           fontSize: 36,
@@ -464,9 +460,7 @@ class _SectionCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
+              style: Theme.of(context).textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -519,9 +513,8 @@ class _SubHeader extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8, bottom: 2),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+        style: Theme.of(context).textTheme.labelLarge
+            ?.copyWith(color: Theme.of(context).colorScheme.primary),
       ),
     );
   }
@@ -546,7 +539,7 @@ class _PersonTile extends StatelessWidget {
       dense: true,
       leading: PhotoAvatar(
         personId: person.id,
-        radius: 18,
+        width: 36,
         accent: accent,
         initial: _initialOf(person.fullName),
       ),

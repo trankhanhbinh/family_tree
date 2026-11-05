@@ -6,10 +6,10 @@ enum MarriageStatus {
   widowed;
 
   static MarriageStatus fromString(String? value) => switch (value) {
-        'divorced' => MarriageStatus.divorced,
-        'widowed' => MarriageStatus.widowed,
-        _ => MarriageStatus.married,
-      };
+    'divorced' => MarriageStatus.divorced,
+    'widowed' => MarriageStatus.widowed,
+    _ => MarriageStatus.married,
+  };
 }
 
 class Marriage {

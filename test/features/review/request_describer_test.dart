@@ -67,57 +67,45 @@ List<DescribedRequest> _describe(List<ChangeRequest> requests, TreeData tree) {
 
 void main() {
   test('thêm người: tiêu đề và các dòng chi tiết', () {
-    final result = _describe(
-      [
-        _req(payload: {
+    final result = _describe([
+      _req(
+        payload: {
           'id': 'n1',
           'full_name': 'Nguyễn Văn B',
           'gender': 'male',
           'birth_year': 1990,
-        }),
-      ],
-      _tree(),
-    );
+        },
+      ),
+    ], _tree());
     expect(result.single.title, 'Thêm người: Nguyễn Văn B');
     expect(result.single.details, contains('Giới tính: Nam'));
     expect(result.single.details, contains('Năm sinh: 1990'));
   });
 
   test('sửa người: liệt kê "cũ → mới"', () {
-    final result = _describe(
-      [
-        _req(
-          action: 'update',
-          entityId: _toId,
-          payload: {'birth_place': 'Đà Nẵng'},
-        ),
-      ],
-      _tree(birthPlace: 'Huế'),
-    );
+    final result = _describe([
+      _req(
+        action: 'update',
+        entityId: _toId,
+        payload: {'birth_place': 'Đà Nẵng'},
+      ),
+    ], _tree(birthPlace: 'Huế'));
     expect(result.single.title, 'Sửa thông tin: Nguyễn Văn Tổ');
     expect(result.single.details, ['Nơi sinh: Huế → Đà Nẵng']);
     expect(result.single.warning, isNull);
   });
 
   test('sửa người: bỏ qua dòng có giá trị không đổi', () {
-    final result = _describe(
-      [
-        _req(
-          action: 'update',
-          entityId: _toId,
-          payload: {'birth_place': 'Huế'},
-        ),
-      ],
-      _tree(birthPlace: 'Huế'),
-    );
+    final result = _describe([
+      _req(action: 'update', entityId: _toId, payload: {'birth_place': 'Huế'}),
+    ], _tree(birthPlace: 'Huế'));
     expect(result.single.details, isEmpty);
   });
 
   test('xóa người không còn trong cây -> có cảnh báo', () {
-    final result = _describe(
-      [_req(action: 'delete', entityId: 'khong-co')],
-      _tree(),
-    );
+    final result = _describe([
+      _req(action: 'delete', entityId: 'khong-co'),
+    ], _tree());
     expect(result.single.title, 'Xóa người: (người không còn trong gia phả)');
     expect(result.single.warning, isNotNull);
   });
@@ -128,71 +116,56 @@ void main() {
   });
 
   test('gắn cha-con: dùng tên người MỚI trong cùng gói', () {
-    final result = _describe(
-      [
-        _req(
-          id: 'p',
-          payload: {'id': 'n1', 'full_name': 'Nguyễn Văn B', 'gender': 'male'},
-        ),
-        _req(
-          id: 'pc',
-          entityType: 'parent_child',
-          payload: {
-            'parent_id': _toId,
-            'child_id': 'n1',
-            'relation_type': 'biological',
-          },
-        ),
-      ],
-      _tree(),
-    );
-    expect(
-      result[1].title,
-      'Gắn Nguyễn Văn B là con ruột của Nguyễn Văn Tổ',
-    );
+    final result = _describe([
+      _req(
+        id: 'p',
+        payload: {'id': 'n1', 'full_name': 'Nguyễn Văn B', 'gender': 'male'},
+      ),
+      _req(
+        id: 'pc',
+        entityType: 'parent_child',
+        payload: {
+          'parent_id': _toId,
+          'child_id': 'n1',
+          'relation_type': 'biological',
+        },
+      ),
+    ], _tree());
+    expect(result[1].title, 'Gắn Nguyễn Văn B là con ruột của Nguyễn Văn Tổ');
     expect(result[1].warning, isNull);
   });
 
   test('gắn cha-con: loại nối đời', () {
-    final result = _describe(
-      [
-        _req(
-          id: 'p',
-          payload: {'id': 'n1', 'full_name': 'Nguyễn Văn B', 'gender': 'male'},
-        ),
-        _req(
-          id: 'pc',
-          entityType: 'parent_child',
-          payload: {
-            'parent_id': _toId,
-            'child_id': 'n1',
-            'relation_type': 'lineage',
-          },
-        ),
-      ],
-      _tree(),
-    );
-    expect(
-      result[1].title,
-      'Gắn Nguyễn Văn B là đời sau của Nguyễn Văn Tổ',
-    );
+    final result = _describe([
+      _req(
+        id: 'p',
+        payload: {'id': 'n1', 'full_name': 'Nguyễn Văn B', 'gender': 'male'},
+      ),
+      _req(
+        id: 'pc',
+        entityType: 'parent_child',
+        payload: {
+          'parent_id': _toId,
+          'child_id': 'n1',
+          'relation_type': 'lineage',
+        },
+      ),
+    ], _tree());
+    expect(result[1].title, 'Gắn Nguyễn Văn B là đời sau của Nguyễn Văn Tổ');
     expect(result[1].warning, isNull);
   });
 
   test('gắn cha-con: người không tồn tại -> có cảnh báo', () {
-    final result = _describe(
-      [
-        _req(
-          entityType: 'parent_child',
-          payload: {
-            'parent_id': 'zzz',
-            'child_id': _toId,
-            'relation_type': 'adopted',
-          },
-        ),
-      ],
-      _tree(),
-    );
+    final result = _describe([
+      _req(
+        entityType: 'parent_child',
+        payload: {
+          'parent_id': 'zzz',
+          'child_id': _toId,
+          'relation_type': 'adopted',
+        },
+      ),
+    ], _tree());
     expect(result.single.warning, isNotNull);
   });
 }

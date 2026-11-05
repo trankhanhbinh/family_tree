@@ -8,13 +8,7 @@ import 'package:familytree/features/person/domain/person.dart';
 /// Mốc đã biết: 28/6 = 02/08, 15/7 = 18/08, 28/8 = 30/09, 29/8 = 01/10 (2024).
 final DateTime _now = DateTime(2024, 8, 1, 10, 0);
 
-Person _p(
-  String id,
-  String name, {
-  bool alive = false,
-  int? day,
-  int? month,
-}) {
+Person _p(String id, String name, {bool alive = false, int? day, int? month}) {
   return Person(
     id: id,
     fullName: name,
@@ -73,10 +67,9 @@ void main() {
     });
 
     test('ranh giới: còn đủ thời gian trước 20:30 thì nhắc', () {
-      final r = _plan(
-        [_p('a', 'Một', day: 15, month: 7)],
-        now: DateTime(2024, 8, 15, 20, 0),
-      );
+      final r = _plan([
+        _p('a', 'Một', day: 15, month: 7),
+      ], now: DateTime(2024, 8, 15, 20, 0));
       expect(r.length, 1);
     });
 
@@ -126,8 +119,9 @@ void main() {
       final people = <Person>[];
       for (var month = 1; month <= 12; month++) {
         for (var day = 1; day <= 29; day++) {
-          people.add(_p('p$month-$day', 'Người $month-$day',
-              day: day, month: month));
+          people.add(
+            _p('p$month-$day', 'Người $month-$day', day: day, month: month),
+          );
         }
       }
       final r = _plan(people);
@@ -147,11 +141,14 @@ void main() {
       expect(isMemorialReminderId(b), isTrue);
     });
 
-    test('mã ngoài dải (vd. mã thông báo đề xuất) không bị coi là nhắc giỗ', () {
-      expect(isMemorialReminderId(1793600000), isFalse);
-      expect(isMemorialReminderId(kMemorialReminderIdBase - 1), isFalse);
-      expect(isMemorialReminderId(kMemorialReminderIdLimit), isFalse);
-    });
+    test(
+      'mã ngoài dải (vd. mã thông báo đề xuất) không bị coi là nhắc giỗ',
+      () {
+        expect(isMemorialReminderId(1793600000), isFalse);
+        expect(isMemorialReminderId(kMemorialReminderIdBase - 1), isFalse);
+        expect(isMemorialReminderId(kMemorialReminderIdLimit), isFalse);
+      },
+    );
   });
 
   group('vietnamWallClock', () {

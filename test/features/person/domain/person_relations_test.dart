@@ -4,11 +4,7 @@ import 'package:familytree/features/person/domain/person_relations.dart';
 import 'package:familytree/features/tree/domain/marriage.dart';
 import 'package:familytree/features/tree/domain/parent_child.dart';
 
-Person _person(
-  String id, {
-  String gender = 'male',
-  int? birthYear,
-}) {
+Person _person(String id, {String gender = 'male', int? birthYear}) {
   return Person.fromJson({
     'id': id,
     'full_name': 'Người $id',
@@ -99,11 +95,11 @@ void main() {
   ];
 
   PersonRelations relationsOf(String id) => PersonRelations.of(
-        id,
-        people: people,
-        parentChildren: parentChildren,
-        marriages: marriages,
-      );
+    id,
+    people: people,
+    parentChildren: parentChildren,
+    marriages: marriages,
+  );
 
   test('con xếp theo năm sinh, không rõ xếp cuối, không trùng lặp', () {
     final children = relationsOf('a').children;

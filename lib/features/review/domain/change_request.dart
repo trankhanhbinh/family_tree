@@ -139,9 +139,8 @@ class ReviewBundle {
   DateTime? get reviewedAt => requests.first.reviewedAt;
 
   /// Có dòng app chưa hỗ trợ duyệt (ví dụ ảnh).
-  bool get hasUnsupported => requests.any(
-        (r) => !kReviewableEntityTypes.contains(r.entityType),
-      );
+  bool get hasUnsupported =>
+      requests.any((r) => !kReviewableEntityTypes.contains(r.entityType));
 
   String get statusLabel {
     return switch (status) {
@@ -167,9 +166,12 @@ List<ReviewBundle> groupRequests(
     for (final entry in byKey.entries)
       ReviewBundle(
         key: entry.key,
-        requests: [...entry.value]..sort((a, b) {
-            final rank = approvalRank(a.entityType, a.action)
-                .compareTo(approvalRank(b.entityType, b.action));
+        requests: [...entry.value]
+          ..sort((a, b) {
+            final rank = approvalRank(
+              a.entityType,
+              a.action,
+            ).compareTo(approvalRank(b.entityType, b.action));
             return rank != 0 ? rank : a.id.compareTo(b.id);
           }),
       ),

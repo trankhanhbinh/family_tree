@@ -10,10 +10,10 @@ class FamilyTreeBuilder {
   FamilyTreeBuilder._();
 
   static FamilyForest fromTreeData(TreeData data) => build(
-        people: data.people,
-        parentChildren: data.parentChildren,
-        marriages: data.marriages,
-      );
+    people: data.people,
+    parentChildren: data.parentChildren,
+    marriages: data.marriages,
+  );
 
   static FamilyForest build({
     required List<Person> people,
@@ -28,8 +28,10 @@ class FamilyTreeBuilder {
     final seenRows = <String>{};
     for (final pc in parentChildren) {
       if (!byId.containsKey(pc.parentId) || !byId.containsKey(pc.childId)) {
-        warnings.add('parent_child tham chiếu người không tồn tại: '
-            '${pc.parentId} -> ${pc.childId}');
+        warnings.add(
+          'parent_child tham chiếu người không tồn tại: '
+          '${pc.parentId} -> ${pc.childId}',
+        );
         continue;
       }
       if (pc.parentId == pc.childId) {
@@ -43,12 +45,15 @@ class FamilyTreeBuilder {
     // Cha mẹ "hiệu lực": ưu tiên ruột/nuôi, chỉ dùng step nếu không có gì khác.
     final parentIds = <String, List<String>>{};
     for (final entry in rowsOf.entries) {
-      var chosen =
-          entry.value.where((r) => r.relationType != RelationType.step).toList();
+      var chosen = entry.value
+          .where((r) => r.relationType != RelationType.step)
+          .toList();
       if (chosen.isEmpty) chosen = List.of(entry.value);
       var ids = chosen.map((r) => r.parentId).toList()..sort();
       if (ids.length > 2) {
-        warnings.add('Người ${entry.key} có hơn 2 cha/mẹ, chỉ dùng 2 người đầu.');
+        warnings.add(
+          'Người ${entry.key} có hơn 2 cha/mẹ, chỉ dùng 2 người đầu.',
+        );
         ids = ids.sublist(0, 2);
       }
       parentIds[entry.key] = ids;
@@ -68,7 +73,9 @@ class FamilyTreeBuilder {
       if (existing == null) {
         pairs[key] = _Pair(key, m.person1Id, m.person2Id)..marriage = m;
       } else {
-        warnings.add('Hai hôn nhân cùng một cặp ($key): chỉ dùng cái đầu tiên.');
+        warnings.add(
+          'Hai hôn nhân cùng một cặp ($key): chỉ dùng cái đầu tiên.',
+        );
       }
     }
     for (final ids in parentIds.values) {
@@ -99,14 +106,18 @@ class FamilyTreeBuilder {
       spouseIds.add(spouse.id);
     }
     for (final id in spouseIds.intersection(anchorIds)) {
-      warnings.add('Người $id vừa là người chính vừa là vợ/chồng ngoại họ '
-          'ở cặp khác: sẽ xuất hiện ở 2 nơi.');
+      warnings.add(
+        'Người $id vừa là người chính vừa là vợ/chồng ngoại họ '
+        'ở cặp khác: sẽ xuất hiện ở 2 nơi.',
+      );
     }
     final spouseOnly = spouseIds.difference(anchorIds);
     for (final id in spouseOnly) {
       if (parentIds.containsKey(id)) {
-        warnings.add('Người $id có cha mẹ trong cây nhưng chỉ hiện như '
-            'vợ/chồng (cả hai người trong cặp đều có cha mẹ).');
+        warnings.add(
+          'Người $id có cha mẹ trong cây nhưng chỉ hiện như '
+          'vợ/chồng (cả hai người trong cặp đều có cha mẹ).',
+        );
       }
     }
 
@@ -121,7 +132,10 @@ class FamilyTreeBuilder {
     final draftsBySpouse = <String, List<_Draft>>{};
     final draftByPairKey = <String, _Draft>{};
     for (final pair in pairs.values) {
-      final draft = _Draft(spouse: byId[pair.spouseId], marriage: pair.marriage);
+      final draft = _Draft(
+        spouse: byId[pair.spouseId],
+        marriage: pair.marriage,
+      );
       draftByPairKey[pair.key] = draft;
       (draftsByAnchor[pair.anchorId] ??= []).add(draft);
       (draftsBySpouse[pair.spouseId] ??= []).add(draft);
@@ -172,10 +186,9 @@ class FamilyTreeBuilder {
       }
     }
 
-    final roots = nodes.values
-        .where((n) => !parentIds.containsKey(n.person.id))
-        .toList()
-      ..sort((a, b) => _comparePeople(a.person, b.person));
+    final roots =
+        nodes.values.where((n) => !parentIds.containsKey(n.person.id)).toList()
+          ..sort((a, b) => _comparePeople(a.person, b.person));
 
     // 8. Kiểm tra: nút không với tới được từ gốc, và đời lệch nhau.
     final visited = <String>{};
@@ -186,8 +199,10 @@ class FamilyTreeBuilder {
           final pg = node.person.generation;
           final cg = c.person.generation;
           if (pg != null && cg != null && cg != pg + 1) {
-            warnings.add('Đời lệch: ${node.person.fullName} (đời $pg) -> '
-                '${c.person.fullName} (đời $cg).');
+            warnings.add(
+              'Đời lệch: ${node.person.fullName} (đời $pg) -> '
+              '${c.person.fullName} (đời $cg).',
+            );
           }
           visit(c);
         }
@@ -199,7 +214,9 @@ class FamilyTreeBuilder {
     }
     for (final id in nodes.keys) {
       if (!visited.contains(id)) {
-        warnings.add('Người $id không nối được tới gốc nào (có thể có vòng lặp).');
+        warnings.add(
+          'Người $id không nối được tới gốc nào (có thể có vòng lặp).',
+        );
       }
     }
 

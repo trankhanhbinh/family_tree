@@ -7,14 +7,14 @@ import 'package:familytree/features/tree/domain/marriage.dart';
 /// Trạng thái form hôn nhân (dùng cho màn Sửa hôn nhân).
 class MarriageFormController extends ChangeNotifier {
   MarriageFormController(this.initial, {this.initialNotes = ''})
-      : startDay = TextEditingController(text: initial.startDay),
-        startMonth = TextEditingController(text: initial.startMonth),
-        startYear = TextEditingController(text: initial.startYear),
-        endDay = TextEditingController(text: initial.endDay),
-        endMonth = TextEditingController(text: initial.endMonth),
-        endYear = TextEditingController(text: initial.endYear),
-        notes = TextEditingController(text: initialNotes),
-        _status = initial.status {
+    : startDay = TextEditingController(text: initial.startDay),
+      startMonth = TextEditingController(text: initial.startMonth),
+      startYear = TextEditingController(text: initial.startYear),
+      endDay = TextEditingController(text: initial.endDay),
+      endMonth = TextEditingController(text: initial.endMonth),
+      endYear = TextEditingController(text: initial.endYear),
+      notes = TextEditingController(text: initialNotes),
+      _status = initial.status {
     for (final c in _controllers) {
       c.addListener(notifyListeners);
     }
@@ -38,14 +38,14 @@ class MarriageFormController extends ChangeNotifier {
   final GlobalKey endKey = GlobalKey();
 
   List<TextEditingController> get _controllers => [
-        startDay,
-        startMonth,
-        startYear,
-        endDay,
-        endMonth,
-        endYear,
-        notes,
-      ];
+    startDay,
+    startMonth,
+    startYear,
+    endDay,
+    endMonth,
+    endYear,
+    notes,
+  ];
 
   MarriageStatus get status => _status;
 

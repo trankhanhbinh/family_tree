@@ -39,8 +39,7 @@ class _Computer {
       _place(root, x, 0);
       x += _width(root) + rootGap;
     }
-    final contentWidth =
-        forest.roots.isEmpty ? 0.0 : x - rootGap - cfg.padding;
+    final contentWidth = forest.roots.isEmpty ? 0.0 : x - rootGap - cfg.padding;
     final contentHeight = forest.roots.isEmpty
         ? 0.0
         : (_maxRow + 1) * cfg.cardHeight + _maxRow * cfg.levelGap;
@@ -122,24 +121,26 @@ class _Computer {
     final childUnions = _childUnions(n);
 
     // Thẻ người chính (có dải thu gọn nếu có con).
-    cards.add(CardLayout(
-      person: n.person,
-      ownerId: n.person.id,
-      isSpouse: false,
-      row: row,
-      rect: Rect.fromLTWH(rowX, y, cfg.cardWidth, cfg.cardHeight),
-      hasChildren: n.hasChildren,
-      isCollapsed: n.hasChildren && collapsed.contains(n.person.id),
-      descendantCount: _descendants(n),
-      footerRect: n.hasChildren
-          ? Rect.fromLTWH(
-              rowX,
-              y + cfg.cardHeight - cfg.footerHeight,
-              cfg.cardWidth,
-              cfg.footerHeight,
-            )
-          : null,
-    ));
+    cards.add(
+      CardLayout(
+        person: n.person,
+        ownerId: n.person.id,
+        isSpouse: false,
+        row: row,
+        rect: Rect.fromLTWH(rowX, y, cfg.cardWidth, cfg.cardHeight),
+        hasChildren: n.hasChildren,
+        isCollapsed: n.hasChildren && collapsed.contains(n.person.id),
+        descendantCount: _descendants(n),
+        footerRect: n.hasChildren
+            ? Rect.fromLTWH(
+                rowX,
+                y + cfg.cardHeight - cfg.footerHeight,
+                cfg.cardWidth,
+                cfg.footerHeight,
+              )
+            : null,
+      ),
+    );
     final primaryCx = rowX + cfg.cardWidth / 2;
     _centerX[n.person.id] = primaryCx;
 
@@ -148,13 +149,15 @@ class _Computer {
     for (var i = 0; i < spouseUnions.length; i++) {
       final u = spouseUnions[i];
       final sx = rowX + (i + 1) * (cfg.cardWidth + cfg.spouseGap);
-      cards.add(CardLayout(
-        person: u.spouse!,
-        ownerId: n.person.id,
-        isSpouse: true,
-        row: row,
-        rect: Rect.fromLTWH(sx, y, cfg.cardWidth, cfg.cardHeight),
-      ));
+      cards.add(
+        CardLayout(
+          person: u.spouse!,
+          ownerId: n.person.id,
+          isSpouse: true,
+          row: row,
+          rect: Rect.fromLTWH(sx, y, cfg.cardWidth, cfg.cardHeight),
+        ),
+      );
       spouseCx[u] = sx + cfg.cardWidth / 2;
     }
 
@@ -172,17 +175,19 @@ class _Computer {
     for (var i = 0; i < spouseUnions.length; i++) {
       final u = spouseUnions[i];
       final yl = yBottom + cfg.marriageLineOffset + i * cfg.marriageLineStep;
-      links.add(LayoutLink(
-        kind: LinkKind.marriage,
-        ownerId: n.person.id,
-        marriage: u.marriage,
-        points: [
-          Offset(primaryCx, yBottom),
-          Offset(primaryCx, yl),
-          Offset(spouseCx[u]!, yl),
-          Offset(spouseCx[u]!, yBottom),
-        ],
-      ));
+      links.add(
+        LayoutLink(
+          kind: LinkKind.marriage,
+          ownerId: n.person.id,
+          marriage: u.marriage,
+          points: [
+            Offset(primaryCx, yBottom),
+            Offset(primaryCx, yl),
+            Offset(spouseCx[u]!, yl),
+            Offset(spouseCx[u]!, yBottom),
+          ],
+        ),
+      );
     }
 
     // Đường xuống con: điểm thả -> trục ngang -> đỉnh thẻ con.
@@ -195,24 +200,27 @@ class _Computer {
               yBottom + cfg.marriageLineOffset + si * cfg.marriageLineStep,
             )
           : Offset(primaryCx, yBottom);
-      var busY = childTop -
+      var busY =
+          childTop -
           cfg.busClearance -
           (childUnions.length - 1 - gi) * cfg.busStep;
       busY = math.min(math.max(busY, drop.dy + 4), childTop - 4);
       for (final c in u.children) {
         final cx = _centerX[c.person.id]!;
-        links.add(LayoutLink(
-          kind: LinkKind.child,
-          ownerId: n.person.id,
-          childId: c.person.id,
-          relation: u.childRelations[c.person.id] ?? RelationType.biological,
-          points: [
-            drop,
-            Offset(drop.dx, busY),
-            Offset(cx, busY),
-            Offset(cx, childTop),
-          ],
-        ));
+        links.add(
+          LayoutLink(
+            kind: LinkKind.child,
+            ownerId: n.person.id,
+            childId: c.person.id,
+            relation: u.childRelations[c.person.id] ?? RelationType.biological,
+            points: [
+              drop,
+              Offset(drop.dx, busY),
+              Offset(cx, busY),
+              Offset(cx, childTop),
+            ],
+          ),
+        );
       }
     }
   }

@@ -32,12 +32,13 @@ class DeletedPeopleRepository {
   }
 }
 
-final deletedPeopleRepositoryProvider = Provider<DeletedPeopleRepository>((ref) {
+final deletedPeopleRepositoryProvider = Provider<DeletedPeopleRepository>((
+  ref,
+) {
   return DeletedPeopleRepository(ref.watch(supabaseClientProvider));
 });
 
-final deletedPeopleProvider =
-    FutureProvider.autoDispose<List<DeletedPerson>>(
+final deletedPeopleProvider = FutureProvider.autoDispose<List<DeletedPerson>>(
   (ref) => ref.watch(deletedPeopleRepositoryProvider).fetchDeleted(),
   retry: (retryCount, error) => null,
 );

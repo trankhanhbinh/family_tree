@@ -48,9 +48,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         child: state.when(
           data: (_) => const CircularProgressIndicator(),
           loading: () => const CircularProgressIndicator(),
-          error: (error, stack) => _ErrorView(
-            onRetry: () => ref.invalidate(clanNameProvider),
-          ),
+          error: (error, stack) =>
+              _ErrorView(onRetry: () => ref.invalidate(clanNameProvider)),
         ),
       ),
     );

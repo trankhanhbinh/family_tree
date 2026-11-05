@@ -33,7 +33,8 @@ class _PhotoCleanupScreenState extends ConsumerState<PhotoCleanupScreen> {
     final review = await showChoiceDialog(
       context,
       title: 'Xóa ${scan.totalCount} file thừa?',
-      message: 'Các file này không còn dùng cho ảnh hay đề xuất nào. '
+      message:
+          'Các file này không còn dùng cho ảnh hay đề xuất nào. '
           'Xóa xong không khôi phục được.',
       primaryLabel: 'Xem lại',
       secondaryLabel: 'Xóa ${scan.totalCount} file',
@@ -116,10 +117,7 @@ class _PhotoCleanupScreenState extends ConsumerState<PhotoCleanupScreen> {
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text(
-                'Đang kiểm tra file ảnh...',
-                style: TextStyle(fontSize: 18),
-              ),
+              Text('Đang kiểm tra file ảnh...', style: TextStyle(fontSize: 18)),
             ],
           ),
         ),

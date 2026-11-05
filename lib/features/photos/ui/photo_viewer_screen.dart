@@ -145,6 +145,7 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final tree = ref.watch(treeDataProvider).value;
@@ -154,7 +155,8 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
     );
     final isAdmin = ref.watch(isAdminProvider);
     final service = ref.watch(photoServiceProvider);
-    final personName = tree?.people
+    final personName =
+        tree?.people
             .where((p) => p.id == widget.personId)
             .firstOrNull
             ?.fullName ??
@@ -236,7 +238,10 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
                           onPressed: (_busy || photo.isAvatar)
                               ? null
                               : () => _setAvatar(photo, photos, personName),
-                          icon: const Icon(Icons.account_circle_outlined, size: 26),
+                          icon: const Icon(
+                            Icons.account_circle_outlined,
+                            size: 26,
+                          ),
                           label: Text(
                             photo.isAvatar
                                 ? 'Đang là ảnh đại diện'
@@ -256,8 +261,9 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
                             foregroundColor: scheme.error,
                             side: BorderSide(color: scheme.error),
                           ),
-                          onPressed:
-                              _busy ? null : () => _delete(photo, personName),
+                          onPressed: _busy
+                              ? null
+                              : () => _delete(photo, personName),
                           icon: const Icon(Icons.delete_outline, size: 26),
                           label: const Text(
                             'Xóa ảnh',

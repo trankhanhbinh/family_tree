@@ -37,7 +37,10 @@ void main() {
     expect(person.fullName, 'Nguyễn Thị An');
     expect(person.birthYear, 2010);
     expect(person.deathYear, isNull);
-    expect(person.deletedAt, DateTime.parse('2026-10-27T20:43:39.640461+00:00'));
+    expect(
+      person.deletedAt,
+      DateTime.parse('2026-10-27T20:43:39.640461+00:00'),
+    );
   });
 
   test('lifeSpan: có cả năm sinh và năm mất', () {

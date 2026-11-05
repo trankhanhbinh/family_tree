@@ -55,30 +55,29 @@ class AdminAccessDeniedException implements Exception {
 const Map<String, String> kErrorMessagesVi = {
   'REQUEST_LIMIT_REACHED':
       'Bạn đang có quá nhiều đề xuất chờ duyệt (tối đa 10). '
-          'Vui lòng đợi quản trị viên duyệt bớt rồi gửi tiếp.',
+      'Vui lòng đợi quản trị viên duyệt bớt rồi gửi tiếp.',
   'CYCLE_DETECTED':
       'Thay đổi này làm quan hệ bị vòng lặp '
-          '(một người trở thành tổ tiên của chính mình). '
-          'Vui lòng kiểm tra lại.',
+      '(một người trở thành tổ tiên của chính mình). '
+      'Vui lòng kiểm tra lại.',
   'HAS_DESCENDANTS':
       'Không thể xóa người này vì vẫn còn con cháu. '
-          'Hãy xử lý con cháu trước.',
+      'Hãy xử lý con cháu trước.',
   'BRANCH_NOT_EMPTY':
       'Không thể xóa chi/nhánh này vì vẫn còn người thuộc chi/nhánh.',
   'ALREADY_REVIEWED': 'Đề xuất này đã được xử lý rồi.',
   'REQUEST_NOT_FOUND': 'Không tìm thấy đề xuất này. Có thể đã bị xóa.',
   'ENTITY_NOT_FOUND':
       'Không tìm thấy mục cần thay đổi. Có thể đã bị xóa. '
-          'Hãy bấm "Làm mới" ở màn hình cây.',
+      'Hãy bấm "Làm mới" ở màn hình cây.',
   'FORBIDDEN': 'Bạn không có quyền thực hiện thao tác này.',
   'INVALID_PAYLOAD_KEY':
       'Nội dung đề xuất có một mục không được phép. '
-          'Vui lòng báo người làm app.',
+      'Vui lòng báo người làm app.',
   'INVALID_PAYLOAD':
       'Nội dung đề xuất không hợp lệ. Vui lòng kiểm tra lại các ô đã nhập.',
   'EMPTY_PAYLOAD': 'Đề xuất chưa có nội dung nào thay đổi.',
-  'INVALID_ACTION':
-      'Loại thao tác không hợp lệ. Vui lòng báo người làm app.',
+  'INVALID_ACTION': 'Loại thao tác không hợp lệ. Vui lòng báo người làm app.',
   'PHOTO_FILE_MISSING': 'Không tìm thấy tệp ảnh. Vui lòng tải ảnh lên lại.',
 };
 

@@ -50,7 +50,8 @@ class _BundleDetailScreenState extends ConsumerState<BundleDetailScreen> {
       await showMessageDialog(
         context,
         title: 'Chưa duyệt được',
-        message: 'Gói này có mục mà app chưa hỗ trợ duyệt. '
+        message:
+            'Gói này có mục mà app chưa hỗ trợ duyệt. '
             'Hãy xử lý trong Supabase.',
         icon: Icons.info_outline,
         isError: true,
@@ -63,7 +64,8 @@ class _BundleDetailScreenState extends ConsumerState<BundleDetailScreen> {
     final review = await showChoiceDialog(
       context,
       title: 'Duyệt đề xuất này?',
-      message: 'Duyệt $changeCount thay đổi của "${bundle.nickname}".\n\n'
+      message:
+          'Duyệt $changeCount thay đổi của "${bundle.nickname}".\n\n'
           'Thay đổi được áp dụng ngay.',
       primaryLabel: 'Xem lại',
       secondaryLabel: 'Duyệt',
@@ -339,7 +341,10 @@ class _RequestTile extends StatelessWidget {
           if (photo != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: ReviewPhotoPreview(photo: photo, bundleStatus: bundleStatus),
+              child: ReviewPhotoPreview(
+                photo: photo,
+                bundleStatus: bundleStatus,
+              ),
             ),
           if (warning != null)
             Padding(
@@ -347,7 +352,11 @@ class _RequestTile extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.warning_amber, size: 22, color: _kWarningColor),
+                  const Icon(
+                    Icons.warning_amber,
+                    size: 22,
+                    color: _kWarningColor,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -465,7 +474,10 @@ class _RejectReasonDialogState extends State<_RejectReasonDialog> {
             minimumSize: const Size(140, 56),
             backgroundColor: scheme.error,
             foregroundColor: scheme.onError,
-            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            textStyle: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           onPressed: _confirm,
           child: const Text('Từ chối'),

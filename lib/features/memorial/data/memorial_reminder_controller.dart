@@ -39,7 +39,7 @@ class MemorialReminderController {
     required this._service,
     required this._store,
     DateTime Function()? now,
-  })  : _now = now ?? DateTime.now;
+  }) : _now = now ?? DateTime.now;
 
   final LocalNotificationService _service;
   final MemorialReminderStore _store;
@@ -149,10 +149,11 @@ class MemorialReminderController {
   }
 }
 
-final memorialReminderControllerProvider =
-    Provider<MemorialReminderController>((ref) {
-  return MemorialReminderController(
-    service: ref.watch(localNotificationServiceProvider),
-    store: ref.watch(memorialReminderStoreProvider),
-  );
-});
+final memorialReminderControllerProvider = Provider<MemorialReminderController>(
+  (ref) {
+    return MemorialReminderController(
+      service: ref.watch(localNotificationServiceProvider),
+      store: ref.watch(memorialReminderStoreProvider),
+    );
+  },
+);

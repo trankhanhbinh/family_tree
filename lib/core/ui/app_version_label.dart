@@ -12,13 +12,13 @@ class AppVersionLabel extends ConsumerWidget {
     final versionAsync = ref.watch(appVersionTextProvider);
     return switch (versionAsync) {
       AsyncData(:final value) => Text(
-          value,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+        value,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 14,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
+      ),
       _ => const SizedBox.shrink(),
     };
   }

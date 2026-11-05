@@ -25,14 +25,16 @@ class ClanInfoScreen extends ConsumerWidget {
       body: SafeArea(
         child: !isAdmin
             ? const _AdminOnlyView()
-            : ref.watch(clanInfoProvider).when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => _LoadErrorView(
-                    onRetry: () => ref.invalidate(clanInfoProvider),
+            : ref
+                  .watch(clanInfoProvider)
+                  .when(
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (error, _) => _LoadErrorView(
+                      onRetry: () => ref.invalidate(clanInfoProvider),
+                    ),
+                    data: (info) => _ClanInfoForm(info: info),
                   ),
-                  data: (info) => _ClanInfoForm(info: info),
-                ),
       ),
     );
   }

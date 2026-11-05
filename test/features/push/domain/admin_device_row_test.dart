@@ -35,10 +35,7 @@ void main() {
     });
 
     test('FID rỗng hoặc toàn khoảng trắng thì ném ArgumentError', () {
-      expect(
-        () => buildAdminDeviceRow(fid: '', now: now),
-        throwsArgumentError,
-      );
+      expect(() => buildAdminDeviceRow(fid: '', now: now), throwsArgumentError);
       expect(
         () => buildAdminDeviceRow(fid: '   ', now: now),
         throwsArgumentError,
@@ -47,7 +44,11 @@ void main() {
 
     test('chỉ nhận platform android hoặc ios', () {
       expect(
-        buildAdminDeviceRow(fid: 'abc123', now: now, platform: 'ios')['platform'],
+        buildAdminDeviceRow(
+          fid: 'abc123',
+          now: now,
+          platform: 'ios',
+        )['platform'],
         'ios',
       );
       expect(

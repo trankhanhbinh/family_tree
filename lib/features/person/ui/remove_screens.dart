@@ -26,7 +26,9 @@ class RemoveParentChildScreen extends ConsumerWidget {
     const title = 'Gỡ quan hệ cha mẹ - con';
     final async = ref.watch(treeDataProvider);
     final data = async.value;
-    final link = data?.parentChildren.where((pc) => pc.id == linkId).firstOrNull;
+    final link = data?.parentChildren
+        .where((pc) => pc.id == linkId)
+        .firstOrNull;
 
     if (data == null || link == null) {
       return ProposalPlaceholderScreen(
@@ -59,7 +61,8 @@ class RemoveParentChildScreen extends ConsumerWidget {
               'riêng trên cây.',
       ],
       drafts: planRemoveParentChild(link),
-      confirmMessage: 'Gỡ quan hệ cha/mẹ - con giữa ${parent.fullName} '
+      confirmMessage:
+          'Gỡ quan hệ cha/mẹ - con giữa ${parent.fullName} '
           'và ${child.fullName}?',
       noteIndex: 0,
       submitLabel: 'Gửi đề xuất gỡ',
@@ -78,8 +81,9 @@ class RemoveMarriageScreen extends ConsumerWidget {
     const title = 'Gỡ hôn nhân';
     final async = ref.watch(treeDataProvider);
     final data = async.value;
-    final marriage =
-        data?.marriages.where((m) => m.id == marriageId).firstOrNull;
+    final marriage = data?.marriages
+        .where((m) => m.id == marriageId)
+        .firstOrNull;
 
     if (data == null || marriage == null) {
       return ProposalPlaceholderScreen(
@@ -190,7 +194,9 @@ class _BlockedDeleteScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shown = childNames.take(5).join(', ');
-    final more = childNames.length > 5 ? ' và ${childNames.length - 5} người khác' : '';
+    final more = childNames.length > 5
+        ? ' và ${childNames.length - 5} người khác'
+        : '';
     return Scaffold(
       appBar: AppBar(title: Text(isAdmin ? 'Xóa người' : 'Đề xuất xóa người')),
       body: Padding(

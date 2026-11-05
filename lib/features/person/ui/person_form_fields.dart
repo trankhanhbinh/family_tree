@@ -52,8 +52,9 @@ Future<BranchChoice?> showBranchPicker(
                 style: TextStyle(fontSize: 18),
               ),
               selected: currentId == null,
-              trailing:
-                  currentId == null ? const Icon(Icons.check, size: 28) : null,
+              trailing: currentId == null
+                  ? const Icon(Icons.check, size: 28)
+                  : null,
               onTap: () =>
                   Navigator.of(sheetContext).pop(const BranchChoice(null)),
             ),
@@ -343,7 +344,8 @@ class PersonFormFields extends StatelessWidget {
       final keep = await showChoiceDialog(
         context,
         title: 'Thay ngày giỗ?',
-        message: 'Ngày giỗ đang nhập: $oldText\n'
+        message:
+            'Ngày giỗ đang nhập: $oldText\n'
             'Ngày giỗ tính từ ngày mất: $newText\n\n'
             'Bạn muốn giữ ngày giỗ nào?',
         primaryLabel: 'Giữ nguyên',
@@ -354,11 +356,7 @@ class PersonFormFields extends StatelessWidget {
       }
     }
 
-    controller.applyMemorial(
-      day: day,
-      month: month,
-      isLeap: computed.isLeap,
-    );
+    controller.applyMemorial(day: day, month: month, isLeap: computed.isLeap);
   }
 
   Widget _memorialCard() {
@@ -424,7 +422,10 @@ class PersonFormFields extends StatelessWidget {
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
-                title: const Text('Tháng nhuận', style: TextStyle(fontSize: 18)),
+                title: const Text(
+                  'Tháng nhuận',
+                  style: TextStyle(fontSize: 18),
+                ),
                 value: controller.memorialIsLeap,
                 onChanged: (value) =>
                     controller.setMemorialIsLeap(value ?? false),

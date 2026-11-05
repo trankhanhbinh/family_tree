@@ -30,14 +30,8 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const SplashScreen(),
-      ),
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => const TreeScreen(),
-      ),
+      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+      GoRoute(path: '/home', builder: (context, state) => const TreeScreen()),
       GoRoute(
         path: '/search',
         builder: (context, state) => const SearchScreen(),
@@ -64,21 +58,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/branches/new',
-        builder: (context, state) => BranchFormScreen(
-          parentId: state.uri.queryParameters['parent'],
-        ),
+        builder: (context, state) =>
+            BranchFormScreen(parentId: state.uri.queryParameters['parent']),
       ),
       GoRoute(
         path: '/admin/branches/:id/edit',
-        builder: (context, state) => BranchFormScreen(
-          branchId: state.pathParameters['id'],
-        ),
+        builder: (context, state) =>
+            BranchFormScreen(branchId: state.pathParameters['id']),
       ),
       GoRoute(
         path: '/admin/branches/:id/why-not-delete',
-        builder: (context, state) => BranchBlockedScreen(
-          branchId: state.pathParameters['id']!,
-        ),
+        builder: (context, state) =>
+            BranchBlockedScreen(branchId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/admin/photo-cleanup',

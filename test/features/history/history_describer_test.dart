@@ -73,10 +73,7 @@ const Branch _nhanhCon = Branch(
   sortOrder: 0,
 );
 
-DescribedHistoryEntry _describeWith(
-  HistoryEntry entry,
-  List<Branch> branches,
-) {
+DescribedHistoryEntry _describeWith(HistoryEntry entry, List<Branch> branches) {
   return describeHistoryEntry(entry, nameOf: _names, branches: branches);
 }
 
@@ -186,10 +183,7 @@ void main() {
         },
       ),
     );
-    expect(
-      result.title,
-      'Gỡ quan hệ: Nguyễn Văn A là cha/mẹ của Nguyễn Thị B',
-    );
+    expect(result.title, 'Gỡ quan hệ: Nguyễn Văn A là cha/mẹ của Nguyễn Thị B');
   });
 
   test('gắn quan hệ con nuôi', () {
@@ -219,10 +213,7 @@ void main() {
         },
       ),
     );
-    expect(
-      result.title,
-      'Gắn Nguyễn Thị B là đời sau của Nguyễn Văn A',
-    );
+    expect(result.title, 'Gắn Nguyễn Thị B là đời sau của Nguyễn Văn A');
   });
 
   test('đổi loại quan hệ sang nối đời', () {
@@ -383,7 +374,6 @@ void main() {
     expect(result.details.single, endsWith('→ Không thuộc chi nào'));
   });
 
-  
   test('thêm chi gốc: có mô tả, không có dòng chi cha', () {
     final result = _describe(
       _entry(
@@ -577,41 +567,45 @@ void main() {
     expect(result.details, ['Nguồn gốc: Gốc Thanh Hóa → (trống)']);
   });
 
-  test('buildHistoryBranches: chi trong cây ưu tiên, chi đã xóa lấy từ lịch sử',
-      () {
-    final merged = buildHistoryBranches(
-      tree: _treeOf(const [_chiNhat]),
-      entries: [
-        _entry(
-          entityType: 'branch',
-          action: 'delete',
-          entityId: 'gone',
-          before: {'name': 'Nhánh Cũ', 'parent_branch_id': 'gone2'},
-        ),
-        _entry(
-          entityType: 'branch',
-          action: 'delete',
-          entityId: 'gone2',
-          before: {'name': 'Chi Đã Xóa', 'parent_branch_id': null},
-        ),
-        _entry(
-          entityType: 'branch',
-          entityId: 'b1',
-          before: {'name': 'Tên Cũ', 'parent_branch_id': null},
-          after: {'name': 'Tên Cũ Nữa', 'parent_branch_id': null},
-        ),
-      ],
-    );
-    expect(merged, hasLength(3));
-    expect(branchPathOf('b1', merged), 'Chi Nhất');
-    expect(branchPathOf('gone', merged), 'Chi Đã Xóa › Nhánh Cũ');
+  test(
+    'buildHistoryBranches: chi trong cây ưu tiên, chi đã xóa lấy từ lịch sử',
+    () {
+      final merged = buildHistoryBranches(
+        tree: _treeOf(const [_chiNhat]),
+        entries: [
+          _entry(
+            entityType: 'branch',
+            action: 'delete',
+            entityId: 'gone',
+            before: {'name': 'Nhánh Cũ', 'parent_branch_id': 'gone2'},
+          ),
+          _entry(
+            entityType: 'branch',
+            action: 'delete',
+            entityId: 'gone2',
+            before: {'name': 'Chi Đã Xóa', 'parent_branch_id': null},
+          ),
+          _entry(
+            entityType: 'branch',
+            entityId: 'b1',
+            before: {'name': 'Tên Cũ', 'parent_branch_id': null},
+            after: {'name': 'Tên Cũ Nữa', 'parent_branch_id': null},
+          ),
+        ],
+      );
+      expect(merged, hasLength(3));
+      expect(branchPathOf('b1', merged), 'Chi Nhất');
+      expect(branchPathOf('gone', merged), 'Chi Đã Xóa › Nhánh Cũ');
 
-    final same = buildHistoryBranches(
-      tree: _treeOf(const [_chiNhat]),
-      entries: [_entry(before: {'full_name': 'Không phải chi'})],
-    );
-    expect(same, hasLength(1));
-  });
+      final same = buildHistoryBranches(
+        tree: _treeOf(const [_chiNhat]),
+        entries: [
+          _entry(before: {'full_name': 'Không phải chi'}),
+        ],
+      );
+      expect(same, hasLength(1));
+    },
+  );
 
   test('sửa người: chi cũ đã xóa vẫn hiện tên nhờ danh sách chi gộp', () {
     final merged = buildHistoryBranches(

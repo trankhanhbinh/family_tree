@@ -31,13 +31,13 @@ class SubmitBar extends StatelessWidget {
             height: 56,
             child: FilledButton.icon(
               onPressed: submitting ? null : onPressed,
-              icon: Icon(
-                submitting ? Icons.hourglass_top : icon,
-                size: 24,
-              ),
+              icon: Icon(submitting ? Icons.hourglass_top : icon, size: 24),
               label: Text(
                 submitting ? submittingLabel : label,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),

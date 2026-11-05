@@ -30,16 +30,16 @@ class LocalNotificationService {
   );
 
   AndroidFlutterLocalNotificationsPlugin? get _android {
-    return _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    return _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
   }
 
   /// Khởi tạo plugin (chỉ chạy một lần; gọi lại trả về kết quả lần đầu).
   /// Tạo hai kênh: "Đề xuất mới" (ưu tiên cao) và "Nhắc ngày giỗ" (ưu tiên
   /// thường, đỡ phiền). [onTap] nhận payload khi bấm thông báo cục bộ.
-  Future<void> initialize({
-    required void Function(String? payload) onTap,
-  }) {
+  Future<void> initialize({required void Function(String? payload) onTap}) {
     final existing = _initialization;
     if (existing != null) {
       return existing;
@@ -58,9 +58,7 @@ class LocalNotificationService {
     return future;
   }
 
-  Future<void> _initializeOnce(
-    void Function(String? payload) onTap,
-  ) async {
+  Future<void> _initializeOnce(void Function(String? payload) onTap) async {
     const settings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     );
@@ -168,9 +166,7 @@ class LocalNotificationService {
 
   /// Thay toàn bộ lịch nhắc giỗ bằng [reminders]. Trả về số nhắc đặt được.
   /// Lỗi ở một nhắc được ghi log và bỏ qua, các nhắc khác vẫn được đặt.
-  Future<int> replaceMemorialReminders(
-    List<MemorialReminder> reminders,
-  ) async {
+  Future<int> replaceMemorialReminders(List<MemorialReminder> reminders) async {
     await cancelMemorialReminders();
 
     var scheduled = 0;
@@ -212,7 +208,8 @@ class LocalNotificationService {
   }
 }
 
-final localNotificationServiceProvider =
-    Provider<LocalNotificationService>((ref) {
+final localNotificationServiceProvider = Provider<LocalNotificationService>((
+  ref,
+) {
   return LocalNotificationService();
 });

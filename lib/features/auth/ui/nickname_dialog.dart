@@ -25,8 +25,9 @@ class _NicknameDialog extends StatefulWidget {
 }
 
 class _NicknameDialogState extends State<_NicknameDialog> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.initialValue);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialValue,
+  );
   String? _error;
 
   @override

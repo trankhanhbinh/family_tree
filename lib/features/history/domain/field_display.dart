@@ -159,7 +159,9 @@ List<String> filledHistoryLines({
     if (column == 'is_alive' && value == true) {
       continue;
     }
-    lines.add('${entry.value}: ${displayHistoryValue(column, value, branches)}');
+    lines.add(
+      '${entry.value}: ${displayHistoryValue(column, value, branches)}',
+    );
   }
   return lines;
 }

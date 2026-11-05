@@ -61,15 +61,13 @@ class PushMessagingService {
   /// Dữ liệu của thông báo được bấm khi app đang ở NỀN (chưa bị tắt hẳn).
   Stream<Map<String, dynamic>> get openedMessageData =>
       FirebaseMessaging.onMessageOpenedApp.map((message) => message.data);
-      
+
   static PushPermission _permissionFrom(AuthorizationStatus status) {
     return switch (status) {
       AuthorizationStatus.authorized ||
-      AuthorizationStatus.provisional =>
-        PushPermission.granted,
+      AuthorizationStatus.provisional => PushPermission.granted,
       AuthorizationStatus.denied ||
-      AuthorizationStatus.deniedPermanently =>
-        PushPermission.denied,
+      AuthorizationStatus.deniedPermanently => PushPermission.denied,
       AuthorizationStatus.notDetermined => PushPermission.notDetermined,
     };
   }

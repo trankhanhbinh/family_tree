@@ -37,9 +37,7 @@ class _FakeService implements LocalNotificationService {
   }
 
   @override
-  Future<int> replaceMemorialReminders(
-    List<MemorialReminder> reminders,
-  ) async {
+  Future<int> replaceMemorialReminders(List<MemorialReminder> reminders) async {
     replaced.add(reminders);
     return reminders.length;
   }

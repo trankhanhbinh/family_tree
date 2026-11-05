@@ -99,8 +99,9 @@ class AppTextField extends StatelessWidget {
         style: const TextStyle(fontSize: 18),
         minLines: minLines,
         maxLines: maxLines,
-        keyboardType:
-            maxLines > 1 ? TextInputType.multiline : TextInputType.text,
+        keyboardType: maxLines > 1
+            ? TextInputType.multiline
+            : TextInputType.text,
         textCapitalization: capitalization,
         inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
         decoration: InputDecoration(

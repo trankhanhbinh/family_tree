@@ -6,6 +6,7 @@ import 'package:familytree/features/tree/data/family_forest_provider.dart';
 import 'package:familytree/features/tree/data/focus_request_provider.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/domain/tree_search.dart';
+import 'package:familytree/core/ui/portrait_frame.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -40,8 +41,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final data = ref.watch(treeDataProvider).value;
-    final results =
-        data == null ? const <Person>[] : searchPeople(data.people, _query);
+    final results = data == null
+        ? const <Person>[]
+        : searchPeople(data.people, _query);
 
     return Scaffold(
       appBar: AppBar(
@@ -136,9 +138,9 @@ class _ResultTile extends StatelessWidget {
 
     return ListTile(
       minVerticalPadding: 12,
-      leading: CircleAvatar(
-        radius: 24,
-        backgroundColor: accent.withValues(alpha: 0.15),
+      leading: PortraitFrame(
+        width: 42,
+        accent: accent,
         child: Text(
           _initialOf(person.fullName),
           style: TextStyle(
@@ -152,10 +154,7 @@ class _ResultTile extends StatelessWidget {
         person.fullName,
         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
       ),
-      subtitle: Text(
-        lines.join('\n'),
-        style: const TextStyle(fontSize: 16),
-      ),
+      subtitle: Text(lines.join('\n'), style: const TextStyle(fontSize: 16)),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
     );

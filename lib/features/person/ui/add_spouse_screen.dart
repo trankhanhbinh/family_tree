@@ -122,13 +122,13 @@ class _AddSpouseFormState extends ConsumerState<_AddSpouseForm> {
   }
 
   List<TextEditingController> get _dateControllers => [
-        _startDay,
-        _startMonth,
-        _startYear,
-        _endDay,
-        _endMonth,
-        _endYear,
-      ];
+    _startDay,
+    _startMonth,
+    _startYear,
+    _endDay,
+    _endMonth,
+    _endYear,
+  ];
 
   bool get _dirty =>
       _form.isDirty ||
@@ -180,20 +180,24 @@ class _AddSpouseFormState extends ConsumerState<_AddSpouseForm> {
     final isAdmin = ref.read(isAdminProvider);
     final nowYear = DateTime.now().year;
 
-    final personErrors =
-        _form.validate(nowYear: nowYear, validateGeneration: isAdmin);
+    final personErrors = _form.validate(
+      nowYear: nowYear,
+      validateGeneration: isAdmin,
+    );
     final marriage = _collectMarriage();
     final marriageErrors = validateMarriageForm(marriage, nowYear: nowYear);
     setState(() => _marriageErrors = marriageErrors);
 
     if (personErrors.isNotEmpty || marriageErrors.isNotEmpty) {
-      final lines = [...personErrors.values, ...marriageErrors.values]
-          .map((e) => '• $e')
-          .join('\n');
+      final lines = [
+        ...personErrors.values,
+        ...marriageErrors.values,
+      ].map((e) => '• $e').join('\n');
       await showMessageDialog(
         context,
         title: isAdmin ? 'Chưa lưu được' : 'Chưa gửi được',
-        message: 'Vui lòng sửa các mục báo đỏ rồi '
+        message:
+            'Vui lòng sửa các mục báo đỏ rồi '
             '${isAdmin ? 'lưu' : 'gửi'} lại:\n\n$lines',
         icon: Icons.error_outline,
         isError: true,
@@ -225,7 +229,8 @@ class _AddSpouseFormState extends ConsumerState<_AddSpouseForm> {
     final proceed = await confirmSubmit(
       context,
       isAdmin: isAdmin,
-      summary: 'Thêm "$spouseName" là vợ/chồng của ${widget.person.fullName} '
+      summary:
+          'Thêm "$spouseName" là vợ/chồng của ${widget.person.fullName} '
           '(${_statusLabel(_status)}).',
       slots: drafts.length,
     );

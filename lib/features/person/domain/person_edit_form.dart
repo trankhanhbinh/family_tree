@@ -82,25 +82,25 @@ class PersonFormValues {
   String generation;
 
   List<Object?> get _props => [
-        fullName,
-        otherName,
-        gender,
-        branchId,
-        birthDay,
-        birthMonth,
-        birthYear,
-        birthPlace,
-        isAlive,
-        deathDay,
-        deathMonth,
-        deathYear,
-        burialPlace,
-        memorialDay,
-        memorialMonth,
-        memorialIsLeap,
-        notes,
-        generation,
-      ];
+    fullName,
+    otherName,
+    gender,
+    branchId,
+    birthDay,
+    birthMonth,
+    birthYear,
+    birthPlace,
+    isAlive,
+    deathDay,
+    deathMonth,
+    deathYear,
+    burialPlace,
+    memorialDay,
+    memorialMonth,
+    memorialIsLeap,
+    notes,
+    generation,
+  ];
 
   /// Hai bộ giá trị giống hệt nhau (dùng để biết form đã bị sửa chưa).
   bool sameAs(PersonFormValues other) {
@@ -115,7 +115,10 @@ class PersonFormValues {
   }
 }
 
-({String day, String month, String year}) _splitDate(DateTime? date, int? year) {
+({String day, String month, String year}) _splitDate(
+  DateTime? date,
+  int? year,
+) {
   if (date != null) {
     return (day: '${date.day}', month: '${date.month}', year: '${date.year}');
   }
@@ -173,7 +176,9 @@ ParsedDate parseDateParts({
   if (date.year != yearValue ||
       date.month != monthValue ||
       date.day != dayValue) {
-    return ParsedDate(error: 'Ngày $dayValue/$monthValue/$yearValue không có thật.');
+    return ParsedDate(
+      error: 'Ngày $dayValue/$monthValue/$yearValue không có thật.',
+    );
   }
   return ParsedDate(date: date, year: yearValue);
 }
@@ -223,7 +228,7 @@ Map<PersonField, String> validatePersonForm(
       errors[PersonField.generation] = generationError;
     }
   }
-  
+
   final birth = parseDateParts(
     day: values.birthDay,
     month: values.birthMonth,
@@ -367,8 +372,9 @@ Map<String, dynamic> buildPersonUpdatePayload(
     );
 
     final memorialDay = alive ? null : int.tryParse(values.memorialDay.trim());
-    final memorialMonth =
-        alive ? null : int.tryParse(values.memorialMonth.trim());
+    final memorialMonth = alive
+        ? null
+        : int.tryParse(values.memorialMonth.trim());
     final hasMemorial = memorialDay != null && memorialMonth != null;
     put(
       'memorial_lunar_day',

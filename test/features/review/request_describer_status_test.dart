@@ -73,17 +73,19 @@ void main() {
     expect(result.warning, isNull);
   });
 
-  test('đã duyệt: xóa người không còn trong cây -> tiêu đề chung, không cảnh báo',
-      () {
-    final result = _describeOne(
-      status: 'approved',
-      action: 'delete',
-      entityId: 'khong-co',
-      tree: _tree(),
-    );
-    expect(result.title, 'Xóa một người khỏi gia phả');
-    expect(result.warning, isNull);
-  });
+  test(
+    'đã duyệt: xóa người không còn trong cây -> tiêu đề chung, không cảnh báo',
+    () {
+      final result = _describeOne(
+        status: 'approved',
+        action: 'delete',
+        entityId: 'khong-co',
+        tree: _tree(),
+      );
+      expect(result.title, 'Xóa một người khỏi gia phả');
+      expect(result.warning, isNull);
+    },
+  );
 
   test('bị từ chối: sửa người vẫn so "cũ → mới" (cây không đổi)', () {
     final result = _describeOne(

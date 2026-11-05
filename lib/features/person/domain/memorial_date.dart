@@ -25,12 +25,7 @@ DateTime? memorialSolarDateInLunarYear({
     return null;
   }
   final exact = lunarToSolar(
-    LunarDate(
-      day: lunarDay,
-      month: lunarMonth,
-      year: lunarYear,
-      isLeap: false,
-    ),
+    LunarDate(day: lunarDay, month: lunarMonth, year: lunarYear, isLeap: false),
   );
   if (exact != null) {
     return exact;

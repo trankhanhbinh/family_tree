@@ -162,9 +162,8 @@ class _BlockedBody extends ConsumerWidget {
         if (blockers.deletedPeople.isNotEmpty)
           _BlockerCard(
             title: deletedPeopleTitle(blockers.deletedPeople.length),
-            body: '${summarizeNames(
-              blockers.deletedPeople.map((m) => m.fullName).toList(),
-            )}\n\nHọ vẫn là người đã xóa; việc chuyển chỉ đổi chi của họ.',
+            body:
+                '${summarizeNames(blockers.deletedPeople.map((m) => m.fullName).toList())}\n\nHọ vẫn là người đã xóa; việc chuyển chỉ đổi chi của họ.',
             buttonLabel: moveMembersButtonLabel(blockers.deletedPeople.length),
             onPressed: () => _moveMembers(
               context,
@@ -374,8 +373,7 @@ Future<void> _moveMembers(
     await showMessageDialog(
       context,
       title: 'Chưa có chi nào để chuyển sang',
-      message:
-          'Hãy tạo thêm một chi khác ở màn "Quản lý chi/nhánh" rồi quay lại đây.',
+      message: 'Hãy tạo thêm một chi khác ở màn "Quản lý chi/nhánh" rồi quay lại đây.',
     );
     return;
   }

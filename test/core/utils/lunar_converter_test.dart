@@ -28,10 +28,7 @@ void main() {
     });
 
     test('bỏ qua giờ trong ngày', () {
-      expect(
-        solarToLunar(DateTime(2024, 2, 10, 23, 59)),
-        _lunar(1, 1, 2024),
-      );
+      expect(solarToLunar(DateTime(2024, 2, 10, 23, 59)), _lunar(1, 1, 2024));
     });
 
     test('ngoài phạm vi 1800-2199 trả null', () {
@@ -60,11 +57,13 @@ void main() {
       expect(lunarToSolar(_lunar(2, 3, 2023, leap: true)), isNull);
     });
 
-    test('ngày 30 của tháng chỉ có 29 ngày trả null, tháng có 30 ngày thì được',
-        () {
-      expect(lunarToSolar(_lunar(30, 1, 2023)), isNull);
-      expect(lunarToSolar(_lunar(30, 2, 2023)), DateTime(2023, 3, 21));
-    });
+    test(
+      'ngày 30 của tháng chỉ có 29 ngày trả null, tháng có 30 ngày thì được',
+      () {
+        expect(lunarToSolar(_lunar(30, 1, 2023)), isNull);
+        expect(lunarToSolar(_lunar(30, 2, 2023)), DateTime(2023, 3, 21));
+      },
+    );
 
     test('dữ liệu không hợp lệ trả null', () {
       expect(lunarToSolar(_lunar(0, 5, 2024)), isNull);

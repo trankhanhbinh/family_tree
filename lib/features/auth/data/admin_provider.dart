@@ -35,8 +35,9 @@ class AdminNotifier extends Notifier<bool> {
   }
 
   Future<bool> _checkIsAdmin() async {
-    final result =
-        await _client.rpc('is_admin').timeout(const Duration(seconds: 15));
+    final result = await _client
+        .rpc('is_admin')
+        .timeout(const Duration(seconds: 15));
     return result == true;
   }
 
@@ -102,5 +103,6 @@ class AdminNotifier extends Notifier<bool> {
   }
 }
 
-final isAdminProvider =
-    NotifierProvider<AdminNotifier, bool>(AdminNotifier.new);
+final isAdminProvider = NotifierProvider<AdminNotifier, bool>(
+  AdminNotifier.new,
+);

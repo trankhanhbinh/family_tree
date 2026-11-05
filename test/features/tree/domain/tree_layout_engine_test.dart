@@ -27,7 +27,8 @@ void main() {
         expect(
           layout.cards[i].rect.overlaps(layout.cards[j].rect),
           isFalse,
-          reason: '${layout.cards[i].person.fullName} chồng lấn '
+          reason:
+              '${layout.cards[i].person.fullName} chồng lấn '
               '${layout.cards[j].person.fullName}',
         );
       }
@@ -35,8 +36,9 @@ void main() {
   });
 
   test('con luôn nằm ngay dưới hàng của cha mẹ', () {
-    final childLinks =
-        layout.links.where((l) => l.kind == LinkKind.child).toList();
+    final childLinks = layout.links
+        .where((l) => l.kind == LinkKind.child)
+        .toList();
     expect(childLinks.length, 10);
     for (final l in childLinks) {
       final parent = layout.cardById[l.ownerId]!;
@@ -62,7 +64,8 @@ void main() {
     final c04 = layout.cardById['04']!;
     final c07 = layout.cardById['07']!;
     final link = layout.links.firstWhere(
-        (l) => l.kind == LinkKind.child && l.ownerId == '04' && l.childId == '12');
+      (l) => l.kind == LinkKind.child && l.ownerId == '04' && l.childId == '12',
+    );
     final midX = (c04.rect.center.dx + c07.rect.center.dx) / 2;
     expect(link.points.first.dx, closeTo(midX, 0.001));
   });
@@ -71,17 +74,21 @@ void main() {
     final c12 = layout.cardById['12']!.rect.center.dx;
     final c13 = layout.cardById['13']!.rect.center.dx;
     final link = layout.links.firstWhere(
-        (l) => l.kind == LinkKind.child && l.ownerId == '04' && l.childId == '12');
+      (l) => l.kind == LinkKind.child && l.ownerId == '04' && l.childId == '12',
+    );
     expect(link.points.first.dx, closeTo((c12 + c13) / 2, 0.001));
   });
 
-  test('con nuôi (16) có đường quan hệ adopted, con ruột (15) là biological', () {
-    RelationType? rel(String id) => layout.links
-        .firstWhere((l) => l.kind == LinkKind.child && l.childId == id)
-        .relation;
-    expect(rel('16'), RelationType.adopted);
-    expect(rel('15'), RelationType.biological);
-  });
+  test(
+    'con nuôi (16) có đường quan hệ adopted, con ruột (15) là biological',
+    () {
+      RelationType? rel(String id) => layout.links
+          .firstWhere((l) => l.kind == LinkKind.child && l.childId == id)
+          .relation;
+      expect(rel('16'), RelationType.adopted);
+      expect(rel('15'), RelationType.biological);
+    },
+  );
 
   test('mọi điểm đường nối nằm trong kích thước tổng', () {
     for (final l in layout.links) {
@@ -97,8 +104,11 @@ void main() {
   });
 
   test('thu gọn gốc: chỉ còn 2 thẻ (01, 02) và không có đường xuống con', () {
-    final collapsed =
-        TreeLayoutEngine.compute(forest, config: cfg, collapsedIds: {'01'});
+    final collapsed = TreeLayoutEngine.compute(
+      forest,
+      config: cfg,
+      collapsedIds: {'01'},
+    );
     expect(collapsed.cards.map((c) => c.personId).toSet(), {'01', '02'});
     expect(collapsed.links.where((l) => l.kind == LinkKind.child), isEmpty);
     expect(collapsed.cardById['01']!.isCollapsed, isTrue);
@@ -106,14 +116,20 @@ void main() {
   });
 
   test('thu gọn người 03: con cháu của 03 biến mất, nhánh 04 vẫn còn', () {
-    final collapsed =
-        TreeLayoutEngine.compute(forest, config: cfg, collapsedIds: {'03'});
+    final collapsed = TreeLayoutEngine.compute(
+      forest,
+      config: cfg,
+      collapsedIds: {'03'},
+    );
     final ids = collapsed.cards.map((c) => c.personId).toSet();
     expect(ids.containsAll({'03', '06', '08', '04', '07', '12', '13'}), isTrue);
     expect(ids.intersection({'09', '10', '11', '14', '15', '16'}), isEmpty);
     for (var i = 0; i < collapsed.cards.length; i++) {
       for (var j = i + 1; j < collapsed.cards.length; j++) {
-        expect(collapsed.cards[i].rect.overlaps(collapsed.cards[j].rect), isFalse);
+        expect(
+          collapsed.cards[i].rect.overlaps(collapsed.cards[j].rect),
+          isFalse,
+        );
       }
     }
   });

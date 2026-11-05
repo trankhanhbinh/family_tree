@@ -76,7 +76,7 @@ class HistoryFeed extends AsyncNotifier<HistoryFeedState> {
 
 final historyFeedProvider = AsyncNotifierProvider.autoDispose
     .family<HistoryFeed, HistoryFeedState, String?>(
-  HistoryFeed.new,
-  // Tắt tự động thử lại để nút "Thử lại" do mình điều khiển.
-  retry: (retryCount, error) => null,
-);
+      HistoryFeed.new,
+      // Tắt tự động thử lại để nút "Thử lại" do mình điều khiển.
+      retry: (retryCount, error) => null,
+    );

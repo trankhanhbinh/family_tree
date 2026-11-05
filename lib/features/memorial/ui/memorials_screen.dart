@@ -18,9 +18,8 @@ class MemorialsScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Ngày giỗ sắp tới')),
       body: dataAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => _ErrorView(
-          onRetry: () => ref.invalidate(treeDataProvider),
-        ),
+        error: (_, _) =>
+            _ErrorView(onRetry: () => ref.invalidate(treeDataProvider)),
         data: (data) {
           final result = buildUpcomingMemorials(
             people: data.people,
@@ -120,8 +119,9 @@ class _MemorialCard extends StatelessWidget {
                       formatNextMemorial(item.date, item.daysLeft),
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight:
-                            highlight ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: highlight
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                       ),
                     ),
                   ],

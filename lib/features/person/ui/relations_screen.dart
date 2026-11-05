@@ -79,7 +79,8 @@ class RelationsScreen extends ConsumerWidget {
             actions: [
               _RelationAction(
                 'Đổi loại quan hệ',
-                () => context.push('/person/$personId/relations/type/$personId'),
+                () =>
+                    context.push('/person/$personId/relations/type/$personId'),
               ),
               if (id != null)
                 _RelationAction(

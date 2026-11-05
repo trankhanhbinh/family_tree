@@ -82,13 +82,13 @@ class PersonRelations {
 
     // Cha mẹ: ruột/nuôi trước, kế sau; nam trước nữ.
     parents.sort((a, b) {
-      final byRelation =
-          _relationRank(a.relation).compareTo(_relationRank(b.relation));
+      final byRelation = _relationRank(a.relation)
+          .compareTo(_relationRank(b.relation));
       if (byRelation != 0) {
         return byRelation;
       }
-      final byGender =
-          _genderRank(a.person.gender).compareTo(_genderRank(b.person.gender));
+      final byGender = _genderRank(a.person.gender)
+          .compareTo(_genderRank(b.person.gender));
       if (byGender != 0) {
         return byGender;
       }
@@ -97,8 +97,10 @@ class PersonRelations {
 
     // Vợ/chồng: theo ngày bắt đầu hôn nhân, thiếu ngày thì xếp sau.
     spouses.sort((a, b) {
-      final byStart =
-          _compareNullableDate(a.marriage.startDate, b.marriage.startDate);
+      final byStart = _compareNullableDate(
+        a.marriage.startDate,
+        b.marriage.startDate,
+      );
       if (byStart != 0) {
         return byStart;
       }
@@ -111,8 +113,10 @@ class PersonRelations {
 
     // Con: theo ngày/năm sinh, không rõ xếp cuối.
     children.sort((a, b) {
-      final byBirth =
-          _compareNullableDate(_birthKey(a.person), _birthKey(b.person));
+      final byBirth = _compareNullableDate(
+        _birthKey(a.person),
+        _birthKey(b.person),
+      );
       if (byBirth != 0) {
         return byBirth;
       }

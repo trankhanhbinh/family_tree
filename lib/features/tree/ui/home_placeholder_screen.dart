@@ -35,9 +35,8 @@ class HomePlaceholderScreen extends ConsumerWidget {
           ),
         ),
         data: (data) {
-          final people = [...data.people]..sort(
-              (a, b) => (a.generation ?? 0).compareTo(b.generation ?? 0),
-            );
+          final people = [...data.people]
+            ..sort((a, b) => (a.generation ?? 0).compareTo(b.generation ?? 0));
 
           return ListView(
             padding: const EdgeInsets.all(16),

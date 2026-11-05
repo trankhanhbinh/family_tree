@@ -71,14 +71,14 @@ void main() {
   });
 
   test('chuyển chi: parent_branch_id và sort_order', () {
-    expect(
-      buildBranchMovePayload(newParentId: 'r2', newSortOrder: 4),
-      {'parent_branch_id': 'r2', 'sort_order': 4},
-    );
-    expect(
-      buildBranchMovePayload(newParentId: null, newSortOrder: 0),
-      {'parent_branch_id': null, 'sort_order': 0},
-    );
+    expect(buildBranchMovePayload(newParentId: 'r2', newSortOrder: 4), {
+      'parent_branch_id': 'r2',
+      'sort_order': 4,
+    });
+    expect(buildBranchMovePayload(newParentId: null, newSortOrder: 0), {
+      'parent_branch_id': null,
+      'sort_order': 0,
+    });
   });
 
   test('đổi chi của một người: có chi mới hoặc null', () {

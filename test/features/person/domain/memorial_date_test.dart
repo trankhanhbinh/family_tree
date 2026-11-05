@@ -55,17 +55,19 @@ void main() {
       );
     });
 
-    test('năm có tháng nhuận vẫn dùng tháng thường (2/2/2023 = 21/02/2023)',
-        () {
-      expect(
-        memorialSolarDateInLunarYear(
-          lunarDay: 2,
-          lunarMonth: 2,
-          lunarYear: 2023,
-        ),
-        DateTime(2023, 2, 21),
-      );
-    });
+    test(
+      'năm có tháng nhuận vẫn dùng tháng thường (2/2/2023 = 21/02/2023)',
+      () {
+        expect(
+          memorialSolarDateInLunarYear(
+            lunarDay: 2,
+            lunarMonth: 2,
+            lunarYear: 2023,
+          ),
+          DateTime(2023, 2, 21),
+        );
+      },
+    );
 
     test('dữ liệu không hợp lệ trả null', () {
       expect(
@@ -119,25 +121,33 @@ void main() {
       expect(_next(30, 1, DateTime(2023, 1, 1)), DateTime(2023, 2, 19));
     });
 
-    test('giỗ 30/1 từ 20/02/2023 -> 09/03/2024 (năm sau, tháng 1 chỉ 29 ngày)',
-        () {
-      expect(_next(30, 1, DateTime(2023, 2, 20)), DateTime(2024, 3, 9));
-    });
+    test(
+      'giỗ 30/1 từ 20/02/2023 -> 09/03/2024 (năm sau, tháng 1 chỉ 29 ngày)',
+      () {
+        expect(_next(30, 1, DateTime(2023, 2, 20)), DateTime(2024, 3, 9));
+      },
+    );
 
-    test('giỗ 30/12 từ 15/01/2025: tháng Chạp 2024 chỉ 29 ngày -> 28/01/2025',
-        () {
-      expect(_next(30, 12, DateTime(2025, 1, 15)), DateTime(2025, 1, 28));
-    });
+    test(
+      'giỗ 30/12 từ 15/01/2025: tháng Chạp 2024 chỉ 29 ngày -> 28/01/2025',
+      () {
+        expect(_next(30, 12, DateTime(2025, 1, 15)), DateTime(2025, 1, 28));
+      },
+    );
 
-    test('hôm nay còn thuộc năm âm trước (05/01/2024): giỗ 20/12 -> 30/01/2024',
-        () {
-      expect(_next(20, 12, DateTime(2024, 1, 5)), DateTime(2024, 1, 30));
-    });
+    test(
+      'hôm nay còn thuộc năm âm trước (05/01/2024): giỗ 20/12 -> 30/01/2024',
+      () {
+        expect(_next(20, 12, DateTime(2024, 1, 5)), DateTime(2024, 1, 30));
+      },
+    );
 
-    test('hôm nay còn thuộc năm âm trước (05/01/2024): giỗ 15/1 -> 24/02/2024',
-        () {
-      expect(_next(15, 1, DateTime(2024, 1, 5)), DateTime(2024, 2, 24));
-    });
+    test(
+      'hôm nay còn thuộc năm âm trước (05/01/2024): giỗ 15/1 -> 24/02/2024',
+      () {
+        expect(_next(15, 1, DateTime(2024, 1, 5)), DateTime(2024, 2, 24));
+      },
+    );
 
     test('giỗ 15/12 từ 25/02/2024 -> 14/01/2025 (sang năm dương sau)', () {
       expect(_next(15, 12, DateTime(2024, 2, 25)), DateTime(2025, 1, 14));

@@ -7,23 +7,24 @@ import 'package:familytree/features/person/domain/person_edit_form.dart';
 /// requireGenderChoice = true: giới tính chưa chọn sẵn, bắt buộc chọn.
 class PersonFormController extends ChangeNotifier {
   PersonFormController(this.initial, {this.requireGenderChoice = false})
-      : fullName = TextEditingController(text: initial.fullName),
-        otherName = TextEditingController(text: initial.otherName),
-        birthDay = TextEditingController(text: initial.birthDay),
-        birthMonth = TextEditingController(text: initial.birthMonth),
-        birthYear = TextEditingController(text: initial.birthYear),
-        birthPlace = TextEditingController(text: initial.birthPlace),
-        deathDay = TextEditingController(text: initial.deathDay),
-        deathMonth = TextEditingController(text: initial.deathMonth),
-        deathYear = TextEditingController(text: initial.deathYear),
-        burialPlace = TextEditingController(text: initial.burialPlace),
-        memorialDay = TextEditingController(text: initial.memorialDay),
-        memorialMonth = TextEditingController(text: initial.memorialMonth),
-        notes = TextEditingController(text: initial.notes),
-        generation = TextEditingController(text: initial.generation),        _gender = requireGenderChoice ? null : initial.gender,
-        _branchId = initial.branchId,
-        _isAlive = initial.isAlive,
-        _memorialIsLeap = initial.memorialIsLeap {
+    : fullName = TextEditingController(text: initial.fullName),
+      otherName = TextEditingController(text: initial.otherName),
+      birthDay = TextEditingController(text: initial.birthDay),
+      birthMonth = TextEditingController(text: initial.birthMonth),
+      birthYear = TextEditingController(text: initial.birthYear),
+      birthPlace = TextEditingController(text: initial.birthPlace),
+      deathDay = TextEditingController(text: initial.deathDay),
+      deathMonth = TextEditingController(text: initial.deathMonth),
+      deathYear = TextEditingController(text: initial.deathYear),
+      burialPlace = TextEditingController(text: initial.burialPlace),
+      memorialDay = TextEditingController(text: initial.memorialDay),
+      memorialMonth = TextEditingController(text: initial.memorialMonth),
+      notes = TextEditingController(text: initial.notes),
+      generation = TextEditingController(text: initial.generation),
+      _gender = requireGenderChoice ? null : initial.gender,
+      _branchId = initial.branchId,
+      _isAlive = initial.isAlive,
+      _memorialIsLeap = initial.memorialIsLeap {
     for (final c in _textControllers) {
       c.addListener(notifyListeners);
     }
@@ -61,21 +62,21 @@ class PersonFormController extends ChangeNotifier {
   };
 
   List<TextEditingController> get _textControllers => [
-        fullName,
-        otherName,
-        birthDay,
-        birthMonth,
-        birthYear,
-        birthPlace,
-        deathDay,
-        deathMonth,
-        deathYear,
-        burialPlace,
-        memorialDay,
-        memorialMonth,
-        notes,
-        generation,
-      ];
+    fullName,
+    otherName,
+    birthDay,
+    birthMonth,
+    birthYear,
+    birthPlace,
+    deathDay,
+    deathMonth,
+    deathYear,
+    burialPlace,
+    memorialDay,
+    memorialMonth,
+    notes,
+    generation,
+  ];
 
   Gender? get gender => _gender;
   bool get genderChosen => _gender != null;
@@ -116,7 +117,7 @@ class PersonFormController extends ChangeNotifier {
     errors.remove(PersonField.memorial);
     notifyListeners();
   }
-  
+
   void clearError(PersonField field) {
     if (errors.remove(field) != null) {
       notifyListeners();

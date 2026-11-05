@@ -57,8 +57,9 @@ class _PersonEditForm extends ConsumerStatefulWidget {
 }
 
 class _PersonEditFormState extends ConsumerState<_PersonEditForm> {
-  late final PersonFormController _form =
-      PersonFormController(PersonFormValues.fromPerson(widget.person));
+  late final PersonFormController _form = PersonFormController(
+    PersonFormValues.fromPerson(widget.person),
+  );
   final TextEditingController _adminNote = TextEditingController();
   late final Listenable _all = Listenable.merge([_form, _adminNote]);
 
@@ -81,13 +82,17 @@ class _PersonEditFormState extends ConsumerState<_PersonEditForm> {
     final actionLabel = isAdmin ? 'Lưu thay đổi' : 'Gửi đề xuất';
     final nowYear = DateTime.now().year;
 
-    final errors = _form.validate(nowYear: nowYear, validateGeneration: isAdmin);
+    final errors = _form.validate(
+      nowYear: nowYear,
+      validateGeneration: isAdmin,
+    );
     if (errors.isNotEmpty) {
       final lines = errors.values.map((e) => '• $e').join('\n');
       await showMessageDialog(
         context,
         title: isAdmin ? 'Chưa lưu được' : 'Chưa gửi được',
-        message: 'Vui lòng sửa các ô báo đỏ rồi '
+        message:
+            'Vui lòng sửa các ô báo đỏ rồi '
             '${isAdmin ? 'lưu' : 'gửi'} lại:\n\n$lines',
         icon: Icons.error_outline,
         isError: true,
@@ -226,7 +231,7 @@ class _PersonEditFormState extends ConsumerState<_PersonEditForm> {
               text: isAdmin
                   ? '. Thay đổi được lưu và hiện trên cây ngay.'
                   : '. Thay đổi sẽ được quản trị viên xem và duyệt, '
-                      'chưa áp dụng ngay.',
+                        'chưa áp dụng ngay.',
             ),
           ],
         ),

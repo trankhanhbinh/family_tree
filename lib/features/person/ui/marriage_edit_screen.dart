@@ -24,8 +24,9 @@ class MarriageEditScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(treeDataProvider);
     final data = async.value;
-    final marriage =
-        data?.marriages.where((m) => m.id == marriageId).firstOrNull;
+    final marriage = data?.marriages
+        .where((m) => m.id == marriageId)
+        .firstOrNull;
 
     if (data == null || marriage == null) {
       String? message;
@@ -34,10 +35,7 @@ class MarriageEditScreen extends ConsumerWidget {
       } else if (data != null) {
         message = 'Không tìm thấy hôn nhân này.';
       }
-      return ProposalPlaceholderScreen(
-        title: 'Sửa hôn nhân',
-        message: message,
-      );
+      return ProposalPlaceholderScreen(title: 'Sửa hôn nhân', message: message);
     }
 
     final byId = {for (final p in data.people) p.id: p};
@@ -88,7 +86,8 @@ class _MarriageEditFormState extends ConsumerState<_MarriageEditForm> {
       await showMessageDialog(
         context,
         title: isAdmin ? 'Chưa lưu được' : 'Chưa gửi được',
-        message: 'Vui lòng sửa các ô báo đỏ rồi '
+        message:
+            'Vui lòng sửa các ô báo đỏ rồi '
             '${isAdmin ? 'lưu' : 'gửi'} lại:\n\n$lines',
         icon: Icons.error_outline,
         isError: true,
@@ -110,7 +109,8 @@ class _MarriageEditFormState extends ConsumerState<_MarriageEditForm> {
       await showMessageDialog(
         context,
         title: 'Bạn chưa thay đổi gì',
-        message: 'Hãy sửa ít nhất một thông tin rồi bấm '
+        message:
+            'Hãy sửa ít nhất một thông tin rồi bấm '
             '"${isAdmin ? 'Lưu thay đổi' : 'Gửi đề xuất'}".',
       );
       return;
@@ -195,9 +195,9 @@ class _MarriageEditFormState extends ConsumerState<_MarriageEditForm> {
                           child: Text(
                             isAdmin
                                 ? 'Sửa trực tiếp hôn nhân giữa ${widget.names}. '
-                                    'Thay đổi được lưu và hiện trên cây ngay.'
+                                      'Thay đổi được lưu và hiện trên cây ngay.'
                                 : 'Sửa hôn nhân giữa ${widget.names}. '
-                                    'Thay đổi sẽ được quản trị viên xem và duyệt.',
+                                      'Thay đổi sẽ được quản trị viên xem và duyệt.',
                             style: const TextStyle(fontSize: 16, height: 1.4),
                           ),
                         ),

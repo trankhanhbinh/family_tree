@@ -31,7 +31,8 @@ PersonFormValues _values({String generation = ''}) {
   return PersonFormValues(fullName: 'Nguyễn Văn B', generation: generation);
 }
 
-Object? _generationOf(List<dynamic> drafts) => drafts.first.payload['generation'];
+Object? _generationOf(List<dynamic> drafts) =>
+    drafts.first.payload['generation'];
 
 void main() {
   group('planAddChild', () {

@@ -34,5 +34,5 @@ class CollapsedIdsNotifier extends Notifier<Set<String>> {
 
 final collapsedIdsProvider =
     NotifierProvider<CollapsedIdsNotifier, Set<String>>(
-  CollapsedIdsNotifier.new,
-);
+      CollapsedIdsNotifier.new,
+    );

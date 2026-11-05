@@ -108,7 +108,9 @@ String describeRestoreResult(RestoreResult result, HistoryNameLookup nameOf) {
     lines.add('');
     lines.add('Bỏ qua ${result.skipped.length} quan hệ:');
     for (final item in result.skipped) {
-      lines.add('• ${_skippedTitle(item, nameOf)}: ${_reasonText(item.reason)}');
+      lines.add(
+        '• ${_skippedTitle(item, nameOf)}: ${_reasonText(item.reason)}',
+      );
     }
     lines.add('');
     lines.add('Có thể thêm lại các quan hệ này bằng các nút trên hồ sơ.');

@@ -16,6 +16,10 @@ const Color _footerAccent = Color(0xFF8B1E1E);
 const Color _footerIdleBg = Color(0xFFF6E9E9);
 const Color _footerDivider = Color(0xFFE3C9C9);
 const Color _highlightColor = Color(0xFFFFA000);
+// Người đã mất: viền đồng, chữ nâu đậm.
+const Color _bronze = Color(0xFF9A7B3F);
+const Color _bronzeDark = Color(0xFF5A4520);
+const Color _bronzeText = Color(0xFF7A6842);
 
 Paint _stroke(Color color, double width) => Paint()
   ..style = PaintingStyle.stroke
@@ -28,7 +32,8 @@ final Paint _childPaint = _stroke(_lineColor, 2);
 final Paint _marriedPaint = _stroke(_lineColor, 2);
 final Paint _widowedPaint = _stroke(_widowedColor, 2);
 final Paint _noMarriagePaint = _stroke(_noMarriageColor, 1.2);
-final Paint _lineagePaint = _stroke(_lineColor, 2.5)..strokeCap = StrokeCap.round;
+final Paint _lineagePaint = _stroke(_lineColor, 2.5)
+  ..strokeCap = StrokeCap.round;
 
 /// Một đường nối đã dựng sẵn thành Path, kèm khung bao để loại nhanh khi nằm ngoài màn hình.
 class LinkShape {
@@ -46,13 +51,9 @@ class TreeScene {
       if (link.kind == LinkKind.marriage) {
         marriageLinks.add(_buildMarriage(link));
       } else if (link.relation == RelationType.lineage) {
-        childDotted.add(
-          LinkShape(_dashed(link.points, 0.1, 5), _lineagePaint),
-        );
+        childDotted.add(LinkShape(_dashed(link.points, 0.1, 5), _lineagePaint));
       } else if (_isNotBiological(link.relation)) {
-        childDashed.add(
-          LinkShape(_dashed(link.points, 6, 4), _childPaint),
-        );
+        childDashed.add(LinkShape(_dashed(link.points, 6, 4), _childPaint));
       } else {
         childSolid.add(LinkShape(_polyline(link.points), _childPaint));
       }
@@ -157,10 +158,8 @@ class TreePainter extends CustomPainter {
     required this.cache,
     this.highlightId,
     Animation<double>? pulse,
-  })  : _pulse = pulse,
-        super(
-          repaint: Listenable.merge([controller, ?pulse]),
-        );
+  }) : _pulse = pulse,
+       super(repaint: Listenable.merge([controller, ?pulse]));
 
   final TreeScene scene;
   final TransformationController controller;
@@ -174,11 +173,20 @@ class TreePainter extends CustomPainter {
   static const double _liteScale = 0.3;
 
   static const double _pad = 10;
-  static const double _avatarRadius = 21;
+  static const double _avatarW = 44;
+  static const double _avatarH = 58;
 
   static final Paint _whitePaint = Paint()..color = Colors.white;
   static final Paint _deceasedPaint = Paint()..color = const Color(0xFFECECEC);
-  static final Paint _ribbonPaint = Paint()..color = Colors.black87;
+  static final Paint _innerFramePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1
+    ..color = _bronze;
+  static final Paint _ornamentLinePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1
+    ..color = _bronze;
+  static final Paint _ornamentFillPaint = Paint()..color = _bronze;
 
   TreeLayout get layout => scene.layout;
 
@@ -187,9 +195,10 @@ class TreePainter extends CustomPainter {
     final matrix = controller.value;
     final scale = matrix.getMaxScaleOnAxis();
     // Vùng canvas đang nhìn thấy (nới 60px để thẻ sát mép không bị cắt).
-    final visible =
-        MatrixUtils.inverseTransformRect(matrix, Offset.zero & size)
-            .inflate(60);
+    final visible = MatrixUtils.inverseTransformRect(
+      matrix,
+      Offset.zero & size,
+    ).inflate(60);
 
     canvas.save();
     canvas.transform(matrix.storage);
@@ -330,30 +339,38 @@ class TreePainter extends CustomPainter {
       return cached;
     }
     final person = card.person;
+    final deceased = !person.isAlive;
     final accent = _accentOf(person.gender);
-    final textLeft = _pad + _avatarRadius * 2 + 8;
+    final textLeft = _pad + _avatarW + 8;
     final textWidth = card.rect.width - 8 - textLeft;
 
     final text = CardText(
       initial: _text(
         _initialOf(person.fullName),
-        TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: accent),
-        _avatarRadius * 2,
+        TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: deceased ? _bronzeDark : accent,
+        ),
+        _avatarW,
       ),
       name: _text(
         person.fullName,
-        const TextStyle(
+        TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
           height: 1.15,
-          color: Color(0xFF212121),
+          color: deceased ? _bronzeDark : const Color(0xFF212121),
         ),
         textWidth,
         maxLines: 2,
       ),
       years: _text(
         _yearsText(person),
-        const TextStyle(fontSize: 12, color: Color(0xFF616161)),
+        TextStyle(
+          fontSize: 12,
+          color: deceased ? _bronzeText : const Color(0xFF616161),
+        ),
         textWidth,
       ),
     );
@@ -365,16 +382,13 @@ class TreePainter extends CustomPainter {
   void _paintCardLite(Canvas canvas, CardLayout card) {
     final rect = card.rect;
     final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(10));
-    final accent = _accentOf(card.person.gender);
+    final deceased = !card.person.isAlive;
+    final accent = deceased ? _bronze : _accentOf(card.person.gender);
 
-    canvas.drawRRect(
-      rrect,
-      card.person.isAlive ? _whitePaint : _deceasedPaint,
-    );
-    canvas.drawRRect(
-      rrect,
-      Paint()..color = accent.withValues(alpha: 0.18),
-    );
+    canvas.drawRRect(rrect, deceased ? _deceasedPaint : _whitePaint);
+    if (!deceased) {
+      canvas.drawRRect(rrect, Paint()..color = accent.withValues(alpha: 0.18));
+    }
     final footer = card.footerRect;
     if (footer != null) {
       canvas.save();
@@ -401,33 +415,29 @@ class TreePainter extends CustomPainter {
 
     final deceased = !person.isAlive;
     final accent = _accentOf(person.gender);
+    final frameColor = deceased ? _bronze : accent;
 
-    // Nền
+    // Nền (người đã mất: xám nhạt)
     canvas.drawRRect(rrect, deceased ? _deceasedPaint : _whitePaint);
 
-    // Dải băng đen góc trên phải (người đã mất)
+    // Viền trong mảnh của người đã mất. Vẽ trước dải đáy để dải che phần dưới.
     if (deceased) {
-      canvas.save();
-      canvas.clipRRect(rrect);
-      final ribbon = Path()
-        ..moveTo(rect.right - 20, rect.top)
-        ..lineTo(rect.right, rect.top)
-        ..lineTo(rect.right, rect.top + 20)
-        ..close();
-      canvas.drawPath(ribbon, _ribbonPaint);
-      canvas.restore();
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect.deflate(5), const Radius.circular(6)),
+        _innerFramePaint,
+      );
     }
 
-    // Dải thu gọn ở đáy (vẽ trước viền để viền nằm đè lên).
+    // Dải thu gọn ở đáy (vẽ trước viền ngoài để viền nằm đè lên).
     _paintFooter(canvas, card, rrect);
 
-    // Viền theo giới tính
+    // Viền ngoài: theo giới tính; người đã mất dùng màu đồng, nét dày hơn.
     canvas.drawRRect(
       rrect,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..color = accent,
+        ..strokeWidth = deceased ? 2.5 : 2
+        ..color = frameColor,
     );
 
     // Nội dung căn giữa trong phần trên (nếu có dải) hoặc cả thẻ (thẻ lá).
@@ -436,31 +446,62 @@ class TreePainter extends CustomPainter {
 
     final text = _cardText(card);
 
-    // Avatar tròn (chữ cái đầu của tên)
-    final avatarCenter =
-        Offset(rect.left + _pad + _avatarRadius, contentCy);
-    canvas.drawCircle(
-      avatarCenter,
-      _avatarRadius,
-      Paint()..color = accent.withValues(alpha: 0.15),
+    // Khung avatar chữ nhật đứng (chữ cái đầu của tên)
+    final avatarBox = Rect.fromLTWH(
+      rect.left + _pad,
+      contentCy - _avatarH / 2,
+      _avatarW,
+      _avatarH,
     );
+    final avatarRRect = RRect.fromRectAndRadius(
+      avatarBox,
+      const Radius.circular(6),
+    );
+    canvas.drawRRect(
+      avatarRRect,
+      Paint()..color = deceased ? Colors.white : accent.withValues(alpha: 0.15),
+    );
+    if (deceased) {
+      canvas.drawRRect(avatarRRect, _innerFramePaint);
+    }
     text.initial.paint(
       canvas,
       Offset(
-        avatarCenter.dx - text.initial.width / 2,
-        avatarCenter.dy - text.initial.height / 2,
+        avatarBox.center.dx - text.initial.width / 2,
+        avatarBox.center.dy - text.initial.height / 2,
       ),
     );
 
-    // Khối chữ bên phải (họ tên + năm sinh - năm mất)
-    final textLeft = rect.left + _pad + _avatarRadius * 2 + 8;
-    const gapBetween = 4.0;
-    final totalHeight = text.name.height + gapBetween + text.years.height;
+    // Khối chữ bên phải (họ tên, [đường kẻ trang trí], năm sinh - năm mất)
+    final textLeft = rect.left + _pad + _avatarW + 8;
+    final gap = deceased ? 3.0 : 4.0;
+    final ornamentBlock = deceased ? 6.0 + gap : 0.0;
+    final totalHeight =
+        text.name.height + gap + ornamentBlock + text.years.height;
     var y = contentCy - totalHeight / 2;
 
     text.name.paint(canvas, Offset(textLeft, y));
-    y += text.name.height + gapBetween;
+    y += text.name.height + gap;
+    if (deceased) {
+      _paintOrnament(canvas, textLeft, y + 3);
+      y += ornamentBlock;
+    }
     text.years.paint(canvas, Offset(textLeft, y));
+  }
+
+  /// Đường kẻ mảnh có hình thoi ở giữa, đặt dưới tên người đã mất.
+  void _paintOrnament(Canvas canvas, double x, double cy) {
+    canvas.drawLine(Offset(x, cy), Offset(x + 14, cy), _ornamentLinePaint);
+    canvas.drawPath(
+      Path()
+        ..moveTo(x + 18, cy - 3)
+        ..lineTo(x + 21, cy)
+        ..lineTo(x + 18, cy + 3)
+        ..lineTo(x + 15, cy)
+        ..close(),
+      _ornamentFillPaint,
+    );
+    canvas.drawLine(Offset(x + 22, cy), Offset(x + 36, cy), _ornamentLinePaint);
   }
 
   // ---------- Dải thu gọn / mở rộng ----------

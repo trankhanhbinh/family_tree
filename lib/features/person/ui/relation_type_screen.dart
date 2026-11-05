@@ -39,8 +39,9 @@ class RelationTypeScreen extends ConsumerWidget {
       );
     }
 
-    final rows =
-        data.parentChildren.where((pc) => pc.childId == childId).toList();
+    final rows = data.parentChildren
+        .where((pc) => pc.childId == childId)
+        .toList();
     if (rows.isEmpty) {
       return const ProposalPlaceholderScreen(
         title: 'Đổi loại quan hệ',
@@ -74,8 +75,8 @@ class _RelationTypeForm extends ConsumerStatefulWidget {
 
 class _RelationTypeFormState extends ConsumerState<_RelationTypeForm> {
   // Các dòng khác loại nhau thì chưa chọn sẵn (null).
-  late final RelationType? _initial = widget.rows
-          .every((r) => r.relationType == widget.rows.first.relationType)
+  late final RelationType? _initial =
+      widget.rows.every((r) => r.relationType == widget.rows.first.relationType)
       ? widget.rows.first.relationType
       : null;
   late RelationType? _selected = _initial;
@@ -135,7 +136,8 @@ class _RelationTypeFormState extends ConsumerState<_RelationTypeForm> {
     final proceed = await confirmSubmit(
       context,
       isAdmin: isAdmin,
-      summary: 'Đổi ${widget.child.fullName} thành ${_label(selected)} '
+      summary:
+          'Đổi ${widget.child.fullName} thành ${_label(selected)} '
           'của $parents.',
       slots: drafts.length,
     );
@@ -218,7 +220,7 @@ class _RelationTypeFormState extends ConsumerState<_RelationTypeForm> {
                                 (RelationType.biological, 'Con ruột'),
                                 (RelationType.adopted, 'Con nuôi'),
                                 (RelationType.step, 'Con riêng'),
-                                (RelationType.lineage, 'Nối đời')
+                                (RelationType.lineage, 'Nối đời'),
                               ],
                               selected: _selected,
                               onChanged: (value) =>

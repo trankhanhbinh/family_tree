@@ -34,9 +34,12 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    container
-        .read(collapsedIdsProvider.notifier)
-        .collapseAll({'01', '03', '04', '09'});
+    container.read(collapsedIdsProvider.notifier).collapseAll({
+      '01',
+      '03',
+      '04',
+      '09',
+    });
     container.read(focusRequestProvider.notifier).focusOn('15', forest);
 
     expect(container.read(collapsedIdsProvider), {'04'});

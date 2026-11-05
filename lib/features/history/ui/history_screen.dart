@@ -14,8 +14,10 @@ class HistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tree = ref.watch(treeDataProvider).value;
-    final name =
-        tree?.people.where((p) => p.id == personId).firstOrNull?.fullName;
+    final name = tree?.people
+        .where((p) => p.id == personId)
+        .firstOrNull
+        ?.fullName;
 
     return Scaffold(
       appBar: AppBar(

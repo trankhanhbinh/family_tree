@@ -38,10 +38,8 @@ class TreeScreen extends ConsumerWidget {
             ),
           ),
           TextButton(
-            onPressed: () => _showMoreSheet(
-              context,
-              isAdmin: ref.read(isAdminProvider),
-            ),
+            onPressed: () =>
+                _showMoreSheet(context, isAdmin: ref.read(isAdminProvider)),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.onSurface,
             ),
@@ -64,9 +62,8 @@ class TreeScreen extends ConsumerWidget {
       bottomNavigationBar: const AdminEntryBar(),
       body: forestAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _TreeErrorView(
-          onRetry: () => ref.invalidate(treeDataProvider),
-        ),
+        error: (error, _) =>
+            _TreeErrorView(onRetry: () => ref.invalidate(treeDataProvider)),
         data: (forest) {
           if (forest.roots.isEmpty) {
             return const Center(child: Text('Chưa có dữ liệu gia phả.'));
@@ -116,7 +113,8 @@ Future<void> _showMoreSheet(
                 _MoreSheetItem(
                   title: 'Quản lý chi/nhánh',
                   subtitle: 'Thêm, đổi tên các chi và nhánh',
-                  onTap: () => Navigator.of(sheetContext).pop('/admin/branches'),
+                  onTap: () =>
+                      Navigator.of(sheetContext).pop('/admin/branches'),
                 ),
                 const SizedBox(height: 8),
                 _MoreSheetItem(
@@ -162,6 +160,7 @@ Future<void> _showMoreSheet(
   }
   context.push(route);
 }
+
 class _MoreSheetItem extends StatelessWidget {
   const _MoreSheetItem({
     required this.title,

@@ -15,7 +15,10 @@ Branch _b(String id, {String? parent, int sort = 0, String? name}) {
 
 void main() {
   test('không có chi thì danh sách rỗng', () {
-    final rows = buildBranchRows(branches: const [], usage: BranchUsage.empty());
+    final rows = buildBranchRows(
+      branches: const [],
+      usage: BranchUsage.empty(),
+    );
     expect(rows, isEmpty);
   });
 
@@ -52,7 +55,10 @@ void main() {
       BranchMember(id: 'p3', fullName: 'C', branchId: 'c', isDeleted: true),
     ]);
     final rows = buildBranchRows(
-      branches: [_b('r'), _b('c', parent: 'r')],
+      branches: [
+        _b('r'),
+        _b('c', parent: 'r'),
+      ],
       usage: usage,
     );
     expect(rows[0].livingCount, 2);
@@ -68,19 +74,22 @@ void main() {
     expect(rows.first.depth, 0);
   });
 
-  test('excludeIds loại chi được chỉ định; chi con của chi bị loại thành chi gốc', () {
-    final rows = buildBranchRows(
-      branches: [
-        _b('r'),
-        _b('c1', parent: 'r'),
-        _b('g', parent: 'c1'),
-      ],
-      usage: BranchUsage.empty(),
-      excludeIds: {'r', 'c1'},
-    );
-    expect(rows.map((r) => r.branch.id).toList(), ['g']);
-    expect(rows.first.depth, 0);
-  });
+  test(
+    'excludeIds loại chi được chỉ định; chi con của chi bị loại thành chi gốc',
+    () {
+      final rows = buildBranchRows(
+        branches: [
+          _b('r'),
+          _b('c1', parent: 'r'),
+          _b('g', parent: 'c1'),
+        ],
+        usage: BranchUsage.empty(),
+        excludeIds: {'r', 'c1'},
+      );
+      expect(rows.map((r) => r.branch.id).toList(), ['g']);
+      expect(rows.first.depth, 0);
+    },
+  );
 
   test('dữ liệu bị vòng thì không treo và không hiện', () {
     final rows = buildBranchRows(

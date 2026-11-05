@@ -12,27 +12,26 @@ Person _person(
   int? gen,
   int? birthYear,
   String? birthDate,
-}) =>
-    Person.fromJson({
-      'id': id,
-      'full_name': name,
-      'other_name': null,
-      'gender': gender,
-      'branch_id': null,
-      'generation': gen,
-      'birth_date': birthDate,
-      'birth_year': birthYear,
-      'birth_place': null,
-      'is_alive': true,
-      'death_date': null,
-      'death_year': null,
-      'burial_place': null,
-      'memorial_lunar_day': null,
-      'memorial_lunar_month': null,
-      'memorial_is_leap': false,
-      'notes': null,
-      'deleted_at': null,
-    });
+}) => Person.fromJson({
+  'id': id,
+  'full_name': name,
+  'other_name': null,
+  'gender': gender,
+  'branch_id': null,
+  'generation': gen,
+  'birth_date': birthDate,
+  'birth_year': birthYear,
+  'birth_place': null,
+  'is_alive': true,
+  'death_date': null,
+  'death_year': null,
+  'burial_place': null,
+  'memorial_lunar_day': null,
+  'memorial_lunar_month': null,
+  'memorial_is_leap': false,
+  'notes': null,
+  'deleted_at': null,
+});
 
 int _pcCounter = 0;
 ParentChild _pc(String parent, String child, [String type = 'biological']) =>
@@ -49,16 +48,15 @@ Marriage _marriage(
   String p2, {
   String status = 'married',
   String? start,
-}) =>
-    Marriage.fromJson({
-      'id': 'm${_mCounter++}',
-      'person1_id': p1,
-      'person2_id': p2,
-      'status': status,
-      'start_date': start,
-      'end_date': null,
-      'notes': null,
-    });
+}) => Marriage.fromJson({
+  'id': 'm${_mCounter++}',
+  'person1_id': p1,
+  'person2_id': p2,
+  'status': status,
+  'start_date': start,
+  'end_date': null,
+  'notes': null,
+});
 
 List<String> _names(Iterable<FamilyNode> nodes) =>
     nodes.map((n) => n.person.id).toList();
@@ -135,18 +133,25 @@ void main() {
     });
 
     test('người 04 và 09 có con đúng, con nuôi (16) có mặt', () {
-      expect(_names(forest.nodeOfPerson['04']!.unions.first.children),
-          ['12', '13']);
-      expect(_names(forest.nodeOfPerson['09']!.unions.first.children),
-          ['15', '16']);
+      expect(_names(forest.nodeOfPerson['04']!.unions.first.children), [
+        '12',
+        '13',
+      ]);
+      expect(_names(forest.nodeOfPerson['09']!.unions.first.children), [
+        '15',
+        '16',
+      ]);
     });
 
-    test('con nuôi (16) được đánh dấu adopted, con ruột (15) là biological', () {
-      final union = forest.nodeOfPerson['09']!.unions.first;
-      expect(union.childRelations['16'], RelationType.adopted);
-      expect(union.childRelations['15'], RelationType.biological);
-    });
-    
+    test(
+      'con nuôi (16) được đánh dấu adopted, con ruột (15) là biological',
+      () {
+        final union = forest.nodeOfPerson['09']!.unions.first;
+        expect(union.childRelations['16'], RelationType.adopted);
+        expect(union.childRelations['15'], RelationType.biological);
+      },
+    );
+
     test('mọi người trong 16 đều tra được nút', () {
       expect(forest.nodeOfPerson.length, 16);
       expect(forest.nodeOfPerson['06']!.person.id, '03');
@@ -169,8 +174,7 @@ void main() {
       expect(_names(a.unions.first.children), ['b']);
     });
 
-    test('cặp cùng là cha mẹ nhưng không có hôn nhân: vẫn tạo cặp, không trùng lặp',
-        () {
+    test('cặp cùng là cha mẹ nhưng không có hôn nhân: vẫn tạo cặp, không trùng lặp', () {
       final forest = FamilyTreeBuilder.build(
         people: [
           _person('f', 'Cha', gen: 1),
@@ -186,8 +190,7 @@ void main() {
       expect(_names(forest.nodeOfPerson['f']!.unions.first.children), ['c']);
     });
 
-    test('hai vợ/chồng đều có cha mẹ trong cây: chọn đời nhỏ hơn / nam, có cảnh báo',
-        () {
+    test('hai vợ/chồng đều có cha mẹ trong cây: chọn đời nhỏ hơn / nam, có cảnh báo', () {
       final forest = FamilyTreeBuilder.build(
         people: [
           _person('r', 'Gốc', gen: 1),
@@ -198,8 +201,10 @@ void main() {
         marriages: [_marriage('x', 'y')],
       );
       expect(forest.spouseOnlyIds, {'y'});
-      expect(forest.warnings.any((w) => w.contains('có cha mẹ trong cây')),
-          isTrue);
+      expect(
+        forest.warnings.any((w) => w.contains('có cha mẹ trong cây')),
+        isTrue,
+      );
     });
 
     test('thiếu ngày hôn nhân: xếp theo năm sinh con đầu', () {
@@ -219,8 +224,9 @@ void main() {
         ],
         marriages: [_marriage('h', 'w1'), _marriage('h', 'w2')],
       );
-      final spouses =
-          forest.nodeOfPerson['h']!.unions.map((u) => u.spouse!.id).toList();
+      final spouses = forest.nodeOfPerson['h']!.unions
+          .map((u) => u.spouse!.id)
+          .toList();
       expect(spouses, ['w2', 'w1']);
     });
   });

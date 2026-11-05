@@ -57,7 +57,8 @@ Future<BranchPick?> showBranchPickerSheet(
                           depth: 0,
                           isCurrent: rootIsCurrent,
                           onTap: () =>
-                              Navigator.of(sheetContext).pop(const BranchPick(null)),
+                              Navigator.of(sheetContext)
+                                  .pop(const BranchPick(null)),
                         ),
                       if (rows.isEmpty && !allowRoot)
                         const Padding(
@@ -72,8 +73,9 @@ Future<BranchPick?> showBranchPickerSheet(
                           label: row.branch.name,
                           depth: row.depth + extraIndent,
                           isCurrent: row.branch.id == currentId,
-                          onTap: () => Navigator.of(sheetContext)
-                              .pop(BranchPick(row.branch.id)),
+                          onTap: () =>
+                              Navigator.of(sheetContext)
+                                  .pop(BranchPick(row.branch.id)),
                         ),
                     ],
                   ),
@@ -85,7 +87,10 @@ Future<BranchPick?> showBranchPickerSheet(
                     onPressed: () => Navigator.of(sheetContext).pop(),
                     child: const Text(
                       'Đóng',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),

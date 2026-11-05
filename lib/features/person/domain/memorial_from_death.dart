@@ -34,7 +34,8 @@ MemorialFromDeath computeMemorialFromDeath({
   );
   if (parsed.isEmpty) {
     return const MemorialFromDeath(
-      error: 'Bạn chưa nhập ngày mất.\n\n'
+      error:
+          'Bạn chưa nhập ngày mất.\n\n'
           'Hãy nhập đủ ngày, tháng, năm mất ở phần "Tình trạng" '
           'phía trên rồi bấm lại.',
     );
@@ -42,14 +43,16 @@ MemorialFromDeath computeMemorialFromDeath({
   final parseError = parsed.error;
   if (parseError != null) {
     return MemorialFromDeath(
-      error: 'Ngày mất chưa hợp lệ: $parseError\n\n'
+      error:
+          'Ngày mất chưa hợp lệ: $parseError\n\n'
           'Hãy sửa ô "Ngày mất" ở phần "Tình trạng" rồi bấm lại.',
     );
   }
   final date = parsed.date;
   if (date == null) {
     return const MemorialFromDeath(
-      error: 'Mới có năm mất, chưa đủ ngày và tháng.\n\n'
+      error:
+          'Mới có năm mất, chưa đủ ngày và tháng.\n\n'
           'Cần đủ ngày, tháng và năm mất thì mới tính được ngày giỗ. '
           'Nếu không biết rõ, bạn có thể nhập tay ngày giỗ ở các ô bên dưới.',
     );
@@ -57,7 +60,8 @@ MemorialFromDeath computeMemorialFromDeath({
   final lunar = solarToLunar(date);
   if (lunar == null) {
     return MemorialFromDeath(
-      error: 'Ngày mất nằm ngoài phạm vi tính âm lịch '
+      error:
+          'Ngày mất nằm ngoài phạm vi tính âm lịch '
           '(từ năm $minLunarSupportedYear đến năm $maxLunarSupportedYear).\n\n'
           'Bạn có thể nhập tay ngày giỗ ở các ô bên dưới.',
     );

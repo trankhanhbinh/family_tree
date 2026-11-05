@@ -165,16 +165,21 @@ void main() {
     }
 
     test('cha và mẹ: 3 dòng theo thứ tự người, cha-con, cha-con', () {
-      final drafts = plan(other: _person(id: 'y', gender: Gender.female));
-      expect(
-        drafts.map((d) => d.entityType).toList(),
-        [kEntityPerson, kEntityParentChild, kEntityParentChild],
+      final drafts = plan(
+        other: _person(id: 'y', gender: Gender.female),
       );
+      expect(drafts.map((d) => d.entityType).toList(), [
+        kEntityPerson,
+        kEntityParentChild,
+        kEntityParentChild,
+      ]);
       expect(drafts.every((d) => d.action == kActionCreate), isTrue);
     });
 
     test('payload cha-con', () {
-      final drafts = plan(other: _person(id: 'y', gender: Gender.female));
+      final drafts = plan(
+        other: _person(id: 'y', gender: Gender.female),
+      );
       expect(drafts[1].payload, {
         'parent_id': 'x',
         'child_id': 'c1',
@@ -227,10 +232,10 @@ void main() {
 
     test('2 dòng: người rồi hôn nhân', () {
       final drafts = plan();
-      expect(
-        drafts.map((d) => d.entityType).toList(),
-        [kEntityPerson, kEntityMarriage],
-      );
+      expect(drafts.map((d) => d.entityType).toList(), [
+        kEntityPerson,
+        kEntityMarriage,
+      ]);
     });
 
     test('số đời của vợ/chồng bằng của bạn đời', () {
@@ -258,16 +263,16 @@ void main() {
     });
 
     test('không ai là nam: người có sẵn là person1', () {
-      final payload = plan(
-        partner: _person(gender: Gender.female),
-      ).last.payload;
+      final payload = plan(partner: _person(gender: Gender.female))
+          .last
+          .payload;
       expect(payload['person1_id'], 'x');
     });
 
     test('chỉ nhập năm bắt đầu thì lưu 1/1', () {
-      final payload = plan(
-        marriage: MarriageFormValues(startYear: '1978'),
-      ).last.payload;
+      final payload = plan(marriage: MarriageFormValues(startYear: '1978'))
+          .last
+          .payload;
       expect(payload, {
         'person1_id': 'x',
         'person2_id': 's1',
@@ -292,9 +297,9 @@ void main() {
     });
 
     test('đang kết hôn thì bỏ qua ngày kết thúc nhập dở', () {
-      final payload = plan(
-        marriage: MarriageFormValues(endYear: '2000'),
-      ).last.payload;
+      final payload = plan(marriage: MarriageFormValues(endYear: '2000'))
+          .last
+          .payload;
       expect(payload.containsKey('end_date'), isFalse);
     });
 

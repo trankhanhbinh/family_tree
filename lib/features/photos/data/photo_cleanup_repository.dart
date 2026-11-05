@@ -20,7 +20,9 @@ class PhotoCleanupRepository {
         .rpc('admin_list_orphan_photo_files', params: {'p_bucket': bucket})
         .timeout(const Duration(seconds: 30));
     return (rows as List)
-        .map((row) => OrphanFile.fromJson(Map<String, dynamic>.from(row as Map)))
+        .map(
+          (row) => OrphanFile.fromJson(Map<String, dynamic>.from(row as Map)),
+        )
         .toList();
   }
 

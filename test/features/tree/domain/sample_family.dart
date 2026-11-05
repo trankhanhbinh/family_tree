@@ -4,28 +4,32 @@ import 'package:familytree/features/tree/domain/family_tree_builder.dart';
 import 'package:familytree/features/tree/domain/marriage.dart';
 import 'package:familytree/features/tree/domain/parent_child.dart';
 
-Person _person(String id, String name,
-        {String gender = 'male', int? gen, int? birthYear}) =>
-    Person.fromJson({
-      'id': id,
-      'full_name': name,
-      'other_name': null,
-      'gender': gender,
-      'branch_id': null,
-      'generation': gen,
-      'birth_date': null,
-      'birth_year': birthYear,
-      'birth_place': null,
-      'is_alive': true,
-      'death_date': null,
-      'death_year': null,
-      'burial_place': null,
-      'memorial_lunar_day': null,
-      'memorial_lunar_month': null,
-      'memorial_is_leap': false,
-      'notes': null,
-      'deleted_at': null,
-    });
+Person _person(
+  String id,
+  String name, {
+  String gender = 'male',
+  int? gen,
+  int? birthYear,
+}) => Person.fromJson({
+  'id': id,
+  'full_name': name,
+  'other_name': null,
+  'gender': gender,
+  'branch_id': null,
+  'generation': gen,
+  'birth_date': null,
+  'birth_year': birthYear,
+  'birth_place': null,
+  'is_alive': true,
+  'death_date': null,
+  'death_year': null,
+  'burial_place': null,
+  'memorial_lunar_day': null,
+  'memorial_lunar_month': null,
+  'memorial_is_leap': false,
+  'notes': null,
+  'deleted_at': null,
+});
 
 int _pcCounter = 0;
 ParentChild _pc(String parent, String child, [String type = 'biological']) =>
@@ -37,17 +41,20 @@ ParentChild _pc(String parent, String child, [String type = 'biological']) =>
     });
 
 int _mCounter = 0;
-Marriage _marriage(String p1, String p2,
-        {String status = 'married', String? start}) =>
-    Marriage.fromJson({
-      'id': 'm${_mCounter++}',
-      'person1_id': p1,
-      'person2_id': p2,
-      'status': status,
-      'start_date': start,
-      'end_date': null,
-      'notes': null,
-    });
+Marriage _marriage(
+  String p1,
+  String p2, {
+  String status = 'married',
+  String? start,
+}) => Marriage.fromJson({
+  'id': 'm${_mCounter++}',
+  'person1_id': p1,
+  'person2_id': p2,
+  'status': status,
+  'start_date': start,
+  'end_date': null,
+  'notes': null,
+});
 
 /// Cây 16 người có cấu trúc giống dữ liệu mẫu trong database.
 FamilyForest buildSampleForest() {

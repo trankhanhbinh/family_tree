@@ -19,8 +19,9 @@ class PersonPhotosSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final all =
-        ref.watch(treeDataProvider.select((async) => async.value?.photos));
+    final all = ref.watch(
+      treeDataProvider.select((async) => async.value?.photos),
+    );
     final photos = photosOfPerson(all ?? const <PersonPhoto>[], personId);
     final isAdmin = ref.watch(isAdminProvider);
     final service = ref.watch(photoServiceProvider);
@@ -34,9 +35,7 @@ class PersonPhotosSection extends ConsumerWidget {
           children: [
             Text(
               'Ảnh',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
+              style: Theme.of(context).textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
