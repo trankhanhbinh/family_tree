@@ -354,6 +354,7 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
             (RelationType.biological, 'Con ruột'),
             (RelationType.adopted, 'Con nuôi'),
             (RelationType.step, 'Con riêng'),
+            (RelationType.lineage, 'Nối đời'),
           ],
           selected: _relation,
           onChanged: (value) => setState(() => _relation = value),

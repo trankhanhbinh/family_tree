@@ -218,6 +218,7 @@ class _RelationTypeFormState extends ConsumerState<_RelationTypeForm> {
                                 (RelationType.biological, 'Con ruột'),
                                 (RelationType.adopted, 'Con nuôi'),
                                 (RelationType.step, 'Con riêng'),
+                                (RelationType.lineage, 'Nối đời')
                               ],
                               selected: _selected,
                               onChanged: (value) =>

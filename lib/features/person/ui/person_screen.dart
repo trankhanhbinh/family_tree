@@ -336,6 +336,9 @@ String _lifeSpan(Person person) {
 }
 
 String _parentText(ParentEntry entry) {
+  if (entry.relation == RelationType.lineage) {
+    return 'Đời trước · ${_lifeSpan(entry.person)}';
+  }
   var label = switch (entry.person.gender) {
     Gender.male => 'Cha',
     Gender.female => 'Mẹ',
@@ -355,6 +358,8 @@ String _childText(ChildEntry entry) {
     label = 'Con nuôi';
   } else if (entry.relation == RelationType.step) {
     label = 'Con riêng';
+  } else if (entry.relation == RelationType.lineage) {
+    label = 'Đời sau';
   } else {
     label = switch (entry.person.gender) {
       Gender.male => 'Con trai',

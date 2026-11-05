@@ -28,6 +28,7 @@ final Paint _childPaint = _stroke(_lineColor, 2);
 final Paint _marriedPaint = _stroke(_lineColor, 2);
 final Paint _widowedPaint = _stroke(_widowedColor, 2);
 final Paint _noMarriagePaint = _stroke(_noMarriageColor, 1.2);
+final Paint _lineagePaint = _stroke(_lineColor, 2.5)..strokeCap = StrokeCap.round;
 
 /// Một đường nối đã dựng sẵn thành Path, kèm khung bao để loại nhanh khi nằm ngoài màn hình.
 class LinkShape {
@@ -44,6 +45,10 @@ class TreeScene {
     for (final link in layout.links) {
       if (link.kind == LinkKind.marriage) {
         marriageLinks.add(_buildMarriage(link));
+      } else if (link.relation == RelationType.lineage) {
+        childDotted.add(
+          LinkShape(_dashed(link.points, 0.1, 5), _lineagePaint),
+        );
       } else if (_isNotBiological(link.relation)) {
         childDashed.add(
           LinkShape(_dashed(link.points, 6, 4), _childPaint),
@@ -57,6 +62,7 @@ class TreeScene {
   final TreeLayout layout;
   final List<LinkShape> marriageLinks = [];
   final List<LinkShape> childDashed = [];
+  final List<LinkShape> childDotted = [];
   final List<LinkShape> childSolid = [];
 
   /// Các thẻ giao với vùng [area] (toạ độ canvas).
@@ -189,6 +195,12 @@ class TreePainter extends CustomPainter {
     canvas.transform(matrix.storage);
 
     for (final s in scene.marriageLinks) {
+      if (s.bounds.overlaps(visible)) {
+        canvas.drawPath(s.path, s.paint);
+      }
+    }
+    // Nét chấm (nối đời) vẽ đầu tiên.
+    for (final s in scene.childDotted) {
       if (s.bounds.overlaps(visible)) {
         canvas.drawPath(s.path, s.paint);
       }
