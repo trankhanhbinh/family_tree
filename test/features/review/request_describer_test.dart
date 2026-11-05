@@ -153,6 +153,32 @@ void main() {
     expect(result[1].warning, isNull);
   });
 
+  test('gắn cha-con: loại nối đời', () {
+    final result = _describe(
+      [
+        _req(
+          id: 'p',
+          payload: {'id': 'n1', 'full_name': 'Nguyễn Văn B', 'gender': 'male'},
+        ),
+        _req(
+          id: 'pc',
+          entityType: 'parent_child',
+          payload: {
+            'parent_id': _toId,
+            'child_id': 'n1',
+            'relation_type': 'lineage',
+          },
+        ),
+      ],
+      _tree(),
+    );
+    expect(
+      result[1].title,
+      'Gắn Nguyễn Văn B là đời sau của Nguyễn Văn Tổ',
+    );
+    expect(result[1].warning, isNull);
+  });
+
   test('gắn cha-con: người không tồn tại -> có cảnh báo', () {
     final result = _describe(
       [

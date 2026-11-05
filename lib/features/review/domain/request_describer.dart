@@ -322,6 +322,7 @@ const Map<String, String> _relationNames = {
   'biological': 'con ruột',
   'adopted': 'con nuôi',
   'step': 'con riêng',
+  'lineage': 'đời sau',
 };
 
 String _relationName(Object? type) => _relationNames[type] ?? 'con';

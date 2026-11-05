@@ -207,6 +207,48 @@ void main() {
     expect(result.title, 'Gắn Nguyễn Thị B là con nuôi của Nguyễn Văn A');
   });
 
+  test('gắn quan hệ nối đời', () {
+    final result = _describe(
+      _entry(
+        entityType: 'parent_child',
+        action: 'create',
+        after: {
+          'parent_id': 'p1',
+          'child_id': 'c1',
+          'relation_type': 'lineage',
+        },
+      ),
+    );
+    expect(
+      result.title,
+      'Gắn Nguyễn Thị B là đời sau của Nguyễn Văn A',
+    );
+  });
+
+  test('đổi loại quan hệ sang nối đời', () {
+    final result = _describe(
+      _entry(
+        entityType: 'parent_child',
+        action: 'update',
+        before: {
+          'parent_id': 'p1',
+          'child_id': 'c1',
+          'relation_type': 'biological',
+        },
+        after: {
+          'parent_id': 'p1',
+          'child_id': 'c1',
+          'relation_type': 'lineage',
+        },
+      ),
+    );
+    expect(result.title, 'Đổi loại quan hệ: Nguyễn Thị B');
+    expect(result.details, [
+      'Cha/mẹ: Nguyễn Văn A',
+      'Loại quan hệ: Con ruột → Đời sau',
+    ]);
+  });
+
   test('đổi loại quan hệ', () {
     final result = _describe(
       _entry(

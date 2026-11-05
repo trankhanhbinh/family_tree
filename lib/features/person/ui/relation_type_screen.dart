@@ -96,6 +96,7 @@ class _RelationTypeFormState extends ConsumerState<_RelationTypeForm> {
       RelationType.biological => 'con ruột',
       RelationType.adopted => 'con nuôi',
       RelationType.step => 'con riêng',
+      RelationType.lineage => 'đời sau',
     };
   }
 

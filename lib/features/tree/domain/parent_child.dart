@@ -1,11 +1,13 @@
 enum RelationType {
   biological,
   adopted,
-  step;
+  step,
+  lineage;
 
   static RelationType fromString(String? value) => switch (value) {
         'adopted' => RelationType.adopted,
         'step' => RelationType.step,
+        'lineage' => RelationType.lineage,
         _ => RelationType.biological,
       };
 }

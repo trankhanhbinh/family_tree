@@ -162,6 +162,7 @@ String _parentLabel(Gender gender, RelationType relation) {
     RelationType.biological => '$base ruột',
     RelationType.adopted => '$base nuôi',
     RelationType.step => '$base kế',
+    RelationType.lineage => 'đời trước',
   };
 }
 
@@ -170,6 +171,7 @@ String _childLabel(RelationType relation) {
     RelationType.biological => 'Con ruột',
     RelationType.adopted => 'Con nuôi',
     RelationType.step => 'Con riêng',
+    RelationType.lineage => 'đời sau',
   };
 }
 
