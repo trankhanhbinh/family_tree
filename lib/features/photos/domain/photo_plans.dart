@@ -65,3 +65,32 @@ List<RequestDraft> planDeletePhoto(PersonPhoto photo) {
     ),
   ];
 }
+
+/// Thêm ảnh mới và đặt làm ảnh đại diện: bỏ cờ ở ảnh đại diện cũ TRƯỚC,
+/// rồi tạo ảnh mới có cờ (database chỉ cho một ảnh đại diện mỗi người).
+List<RequestDraft> planAddPhotoAsAvatar({
+  required String photoId,
+  required String personId,
+  required String storagePath,
+  required String caption,
+  required int sortOrder,
+  PersonPhoto? currentAvatar,
+}) {
+  return [
+    if (currentAvatar != null)
+      RequestDraft(
+        entityType: kEntityPersonPhoto,
+        action: kActionUpdate,
+        entityId: currentAvatar.id,
+        payload: const {'is_avatar': false},
+      ),
+    ...planAddPhoto(
+      photoId: photoId,
+      personId: personId,
+      storagePath: storagePath,
+      caption: caption,
+      sortOrder: sortOrder,
+      makeAvatar: true,
+    ),
+  ];
+}

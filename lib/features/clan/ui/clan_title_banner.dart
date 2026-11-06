@@ -27,8 +27,10 @@ class ClanTitleBanner extends StatelessWidget {
                 border: Border.all(color: _bronze, width: 0.8),
               ),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: _bronze, width: 1.5),

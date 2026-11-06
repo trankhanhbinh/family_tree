@@ -26,9 +26,16 @@ import 'package:familytree/features/tree/data/tree_repository.dart';
 /// - Người đóng góp: tải file lên pending-photos rồi gửi đề xuất, chờ duyệt.
 /// Luôn tải file lên TRƯỚC; bước sau lỗi thì xóa file vừa tải.
 class AddPhotoScreen extends ConsumerStatefulWidget {
-  const AddPhotoScreen({super.key, required this.personId});
+  const AddPhotoScreen({
+    super.key,
+    required this.personId,
+    this.asAvatar = false,
+  });
 
   final String personId;
+
+  /// true: ảnh mới sẽ được đặt làm ảnh đại diện (ảnh đại diện cũ bị bỏ cờ).
+  final bool asAvatar;
 
   @override
   ConsumerState<AddPhotoScreen> createState() => _AddPhotoScreenState();
@@ -141,8 +148,10 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
       final proceed = await confirmSubmit(
         context,
         isAdmin: false,
-        summary: 'Gửi đề xuất thêm ảnh cho $personName?',
-        slots: 1,
+        summary: widget.asAvatar
+            ? 'Gửi đề xuất đổi ảnh đại diện của $personName?'
+            : 'Gửi đề xuất thêm ảnh cho $personName?',
+        slots: widget.asAvatar && avatarOf(existing) != null ? 2 : 1,
       );
       if (!proceed || !mounted) {
         return;
@@ -213,14 +222,23 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
       final outcome = await submitChanges(
         context,
         ref,
-        drafts: planAddPhoto(
-          photoId: _photoId,
-          personId: widget.personId,
-          storagePath: publicPath,
-          caption: _caption.text,
-          sortOrder: nextSortOrder(existing),
-          makeAvatar: isAdmin && existing.isEmpty,
-        ),
+        drafts: widget.asAvatar
+            ? planAddPhotoAsAvatar(
+                photoId: _photoId,
+                personId: widget.personId,
+                storagePath: publicPath,
+                caption: _caption.text,
+                sortOrder: nextSortOrder(existing),
+                currentAvatar: avatarOf(existing),
+              )
+            : planAddPhoto(
+                photoId: _photoId,
+                personId: widget.personId,
+                storagePath: publicPath,
+                caption: _caption.text,
+                sortOrder: nextSortOrder(existing),
+                makeAvatar: isAdmin && existing.isEmpty,
+              ),
         note: (isAdmin || note.isEmpty) ? null : note,
       );
       if (outcome == SubmitOutcome.cancelled) {
@@ -242,9 +260,13 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
     if (done && mounted) {
       await showMessageDialog(
         context,
-        title: isAdmin ? 'Đã lưu ảnh' : 'Đã gửi đề xuất ảnh',
+        title: isAdmin
+            ? (widget.asAvatar ? 'Đã đổi ảnh đại diện' : 'Đã lưu ảnh')
+            : 'Đã gửi đề xuất ảnh',
         message: isAdmin
-            ? 'Ảnh đã được thêm vào hồ sơ.'
+            ? (widget.asAvatar
+                  ? 'Ảnh mới đã trở thành ảnh đại diện.'
+                  : 'Ảnh đã được thêm vào hồ sơ.')
             : 'Quản trị viên sẽ xem và duyệt.\n'
                   'Ảnh sẽ hiện trong hồ sơ sau khi được duyệt.',
         icon: Icons.check_circle_outline,
@@ -283,7 +305,13 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
           },
           child: Scaffold(
             appBar: AppBar(
-              title: Text(isAdmin ? 'Thêm ảnh' : 'Đề xuất thêm ảnh'),
+              title: Text(
+                widget.asAvatar
+                    ? (isAdmin
+                          ? 'Đổi ảnh đại diện'
+                          : 'Đề xuất đổi ảnh đại diện')
+                    : (isAdmin ? 'Thêm ảnh' : 'Đề xuất thêm ảnh'),
+              ),
             ),
             body: Column(
               children: [
@@ -298,12 +326,19 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
-                            isAdmin
+                            widget.asAvatar
+                                ? (isAdmin
+                                      ? 'Chọn ảnh mới làm ảnh đại diện của '
+                                            '$personName. Ảnh được lưu ngay.'
+                                      : 'Bạn đang đề xuất đổi ảnh đại diện của '
+                                            '$personName. Ảnh chỉ thay đổi sau '
+                                            'khi quản trị viên duyệt.')
+                                : isAdmin
                                 ? 'Thêm ảnh cho $personName. '
                                       'Ảnh được lưu ngay vào hồ sơ.'
-                                : 'Bạn đang đề xuất thêm ảnh cho $personName. '
-                                      'Ảnh chỉ hiện trong hồ sơ sau khi '
-                                      'quản trị viên duyệt.',
+                                : 'Bạn đang đề xuất thêm ảnh cho '
+                                      '$personName. Ảnh chỉ hiện trong hồ sơ '
+                                      'sau khi quản trị viên duyệt.',
                             style: const TextStyle(fontSize: 16, height: 1.4),
                           ),
                         ),
@@ -377,7 +412,9 @@ class _AddPhotoScreenState extends ConsumerState<AddPhotoScreen> {
                 SubmitBar(
                   submitting: _submitting,
                   onPressed: _save,
-                  label: isAdmin ? 'Lưu ảnh' : 'Gửi đề xuất ảnh',
+                  label: widget.asAvatar
+                      ? (isAdmin ? 'Lưu ảnh đại diện' : 'Gửi đề xuất đổi ảnh')
+                      : (isAdmin ? 'Lưu ảnh' : 'Gửi đề xuất ảnh'),
                   submittingLabel: 'Đang tải lên...',
                   icon: isAdmin ? Icons.save : Icons.send,
                 ),

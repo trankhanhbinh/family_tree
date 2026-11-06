@@ -8,6 +8,7 @@ import 'package:familytree/features/person/domain/memorial_date.dart';
 import 'package:familytree/features/person/domain/memorial_labels.dart';
 import 'package:familytree/features/person/domain/person.dart';
 import 'package:familytree/features/person/domain/person_relations.dart';
+import 'package:familytree/features/photos/ui/avatar_edit_button.dart';
 import 'package:familytree/features/photos/ui/person_photos_section.dart';
 import 'package:familytree/features/photos/ui/photo_avatar.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
@@ -416,12 +417,31 @@ class _Header extends StatelessWidget {
 
     return Column(
       children: [
-        PhotoAvatar(
-          personId: person.id,
-          width: 84,
-          accent: accent,
-          initial: _initialOf(person.fullName),
-          fontSize: 36,
+        // Khung 112x126: avatar 84x112 ở dưới-trái, nút bút chì ở góc trên
+        // phải avatar. Nút nằm TRONG khung để nhận được thao tác chạm.
+        SizedBox(
+          width: 112,
+          height: 126,
+          child: Stack(
+            children: [
+              Positioned(
+                left: 14,
+                bottom: 0,
+                child: PhotoAvatar(
+                  personId: person.id,
+                  width: 84,
+                  accent: accent,
+                  initial: _initialOf(person.fullName),
+                  fontSize: 36,
+                ),
+              ),
+              Positioned(
+                left: 67,
+                top: 1,
+                child: AvatarEditButton(personId: person.id),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
         Text(

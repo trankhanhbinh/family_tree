@@ -144,8 +144,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/person/:id/add-photo',
-        builder: (context, state) =>
-            AddPhotoScreen(personId: state.pathParameters['id']!),
+        builder: (context, state) => AddPhotoScreen(
+          personId: state.pathParameters['id']!,
+          asAvatar: state.uri.queryParameters['avatar'] == '1',
+        ),
       ),
       GoRoute(
         path: '/person/:id/history',
