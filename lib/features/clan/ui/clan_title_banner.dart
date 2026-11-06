@@ -1,23 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:familytree/features/clan/data/clan_info_repository.dart';
-import 'package:familytree/features/clan/domain/clan_title.dart';
+/// Tên nhãn đầu cây (cố định).
+const String kClanTitle = 'Gia phả họ Nguyễn';
 
 const Color _burgundy = Color(0xFF8B1E1E);
 const Color _bronze = Color(0xFF9A7B3F);
 
 /// Nhãn đầu cây: chữ thư pháp trong khung đôi màu đồng, hoa sen ở hai góc chéo.
-/// Tên lấy từ thông tin dòng họ (sửa ở /admin/clan).
-class ClanTitleBanner extends ConsumerWidget {
+class ClanTitleBanner extends StatelessWidget {
   const ClanTitleBanner({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final name = ref.watch(
-      clanInfoProvider.select((async) => async.value?.name),
-    );
-    final title = clanTitleOf(name);
+  Widget build(BuildContext context) {
     final pageColor = Theme.of(context).scaffoldBackgroundColor;
 
     return Padding(
@@ -33,20 +27,18 @@ class ClanTitleBanner extends ConsumerWidget {
                 border: Border.all(color: _bronze, width: 0.8),
               ),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 4,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: _bronze, width: 1.5),
                 ),
-                child: FittedBox(
+                child: const FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    title,
+                    kClanTitle,
                     maxLines: 1,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'DancingScript',
                       fontSize: 30,
                       height: 1.2,

@@ -330,7 +330,7 @@ class _TreeViewState extends State<TreeView> with TickerProviderStateMixin {
     return Column(
       children: [
         const ClanTitleBanner(),
-        Expanded(child: _buildCanvas(context)),
+        Expanded(child: ClipRect(child: _buildCanvas(context))),
       ],
     );
   }

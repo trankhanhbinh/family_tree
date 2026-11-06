@@ -25,7 +25,7 @@ class PortraitFrame extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular((width * 0.14).clamp(4.0, 10.0)),
+        borderRadius: BorderRadius.circular(2),
         border: Border.all(color: accent.withValues(alpha: 0.45), width: 1),
         image: photo == null
             ? null

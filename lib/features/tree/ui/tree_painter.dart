@@ -455,7 +455,7 @@ class TreePainter extends CustomPainter {
     );
     final avatarRRect = RRect.fromRectAndRadius(
       avatarBox,
-      const Radius.circular(6),
+      const Radius.circular(2),
     );
     canvas.drawRRect(
       avatarRRect,
