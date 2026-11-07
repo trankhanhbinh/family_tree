@@ -112,4 +112,70 @@ void main() {
       );
     });
   });
+
+  group('máy chủ tạm dừng hoặc bận', () {
+    test('Postgrest 540 là tạm dừng', () {
+      expect(
+        vietnameseErrorMessage(PostgrestException(message: '', code: '540')),
+        kServerPausedMessage,
+      );
+    });
+
+    test('Postgrest 402 là tạm dừng', () {
+      expect(
+        vietnameseErrorMessage(PostgrestException(message: '', code: '402')),
+        kServerPausedMessage,
+      );
+    });
+
+    test('Auth 540 là tạm dừng', () {
+      expect(
+        vietnameseErrorMessage(AuthException('', statusCode: '540')),
+        kServerPausedMessage,
+      );
+    });
+
+    test('Storage 540 là tạm dừng', () {
+      expect(
+        vietnameseErrorMessage(StorageException('', statusCode: '540')),
+        kServerPausedMessage,
+      );
+    });
+
+    test('nội dung có chữ paused cũng là tạm dừng', () {
+      expect(
+        vietnameseErrorMessage(
+          PostgrestException(message: 'Project is paused'),
+        ),
+        kServerPausedMessage,
+      );
+    });
+
+    for (final code in ['544', '502', '503', '504']) {
+      test('Postgrest $code là máy chủ bận', () {
+        expect(
+          vietnameseErrorMessage(PostgrestException(message: '', code: code)),
+          kServerBusyMessage,
+        );
+      });
+    }
+
+    test('mã lỗi database thường không bị nhận nhầm', () {
+      expect(
+        vietnameseErrorMessage(PostgrestException(message: 'x', code: '23503')),
+        kRelatedDataMissingMessage,
+      );
+      expect(
+        vietnameseErrorMessage(PostgrestException(message: 'x', code: '42501')),
+        kErrorMessagesVi['FORBIDDEN'],
+      );
+    });
+
+    test('lỗi mạng vẫn là lỗi mạng', () {
+      expect(
+        vietnameseErrorMessage(const SocketException('Failed host lookup')),
+        kNetworkErrorMessage,
+      );
+    });
+  });
 }

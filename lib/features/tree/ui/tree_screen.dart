@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:familytree/core/errors/app_error_messages.dart';
 import 'package:familytree/features/memorial/domain/upcoming_memorials.dart';
 import 'package:familytree/features/photos/domain/avatar_person_ids.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
@@ -74,8 +75,10 @@ class TreeScreen extends ConsumerWidget {
       bottomNavigationBar: const AdminEntryBar(),
       body: forestAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) =>
-            _TreeErrorView(onRetry: () => ref.invalidate(treeDataProvider)),
+        error: (error, _) => _TreeErrorView(
+          message: _treeErrorMessage(error),
+          onRetry: () => ref.invalidate(treeDataProvider),
+        ),
         data: (forest) {
           if (forest.roots.isEmpty) {
             return EmptyTreeView(
@@ -206,21 +209,37 @@ class _MoreSheetItem extends StatelessWidget {
   }
 }
 
-class _TreeErrorView extends StatelessWidget {
-  const _TreeErrorView({required this.onRetry});
+String _treeErrorMessage(Object error) {
+  final message = vietnameseErrorMessage(error);
+  if (message == kGenericErrorMessage) {
+    return 'Không tải được gia phả. Vui lòng thử lại.';
+  }
+  return message;
+}
 
+class _TreeErrorView extends StatelessWidget {
+  const _TreeErrorView({required this.message, required this.onRetry});
+
+  final String message;
   final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('Không tải được gia phả. Vui lòng thử lại.'),
-          const SizedBox(height: 12),
-          FilledButton(onPressed: onRetry, child: const Text('Thử lại')),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(onPressed: onRetry, child: const Text('Thử lại')),
+          ],
+        ),
       ),
     );
   }

@@ -12,6 +12,14 @@ const String kGenericErrorMessage = 'Có lỗi xảy ra, vui lòng thử lại.'
 const String kNetworkErrorMessage =
     'Không kết nối được mạng. Vui lòng kiểm tra mạng rồi thử lại.';
 
+const String kServerPausedMessage =
+    'Hệ thống gia phả đang tạm nghỉ nên chưa dùng được. '
+    'Vui lòng báo quản trị viên mở lại, rồi thử lại sau.';
+
+const String kServerBusyMessage =
+    'Máy chủ đang bận hoặc đang bảo trì. '
+    'Vui lòng thử lại sau ít phút.';
+
 /// Sai mã quản trị, hoặc đăng nhập được nhưng không phải admin.
 const String kWrongAdminCodeMessage =
     'Mã không đúng hoặc không có quyền quản trị.';
@@ -114,6 +122,11 @@ String vietnameseErrorMessage(Object error) {
     }
   }
 
+  final serverMessage = _serverStateMessage(error, text);
+  if (serverMessage != null) {
+    return serverMessage;
+  }
+
   if (error is AuthException) {
     final authMessage = _authErrorMessage(error);
     if (authMessage != null) {
@@ -208,6 +221,35 @@ String? _storageErrorMessage(StorageException error) {
       message.contains('row-level security') ||
       message.contains('unauthorized')) {
     return kErrorMessagesVi['FORBIDDEN'];
+  }
+  return null;
+}
+
+int? _httpStatusOf(Object error) {
+  if (error is PostgrestException) {
+    return int.tryParse(error.code ?? '');
+  }
+  if (error is AuthException) {
+    return int.tryParse(error.statusCode ?? '');
+  }
+  if (error is StorageException) {
+    return int.tryParse(error.statusCode ?? '');
+  }
+  return null;
+}
+
+// Supabase: 540 = project tạm dừng, 402 = bị hạn chế dịch vụ, 544 = quá thời
+// gian chờ của cổng API. Không có mạng thì KHÔNG có mã này (rơi xuống lỗi mạng).
+String? _serverStateMessage(Object error, String text) {
+  final status = _httpStatusOf(error);
+  if (status == 540 || status == 402) {
+    return kServerPausedMessage;
+  }
+  if (status == 544 || status == 502 || status == 503 || status == 504) {
+    return kServerBusyMessage;
+  }
+  if (text.toLowerCase().contains('paused')) {
+    return kServerPausedMessage;
   }
   return null;
 }
