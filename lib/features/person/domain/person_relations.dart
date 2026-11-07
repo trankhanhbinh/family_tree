@@ -38,6 +38,20 @@ class PersonRelations {
 
   bool get isEmpty => parents.isEmpty && spouses.isEmpty && children.isEmpty;
 
+  String get parentsHeading {
+    final allLineage =
+        parents.isNotEmpty &&
+        parents.every((e) => e.relation == RelationType.lineage);
+    return allLineage ? 'Đời trước' : 'Cha mẹ';
+  }
+
+  String get childrenHeading {
+    final allLineage =
+        children.isNotEmpty &&
+        children.every((e) => e.relation == RelationType.lineage);
+    return allLineage ? 'Đời sau' : 'Con';
+  }
+
   factory PersonRelations.of(
     String personId, {
     required Iterable<Person> people,
@@ -80,7 +94,6 @@ class PersonRelations {
       }
     }
 
-    // Cha mẹ: ruột/nuôi trước, kế sau; nam trước nữ.
     parents.sort((a, b) {
       final byRelation = _relationRank(a.relation)
           .compareTo(_relationRank(b.relation));
@@ -95,7 +108,6 @@ class PersonRelations {
       return a.person.id.compareTo(b.person.id);
     });
 
-    // Vợ/chồng: theo ngày bắt đầu hôn nhân, thiếu ngày thì xếp sau.
     spouses.sort((a, b) {
       final byStart = _compareNullableDate(
         a.marriage.startDate,
@@ -111,7 +123,6 @@ class PersonRelations {
       return a.person.id.compareTo(b.person.id);
     });
 
-    // Con: theo ngày/năm sinh, không rõ xếp cuối.
     children.sort((a, b) {
       final byBirth = _compareNullableDate(
         _birthKey(a.person),

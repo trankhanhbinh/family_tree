@@ -245,7 +245,7 @@ class PersonScreen extends ConsumerWidget {
     final items = <Widget>[];
 
     if (relations.parents.isNotEmpty) {
-      items.add(const _SubHeader('Cha mẹ'));
+      items.add(_SubHeader(relations.parentsHeading));
       for (final e in relations.parents) {
         items.add(
           _PersonTile(
@@ -269,7 +269,7 @@ class PersonScreen extends ConsumerWidget {
       }
     }
     if (relations.children.isNotEmpty) {
-      items.add(const _SubHeader('Con'));
+      items.add(_SubHeader(relations.childrenHeading));
       for (final e in relations.children) {
         items.add(
           _PersonTile(
