@@ -52,7 +52,7 @@ class RelationsScreen extends ConsumerWidget {
       Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Text(
-          'Sửa quan quan hệ của ${person.fullName}. '
+          'Sửa quan hệ của ${person.fullName}. '
           'Mọi thay đổi được gửi cho quản trị viên duyệt, chưa áp dụng ngay.',
           style: const TextStyle(fontSize: 16, height: 1.4),
         ),
@@ -69,7 +69,7 @@ class RelationsScreen extends ConsumerWidget {
     }
 
     if (relations.parents.isNotEmpty) {
-      items.add(const _SectionTitle('Cha mẹ'));
+      items.add(_SectionTitle(relations.parentsHeading));
       for (final e in relations.parents) {
         final id = linkId(e.person.id, personId);
         items.add(
@@ -121,7 +121,7 @@ class RelationsScreen extends ConsumerWidget {
     }
 
     if (relations.children.isNotEmpty) {
-      items.add(const _SectionTitle('Con'));
+      items.add(_SectionTitle(relations.childrenHeading));
       for (final e in relations.children) {
         final id = linkId(personId, e.person.id);
         final childId = e.person.id;
@@ -163,7 +163,7 @@ String _parentLabel(Gender gender, RelationType relation) {
     RelationType.biological => '$base ruột',
     RelationType.adopted => '$base nuôi',
     RelationType.step => '$base kế',
-    RelationType.lineage => 'đời trước',
+    RelationType.lineage => 'Đời trước',
   };
 }
 
@@ -172,7 +172,7 @@ String _childLabel(RelationType relation) {
     RelationType.biological => 'Con ruột',
     RelationType.adopted => 'Con nuôi',
     RelationType.step => 'Con riêng',
-    RelationType.lineage => 'đời sau',
+    RelationType.lineage => 'Đời sau',
   };
 }
 

@@ -107,6 +107,12 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
       _relation != RelationType.biological ||
       _otherChoice != _initialOther;
 
+  bool get _isLineage => _relation == RelationType.lineage;
+
+  String get _otherMissingMessage => _isLineage
+      ? 'Vui lòng chọn người đời sau này gắn với ai.'
+      : 'Vui lòng chọn con này sinh cùng với ai.';
+
   String _relationLabel(RelationType relation) {
     return switch (relation) {
       RelationType.biological => 'con ruột',
@@ -129,15 +135,13 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
     );
     final otherMissing = _otherChoice == null;
     setState(() {
-      _otherError = otherMissing
-          ? 'Vui lòng chọn con này sinh cùng với ai.'
-          : null;
+      _otherError = otherMissing ? _otherMissingMessage : null;
     });
 
     if (errors.isNotEmpty || otherMissing) {
       final lines = [
         ...errors.values,
-        if (otherMissing) 'Vui lòng chọn con này sinh cùng với ai.',
+        if (otherMissing) _otherMissingMessage,
       ].map((e) => '• $e').join('\n');
       await showMessageDialog(
         context,
@@ -243,7 +247,9 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
             }
           },
           child: Scaffold(
-            appBar: AppBar(title: const Text('Thêm con')),
+            appBar: AppBar(
+              title: Text(_isLineage ? 'Thêm người đời sau' : 'Thêm con'),
+            ),
             body: Column(
               children: [
                 Expanded(
@@ -283,6 +289,7 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
   }
 
   Widget _intro(bool isAdmin) {
+    final kind = _isLineage ? 'người đời sau' : 'người con';
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text.rich(
@@ -291,8 +298,8 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
           children: [
             TextSpan(
               text: isAdmin
-                  ? 'Bạn đang thêm trực tiếp một người con cho '
-                  : 'Bạn đang đề xuất thêm một người con cho ',
+                  ? 'Bạn đang thêm trực tiếp một $kind cho '
+                  : 'Bạn đang đề xuất thêm một $kind cho ',
             ),
             TextSpan(
               text: widget.person.fullName,
@@ -310,14 +317,15 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
   }
 
   Widget _otherParentCard(bool isAdmin) {
+    final childWord = _isLineage ? 'người đời sau' : 'con';
     final spouses = widget.spouses;
     if (spouses.isEmpty) {
       return FormCard(
-        title: 'Cha/mẹ của con',
+        title: _isLineage ? 'Người đời trước' : 'Cha/mẹ của con',
         children: [
           Text(
             '${widget.person.fullName} chưa có vợ/chồng nào trong gia phả, '
-            'nên con sẽ chỉ được gắn với ${widget.person.fullName}. '
+            'nên $childWord sẽ chỉ được gắn với ${widget.person.fullName}. '
             '${isAdmin ? 'Muốn ghi cả cha/mẹ còn lại, hãy "Thêm vợ/chồng" '
                       'trước rồi quay lại thêm con.' : 'Muốn ghi cả cha/mẹ còn lại, '
                       'hãy gửi đề xuất "Thêm vợ/chồng" trước và đợi được duyệt.'}',
@@ -330,7 +338,9 @@ class _AddChildFormState extends ConsumerState<_AddChildForm> {
     return KeyedSubtree(
       key: _otherKey,
       child: FormCard(
-        title: 'Con này sinh cùng với ai?',
+        title: _isLineage
+            ? 'Người đời sau này gắn với ai?'
+            : 'Con này sinh cùng với ai?',
         children: [
           BigChoiceList<String>(
             options: [
