@@ -10,6 +10,7 @@ import 'package:familytree/features/history/ui/history_screen.dart';
 import 'package:familytree/features/history/ui/deleted_people_screen.dart';
 import 'package:familytree/features/memorial/ui/memorials_screen.dart';
 import 'package:familytree/features/person/ui/add_child_screen.dart';
+import 'package:familytree/features/person/ui/add_root_screen.dart';
 import 'package:familytree/features/person/ui/add_spouse_screen.dart';
 import 'package:familytree/features/person/ui/marriage_edit_screen.dart';
 import 'package:familytree/features/person/ui/person_edit_screen.dart';
@@ -78,6 +79,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/notifications',
         builder: (context, state) => const PushSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/add-root',
+        builder: (context, state) => const AddRootScreen(),
       ),
       GoRoute(
         path: '/backup',

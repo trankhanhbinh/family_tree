@@ -9,6 +9,7 @@ import 'package:familytree/features/tree/data/family_forest_provider.dart';
 import 'package:familytree/features/tree/data/focus_request_provider.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/ui/tree_view.dart';
+import 'package:familytree/features/tree/ui/empty_tree_view.dart';
 import 'package:familytree/features/auth/ui/admin_entry_bar.dart';
 import 'package:familytree/core/ui/app_version_label.dart';
 
@@ -21,6 +22,7 @@ class TreeScreen extends ConsumerWidget {
     final clanName = ref.watch(clanNameProvider).value ?? 'Gia phả';
     final collapsedIds = ref.watch(collapsedIdsProvider);
     final focusRequest = ref.watch(focusRequestProvider);
+    final isAdmin = ref.watch(isAdminProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -66,7 +68,10 @@ class TreeScreen extends ConsumerWidget {
             _TreeErrorView(onRetry: () => ref.invalidate(treeDataProvider)),
         data: (forest) {
           if (forest.roots.isEmpty) {
-            return const Center(child: Text('Chưa có dữ liệu gia phả.'));
+            return EmptyTreeView(
+              isAdmin: isAdmin,
+              onAddFirst: () => context.push('/admin/add-root'),
+            );
           }
           final notifier = ref.read(collapsedIdsProvider.notifier);
           return TreeView(

@@ -295,6 +295,28 @@ List<RequestDraft> planAddSpouse({
   ];
 }
 
+/// Thêm người đầu tiên của gia phả (cây trống): chỉ MỘT dòng người mới,
+/// không có quan hệ cha mẹ hay vợ chồng. Số đời lấy từ form (trống = không gửi).
+List<RequestDraft> planAddRoot({
+  required PersonFormValues values,
+  required String personId,
+  required int nowYear,
+}) {
+  final int? generation = parseGeneration(values.generation).value;
+  return [
+    RequestDraft(
+      entityType: kEntityPerson,
+      action: kActionCreate,
+      payload: buildPersonCreatePayload(
+        values,
+        id: personId,
+        generation: generation,
+        nowYear: nowYear,
+      ),
+    ),
+  ];
+}
+
 // ---------- Hàm nhỏ ----------
 
 String _clean(String input) {

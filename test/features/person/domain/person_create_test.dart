@@ -215,6 +215,42 @@ void main() {
     });
   });
 
+  group('planAddRoot', () {
+    List<RequestDraft> plan(String generation) {
+      return planAddRoot(
+        values: PersonFormValues(
+          fullName: 'Nguyễn Văn Tổ',
+          generation: generation,
+        ),
+        personId: 'r1',
+        nowYear: _now,
+      );
+    }
+
+    test('chỉ một dòng: tạo người, không có cha-con hay hôn nhân', () {
+      final drafts = plan('1');
+      expect(drafts.length, 1);
+      expect(drafts.first.entityType, kEntityPerson);
+      expect(drafts.first.action, kActionCreate);
+      expect(drafts.first.entityId, isNull);
+    });
+
+    test('payload có id và số đời 1', () {
+      final payload = plan('1').first.payload;
+      expect(payload['id'], 'r1');
+      expect(payload['full_name'], 'Nguyễn Văn Tổ');
+      expect(payload['generation'], 1);
+    });
+
+    test('số đời admin đổi thì dùng số đó', () {
+      expect(plan('3').first.payload['generation'], 3);
+    });
+
+    test('số đời để trống thì không gửi generation', () {
+      expect(plan('').first.payload.containsKey('generation'), isFalse);
+    });
+  });
+
   group('planAddSpouse', () {
     List<RequestDraft> plan({
       Person? partner,
