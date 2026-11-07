@@ -76,8 +76,6 @@ Future<BranchChoice?> showBranchPicker(
   );
 }
 
-/// Các card nhập thông tin một người: cơ bản, ngày sinh, tình trạng,
-/// ngày giỗ (khi đã mất), ghi chú. Dùng chung cho Sửa và Thêm.
 class PersonFormFields extends StatelessWidget {
   const PersonFormFields({
     super.key,
@@ -88,8 +86,6 @@ class PersonFormFields extends StatelessWidget {
 
   final PersonFormController controller;
   final List<Branch> branches;
-
-  /// Ô "Số đời": chỉ quản trị viên thấy.
   final bool showGeneration;
 
   @override
@@ -202,7 +198,7 @@ class PersonFormFields extends StatelessWidget {
               children: [
                 AppNumberField(
                   controller: controller.generation,
-                  label: 'Số đời (chỉ quản trị viên thấy)',
+                  label: 'Số đời',
                   maxDigits: 2,
                   hasError: generationError != null,
                   onChanged: () =>
