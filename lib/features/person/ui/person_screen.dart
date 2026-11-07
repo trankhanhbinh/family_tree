@@ -393,15 +393,6 @@ Color _accentOf(Gender gender) {
   return const Color(0xFF757575);
 }
 
-String _initialOf(String fullName) {
-  final parts = fullName.trim().split(RegExp(r'\s+'));
-  final last = parts.isEmpty ? '' : parts.last;
-  if (last.isEmpty) {
-    return '?';
-  }
-  return String.fromCharCode(last.runes.first).toUpperCase();
-}
-
 // ---------- Widget con ----------
 
 class _Header extends StatelessWidget {
@@ -431,8 +422,6 @@ class _Header extends StatelessWidget {
                   personId: person.id,
                   width: 84,
                   accent: accent,
-                  initial: _initialOf(person.fullName),
-                  fontSize: 36,
                 ),
               ),
               Positioned(
@@ -557,12 +546,7 @@ class _PersonTile extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
-      leading: PhotoAvatar(
-        personId: person.id,
-        width: 36,
-        accent: accent,
-        initial: _initialOf(person.fullName),
-      ),
+      leading: PhotoAvatar(personId: person.id, width: 36, accent: accent),
       title: Text(person.fullName),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),

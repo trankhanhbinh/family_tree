@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:familytree/features/memorial/domain/upcoming_memorials.dart';
+import 'package:familytree/features/photos/domain/avatar_person_ids.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/tree/data/clan_info_provider.dart';
 import 'package:familytree/features/tree/data/collapsed_ids_provider.dart';
@@ -23,6 +24,15 @@ class TreeScreen extends ConsumerWidget {
     final collapsedIds = ref.watch(collapsedIdsProvider);
     final focusRequest = ref.watch(focusRequestProvider);
     final isAdmin = ref.watch(isAdminProvider);
+    final avatarIds = ref.watch(
+      treeDataProvider.select((async) {
+        final data = async.value;
+        if (data == null) {
+          return const <String>{};
+        }
+        return avatarPersonIds(data.people, data.photos);
+      }),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -78,6 +88,7 @@ class TreeScreen extends ConsumerWidget {
             forest: forest,
             collapsedIds: collapsedIds,
             focusRequest: focusRequest,
+            avatarIds: avatarIds,
             onPersonTap: (personId) => context.push('/person/$personId'),
             onToggleCollapse: notifier.toggle,
             onCollapseAll: notifier.collapseAll,

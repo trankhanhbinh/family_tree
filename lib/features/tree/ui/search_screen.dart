@@ -6,7 +6,7 @@ import 'package:familytree/features/tree/data/family_forest_provider.dart';
 import 'package:familytree/features/tree/data/focus_request_provider.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 import 'package:familytree/features/tree/domain/tree_search.dart';
-import 'package:familytree/core/ui/portrait_frame.dart';
+import 'package:familytree/core/ui/default_portrait.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -138,18 +138,7 @@ class _ResultTile extends StatelessWidget {
 
     return ListTile(
       minVerticalPadding: 12,
-      leading: PortraitFrame(
-        width: 42,
-        accent: accent,
-        child: Text(
-          _initialOf(person.fullName),
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: accent,
-          ),
-        ),
-      ),
+      leading: DefaultPortrait(width: 42, accent: accent),
       title: Text(
         person.fullName,
         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
@@ -169,15 +158,6 @@ Color _accentOf(Gender gender) {
     return const Color(0xFFC2185B);
   }
   return const Color(0xFF757575);
-}
-
-String _initialOf(String fullName) {
-  final parts = fullName.trim().split(RegExp(r'\s+'));
-  final last = parts.isEmpty ? '' : parts.last;
-  if (last.isEmpty) {
-    return '?';
-  }
-  return String.fromCharCode(last.runes.first).toUpperCase();
 }
 
 String _lifeSpan(Person person) {

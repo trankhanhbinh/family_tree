@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:familytree/core/ui/default_portrait.dart';
 import 'package:familytree/features/person/domain/person.dart';
 import 'package:familytree/features/tree/domain/marriage.dart';
 import 'package:familytree/features/tree/domain/parent_child.dart';
@@ -156,6 +157,7 @@ class TreePainter extends CustomPainter {
     required this.scene,
     required this.controller,
     required this.cache,
+    this.avatarIds = const <String>{},
     this.highlightId,
     Animation<double>? pulse,
   }) : _pulse = pulse,
@@ -164,6 +166,7 @@ class TreePainter extends CustomPainter {
   final TreeScene scene;
   final TransformationController controller;
   final CardTextCache cache;
+  final Set<String> avatarIds;
 
   /// Người đang nhấp nháy (sau khi tìm kiếm / "Xem trên cây").
   final String? highlightId;
@@ -246,7 +249,8 @@ class TreePainter extends CustomPainter {
   bool shouldRepaint(TreePainter oldDelegate) =>
       !identical(oldDelegate.scene, scene) ||
       oldDelegate.highlightId != highlightId ||
-      !identical(oldDelegate.cache, cache);
+      !identical(oldDelegate.cache, cache) ||
+      !identical(oldDelegate.avatarIds, avatarIds);
 
   // ---------- Khung nổi bật ----------
 
@@ -446,7 +450,6 @@ class TreePainter extends CustomPainter {
 
     final text = _cardText(card);
 
-    // Khung avatar chữ nhật đứng (chữ cái đầu của tên)
     final avatarBox = Rect.fromLTWH(
       rect.left + _pad,
       contentCy - _avatarH / 2,
@@ -457,20 +460,25 @@ class TreePainter extends CustomPainter {
       avatarBox,
       const Radius.circular(2),
     );
-    canvas.drawRRect(
-      avatarRRect,
-      Paint()..color = deceased ? Colors.white : accent.withValues(alpha: 0.15),
-    );
+    final hasPhoto = avatarIds.contains(person.id);
+    final Color avatarFill = deceased
+        ? Colors.white
+        : (hasPhoto ? accent.withValues(alpha: 0.15) : kPortraitBackground);
+    canvas.drawRRect(avatarRRect, Paint()..color = avatarFill);
     if (deceased) {
       canvas.drawRRect(avatarRRect, _innerFramePaint);
     }
-    text.initial.paint(
-      canvas,
-      Offset(
-        avatarBox.center.dx - text.initial.width / 2,
-        avatarBox.center.dy - text.initial.height / 2,
-      ),
-    );
+    if (hasPhoto) {
+      text.initial.paint(
+        canvas,
+        Offset(
+          avatarBox.center.dx - text.initial.width / 2,
+          avatarBox.center.dy - text.initial.height / 2,
+        ),
+      );
+    } else {
+      paintPortraitFigure(canvas, avatarBox);
+    }
 
     // Khối chữ bên phải (họ tên, [đường kẻ trang trí], năm sinh - năm mất)
     final textLeft = rect.left + _pad + _avatarW + 8;

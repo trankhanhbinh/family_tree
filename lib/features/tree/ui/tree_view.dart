@@ -10,8 +10,6 @@ import 'package:familytree/features/tree/ui/tree_painter.dart';
 import 'package:familytree/features/clan/ui/clan_title_banner.dart';
 
 /// Canvas cây gia phả: zoom/pan, bấm thẻ, thu gọn/mở rộng nhánh,
-/// cuộn tới người được tìm, nút "về gốc".
-/// H3: CustomPaint tự áp ma trận và chỉ vẽ phần nhìn thấy.
 class TreeView extends StatefulWidget {
   const TreeView({
     super.key,
@@ -23,14 +21,11 @@ class TreeView extends StatefulWidget {
     required this.onCollapseAll,
     required this.onExpandAll,
     required this.onFocusHandled,
+    this.avatarIds = const <String>{},
   });
 
   final FamilyForest forest;
-
-  /// Các người chính đang thu gọn (nguồn sự thật nằm ở provider).
   final Set<String> collapsedIds;
-
-  /// Yêu cầu cuộn tới một người (null nếu không có).
   final FocusRequest? focusRequest;
 
   final void Function(String personId) onPersonTap;
@@ -42,6 +37,9 @@ class TreeView extends StatefulWidget {
 
   /// Báo đã nhận yêu cầu cuộn để provider xóa nó.
   final VoidCallback onFocusHandled;
+
+  /// Người đã có ảnh đại diện (thẻ vẽ chữ cái đầu); còn lại vẽ chân dung mặc định.
+  final Set<String> avatarIds;
 
   @override
   State<TreeView> createState() => _TreeViewState();
