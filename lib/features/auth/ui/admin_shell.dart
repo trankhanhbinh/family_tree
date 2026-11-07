@@ -22,11 +22,7 @@ class AdminShell extends ConsumerWidget {
     // thông báo đã được cấp thì đăng ký thiết bị âm thầm, không hộp thoại.
     ref.listen(isAdminProvider, (_, next) {
       if (next) {
-        unawaited(
-          ref
-              .read(pushDeviceControllerProvider)
-              .registerSilentlyIfGranted(isAdmin: true),
-        );
+        unawaited(_onBecameAdmin(ref.read(pushDeviceControllerProvider)));
       }
     });
 
@@ -46,6 +42,11 @@ class AdminShell extends ConsumerWidget {
       ],
     );
   }
+}
+
+Future<void> _onBecameAdmin(PushDeviceController controller) async {
+  await controller.flushPendingDeletes();
+  await controller.registerSilentlyIfGranted(isAdmin: true);
 }
 
 class _AdminBanner extends StatelessWidget {

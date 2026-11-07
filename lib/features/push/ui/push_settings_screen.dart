@@ -106,8 +106,9 @@ class _PushSettingsScreenState extends ConsumerState<PushSettingsScreen>
         title: 'Chưa tắt hết được',
         message:
             'Đã tắt thông báo trên máy, nhưng chưa xóa được máy này '
-            'khỏi hệ thống vì không có mạng. Máy có thể vẫn nhận thông báo. '
-            'Khi có mạng, hãy bấm “Bật thông báo” rồi tắt lại.',
+            'khỏi hệ thống vì không có mạng. Máy có thể vẫn nhận thông báo '
+            'cho tới lúc đó. Lần tới mở ứng dụng hoặc đăng nhập quản trị '
+            'khi có mạng, máy sẽ tự được xóa khỏi hệ thống.',
         icon: Icons.cloud_off_outlined,
         isError: true,
       );

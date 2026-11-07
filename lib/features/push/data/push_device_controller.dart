@@ -121,6 +121,7 @@ class PushDeviceController {
     }
     try {
       await _registerAndSave();
+      await flushPendingDeletes();
       return PushEnableResult.enabled;
     } catch (error) {
       debugPrint('Đăng ký hoặc lưu thiết bị thất bại: $error');
@@ -149,18 +150,41 @@ class PushDeviceController {
     _epoch++;
     await _stopWatching();
     var removed = true;
+    String? fid;
     try {
-      final fid = _lastSavedFid ?? await _fidStore.read();
+      fid = _lastSavedFid ?? await _fidStore.read();
       if (fid != null && fid.isNotEmpty) {
         await _repository.deleteDevice(fid, timeout: _removeTimeout);
       }
     } catch (error) {
       removed = false;
+      if (fid != null && fid.isNotEmpty) {
+        await _fidStore.addPendingDelete(fid);
+      }
       debugPrint('Không xóa được thiết bị admin (bỏ qua): $error');
     }
     _lastSavedFid = null;
     await _fidStore.clear();
     return removed;
+  }
+
+  /// Xóa các dòng admin_devices còn sót do lần xóa trước bị lỗi mạng. Chỉ chạy
+  /// khi đang là admin (quyền xóa). Không bao giờ ném lỗi.
+  Future<void> flushPendingDeletes() async {
+    final pending = await _fidStore.readPendingDeletes();
+    for (final fid in pending) {
+      // FID đang dùng thì dòng đã được tạo lại: không được xóa.
+      if (fid == _lastSavedFid) {
+        await _fidStore.removePendingDelete(fid);
+        continue;
+      }
+      try {
+        await _repository.deleteDevice(fid, timeout: _removeTimeout);
+        await _fidStore.removePendingDelete(fid);
+      } catch (error) {
+        debugPrint('Chưa xóa được FID chờ xóa (thử lại sau): $error');
+      }
+    }
   }
 
   void dispose() {
@@ -190,6 +214,7 @@ class PushDeviceController {
     await _repository.saveDevice(fid);
     _lastSavedFid = fid;
     await _fidStore.write(fid);
+    await _fidStore.removePendingDelete(fid);
   }
 
   void _watchFidChanges() {

@@ -118,6 +118,25 @@ class _FakeFidStore implements PushFidStore {
   Future<void> clearOptedOut() async {
     optedOut = false;
   }
+
+  List<String> pendingDeletes = [];
+
+  @override
+  Future<List<String>> readPendingDeletes() async {
+    return List<String>.of(pendingDeletes);
+  }
+
+  @override
+  Future<void> addPendingDelete(String fid) async {
+    if (!pendingDeletes.contains(fid)) {
+      pendingDeletes.add(fid);
+    }
+  }
+
+  @override
+  Future<void> removePendingDelete(String fid) async {
+    pendingDeletes.remove(fid);
+  }
 }
 
 void main() {
@@ -463,6 +482,103 @@ void main() {
       await controller.disable();
 
       expect(await controller.needsLoginPrompt(), isFalse);
+    });
+  });
+
+  group('FID chờ xóa (offline)', () {
+    test('đăng xuất lỗi mạng thì ghi FID vào danh sách chờ', () async {
+      final controller = makeController();
+      await controller.enable();
+      repo.deleteError = Exception('mất mạng');
+
+      await controller.removeThisDevice();
+
+      expect(store.pendingDeletes, ['fid-1']);
+    });
+
+    test('đăng xuất thành công thì không có gì chờ xóa', () async {
+      final controller = makeController();
+      await controller.enable();
+
+      await controller.removeThisDevice();
+
+      expect(store.pendingDeletes, isEmpty);
+    });
+
+    test('tắt thông báo lỗi mạng thì ghi FID chờ xóa', () async {
+      final controller = makeController();
+      await controller.enable();
+      repo.deleteError = Exception('mất mạng');
+
+      final removed = await controller.disable();
+
+      expect(removed, isFalse);
+      expect(store.pendingDeletes, ['fid-1']);
+    });
+
+    test('flush xóa các FID chờ và làm rỗng danh sách', () async {
+      store.pendingDeletes = ['a', 'b'];
+      final controller = makeController();
+
+      await controller.flushPendingDeletes();
+
+      expect(repo.deleted, ['a', 'b']);
+      expect(store.pendingDeletes, isEmpty);
+    });
+
+    test('flush lỗi thì giữ lại danh sách và không ném ra ngoài', () async {
+      store.pendingDeletes = ['a', 'b'];
+      repo.deleteError = Exception('mất mạng');
+      final controller = makeController();
+
+      await controller.flushPendingDeletes();
+
+      expect(repo.deleted, isEmpty);
+      expect(store.pendingDeletes, ['a', 'b']);
+    });
+
+    test('không có gì chờ thì không gọi xóa', () async {
+      final controller = makeController();
+
+      await controller.flushPendingDeletes();
+
+      expect(repo.deleteTimeouts, isEmpty);
+    });
+
+    test('đăng xuất offline rồi có mạng thì flush xóa dòng cũ', () async {
+      final controller = makeController();
+      await controller.enable();
+      repo.deleteError = Exception('mất mạng');
+      await controller.removeThisDevice();
+      repo.deleteError = null;
+
+      await controller.flushPendingDeletes();
+
+      expect(repo.deleted, ['fid-1']);
+      expect(store.pendingDeletes, isEmpty);
+    });
+
+    test('đăng ký lại đúng FID đang chờ xóa thì gỡ khỏi danh sách', () async {
+      store.pendingDeletes = ['fid-1'];
+      final controller = makeController();
+
+      final result = await controller.registerSilentlyIfGranted(isAdmin: true);
+
+      expect(result, isTrue);
+      expect(repo.saved, ['fid-1']);
+      expect(repo.deleted, isEmpty);
+      expect(store.pendingDeletes, isEmpty);
+    });
+
+    test('bật thông báo xong thì xóa FID cũ, giữ FID đang dùng', () async {
+      store.pendingDeletes = ['fid-1', 'fid-old'];
+      final controller = makeController();
+
+      await controller.enable();
+
+      expect(repo.saved, ['fid-1']);
+      expect(repo.deleted, ['fid-old']);
+      expect(store.pendingDeletes, isEmpty);
     });
   });
 }
