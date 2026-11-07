@@ -1,3 +1,5 @@
+# Cấu hình đã test chạy ổn với dòng này; bỏ đi thì phải test lại cả emulator lẫn Samsung.
+-dontobfuscate
 # ---- flutter_local_notifications ----
 -keep class com.dexterous.flutterlocalnotifications.** { *; }
 # Thư viện này lưu lịch thông báo bằng Gson nên cần giữ các lớp kiểu của Gson.
