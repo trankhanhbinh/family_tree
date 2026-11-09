@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:familytree/core/theme/app_colors.dart';
 import 'package:familytree/core/ui/app_dialogs.dart';
 import 'package:familytree/core/ui/choice_dialog.dart';
 import 'package:familytree/core/ui/form_widgets.dart';
@@ -14,7 +15,7 @@ import 'package:familytree/features/review/domain/change_request.dart';
 import 'package:familytree/features/review/domain/request_describer.dart';
 import 'package:familytree/features/tree/data/tree_repository.dart';
 
-const Color _kWarningColor = Color(0xFFB26A00);
+const Color _kWarningColor = AppColors.warning;
 
 /// Chi tiết một gói đề xuất: xem từng thay đổi, rồi Duyệt hoặc Từ chối cả gói.
 /// [readOnly] = true: người đóng góp chỉ xem (không có nút Duyệt/Từ chối).

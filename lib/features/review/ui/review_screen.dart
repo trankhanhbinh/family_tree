@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:familytree/core/theme/app_colors.dart';
 import 'package:familytree/core/ui/form_widgets.dart';
 import 'package:familytree/features/auth/data/admin_provider.dart';
 import 'package:familytree/features/history/data/history_repository.dart';
@@ -211,7 +212,7 @@ class BundleCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFB26A00),
+                      color: AppColors.warning,
                     ),
                   ),
                 ),
@@ -224,7 +225,7 @@ class BundleCard extends StatelessWidget {
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: bundle.status == 'approved'
-                          ? const Color(0xFF2E7D32)
+                          ? AppColors.success
                           : scheme.error,
                     ),
                   ),
